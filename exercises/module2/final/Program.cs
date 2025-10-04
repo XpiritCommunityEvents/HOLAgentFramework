@@ -1,0 +1,42 @@
+﻿using Microsoft.SemanticKernel;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel.ChatCompletion;
+
+// Make sure to add ApiKey to your dotnet user secrets...
+// dotnet user-secrets set "ApiKey"="<your API key>" -p .\module2.csproj
+// PLEASE DO NOT COMMIT YOUR API SECRET TO GIT!
+
+var config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
+    .Build();
+
+var token = config["ApiKey"];
+var model = "openai/gpt-5-mini";
+var endpoint = "https://models.github.ai/inference";
+
+var kernelBuilder = Kernel
+    .CreateBuilder()
+    .AddAzureAIInferenceChatCompletion(model, token, new Uri(endpoint));
+
+var kernel = kernelBuilder.Build();
+
+Console.WriteLine("Hi! I am your AI assistant. Talk to me:");
+
+var chatHistory = new ChatHistory();
+chatHistory.AddSystemMessage("You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing. Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that you don't know the answer based on your knowledge.");
+
+var chatCompletionService = kernel.Services.GetService<IChatCompletionService>();
+
+while (true)
+{
+    Console.WriteLine();
+
+    var prompt = Console.ReadLine();
+    
+    chatHistory.AddUserMessage(prompt!);
+    var response = await chatCompletionService!.GetChatMessageContentsAsync(chatHistory);
+    Console.WriteLine(response.Last().Content);
+}
