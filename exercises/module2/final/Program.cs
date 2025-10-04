@@ -14,7 +14,7 @@ var config = new ConfigurationBuilder()
     .Build();
 
 var token = config["ApiKey"];
-var model = "openai/gpt-5-mini";
+var model = "openai/gpt-4o";
 var endpoint = "https://models.github.ai/inference";
 
 var kernelBuilder = Kernel
