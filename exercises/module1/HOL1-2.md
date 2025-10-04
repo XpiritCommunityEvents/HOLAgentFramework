@@ -37,9 +37,9 @@ var model = "openai/gpt-5-mini";
 
 # Step 3
 
-Goal: The API token to your model is important. Otherwise people can use your LLM at your cost. Therefore we will store  the API key in the user secrets
+Goal: It is important to keep the API token to your model safe. Otherwise people can use your LLM at your cost. Therefore we will move the API key to .NET user secrets. Never commit a secret key to your version control system!
 
-- In the terminal window type 
+- In the terminal window type
 
 ```pwsh
 dotnet user-secrets set "ApiKey" "<key>" -p .\HolSemanticKernel.csproj
@@ -47,7 +47,7 @@ dotnet user-secrets set "ApiKey" "<key>" -p .\HolSemanticKernel.csproj
 
 # Step 4 Use your Model
 
-Now that you have added the api key, it is time to fire your first LLM query
+Now that you have added the api token, it is time to fire your first LLM query
 
 - First add the neccessary packages to your program
 
@@ -57,7 +57,7 @@ dotnet add package Azure.Identity --prerelease
 ```
 
 ```csharp
-var client = new ChatCompletionsClient(new Uri(endpoint), new AzureKeyCredential(key), new AzureAIInferenceClientOptions());
+var client = new ChatCompletionsClient(new Uri(endpoint), new AzureKeyCredential(token), new AzureAIInferenceClientOptions());
 var requestOptions = new ChatCompletionsOptions()
 {
     Model = model,
