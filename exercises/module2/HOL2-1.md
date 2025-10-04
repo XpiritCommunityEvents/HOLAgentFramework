@@ -166,3 +166,21 @@ We will give the LLM "knowledge" about artists and tickets later.
 
 3. Run the application and confirm that it still works. Play around with the values of these parameters to see if there are any differences.
 
+## Use streaming responses
+
+**Goal:** switch to streaming responses to make your LLM application feel faster and more responsive.
+
+### Steps
+
+1. Replace the call to `GetChatMessageContentsAsync()` with `GetStreamingChatMessageContentsAsync()` and process the results in a streaming fashion:
+
+    ```csharp
+    // streaming call
+    var responseStream = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory);
+    await foreach (var response in responseStream)
+    {
+        Console.Write(response.Content);
+    }
+    ```
+
+This concludes lab 2.1.

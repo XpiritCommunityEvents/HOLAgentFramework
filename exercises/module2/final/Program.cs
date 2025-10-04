@@ -45,8 +45,17 @@ while (true)
     Console.WriteLine();
 
     var prompt = Console.ReadLine();
-    
+
     chatHistory.AddUserMessage(prompt!);
-    var response = await chatCompletionService!.GetChatMessageContentsAsync(chatHistory);
+
+    // synchronous call
+    var response = await chatCompletionService!.GetChatMessageContentsAsync(chatHistory, executionSettings);
     Console.WriteLine(response.Last().Content);
+
+    // streaming call
+    // var responseStream = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings);
+    // await foreach (var response in responseStream)
+    // {
+    //     Console.Write(response.Content);
+    // }
 }
