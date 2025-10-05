@@ -10,7 +10,8 @@
         "humao.rest-client",
         "ms-azuretools.vscode-docker",
         "github.copilot",
-        "ms-mssql.mssql"
+        "ms-mssql.mssql",
+        "bierner.markdown-mermaid"
       ]
     }
   },
