@@ -1,45 +1,33 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.VectorData;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.Qdrant;
-using module4.Services;
-using Qdrant.Client;
+using OpenAI;
+using System.ClientModel;
 
-internal class Program
+namespace demo_01
 {
-    private static async Task Main(string[] args)
+    internal class Program
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        var kernelBuilder = builder.Services.AddKernel()
-            .AddAzureOpenAIChatCompletion(
-                deploymentName: builder.Configuration["LanguageModel:CompletionModel"]!,
-                endpoint: builder.Configuration["LanguageModel:Endpoint"]!,
-                apiKey: builder.Configuration["LanguageModel:ApiKey"]!
-            )
-            .AddAzureOpenAIEmbeddingGenerator(
-                deploymentName: builder.Configuration["LanguageModel:EmbeddingModel"]!,
-                endpoint: builder.Configuration["LanguageModel:EmbeddingEndpoint"]!,
-                apiKey: builder.Configuration["LanguageModel:EmbeddingApiKey"]!
-            );
-
-        builder.Services.AddQdrantVectorStore("localhost", 6334, false);
-        builder.Services.AddSingleton<ContentIndexer>();
-        builder.Services.AddSingleton<QuestionAnsweringTool>();
-
-        var app = builder.Build();
-
-        app.MapGet("/answer", async ([FromServices] QuestionAnsweringTool tool, [FromQuery] string question) =>
+        static async Task Main(string[] args)
         {
-            var result = await tool.AnswerAsync(question);
-            return result.Response;
-        });
+            var builder = new ConfigurationBuilder();
+            builder.SetBasePath(Directory.GetCurrentDirectory())
+                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                   .AddUserSecrets<Program>();
 
-        var scope = app.Services.CreateScope();
-        var indexer = scope.ServiceProvider.GetRequiredService<ContentIndexer>();
+            IConfiguration config = builder.Build();
 
-        await indexer.ProcessContentAsync();
+            string deploymentName = config.GetSection("OpenAI").GetValue<string>("Model") ?? throw new ArgumentException("OpenAI Model not set");
+            string endpoint = config.GetSection("OpenAI").GetValue<string>("EndPoint") ?? throw new ArgumentException("OpenAI EndPoint not set");
+            string apiKey = config.GetSection("OpenAI").GetValue<string>("ApiKey") ?? throw new ArgumentException("OpenAIKey not set");
+            
 
-        await app.RunAsync();
+
+            await new ChatWithRag().IngestDocuments(deploymentName, endpoint, apiKey, config);
+            await new ChatWithRag().RaG_With_Memory(deploymentName, endpoint, apiKey, config);
+            await new ChatWithRag().AskVenueQuestion(deploymentName, endpoint, apiKey, config);
+
+        }
     }
 }
