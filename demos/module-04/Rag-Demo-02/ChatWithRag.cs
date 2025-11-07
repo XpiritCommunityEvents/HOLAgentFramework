@@ -144,7 +144,7 @@ namespace demo_01
 
         private IEnumerable<string> GetFileListOfPolicyDocuments(string directory)
         {
-            return System.IO.Directory.GetFiles(directory, "*.md").Select(f => System.IO.Path.GetFileName(f));
+            return System.IO.Directory.GetFiles(directory, "*.pdf").Select(f => System.IO.Path.GetFileName(f));
         }
 
  
