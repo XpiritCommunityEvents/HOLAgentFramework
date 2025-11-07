@@ -26,6 +26,7 @@ namespace demo_01
 
             await new ChatWithRag().IngestDocuments(deploymentName, endpoint, apiKey, config);
             await new ChatWithRag().RaG_With_Memory(deploymentName, endpoint, apiKey, config);
+            await new ChatWithRag().AskVenueQuestion(deploymentName, endpoint, apiKey, config);
 
         }
     }

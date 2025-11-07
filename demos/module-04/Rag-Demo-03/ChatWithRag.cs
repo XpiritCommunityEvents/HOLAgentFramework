@@ -94,6 +94,25 @@ namespace demo_01
                 Console.WriteLine($"Source: {source.DocumentId}");
             }
         }
+
+
+        internal async Task AskVenueQuestion(string deploymentName, string endpoint, string apiKey, IConfiguration config)
+        {
+            var memoryConnector = GetLocalKernelMemory(deploymentName, endpoint, apiKey);
+            var question =
+                """
+                Which venue allows a backpack?
+                """;
+            var response = memoryConnector.AskAsync(question);
+            Console.WriteLine("******** RESPONSE WITH MEMORY ***********");
+            Console.WriteLine(response.Result.Result);
+            Console.WriteLine("******** Relevant sources ***********");
+            Console.WriteLine("# of sources:" + response.Result.RelevantSources.Count);
+            foreach (var source in response.Result.RelevantSources)
+            {
+                Console.WriteLine($"Source: {source.DocumentId}");
+            }
+        }
         private async Task<string> GetVenueFromQuestion(Kernel kernel, string question)
         {
             ChatHistory chatHistory = new();
@@ -166,7 +185,7 @@ namespace demo_01
 
         private IEnumerable<string> GetFileListOfPolicyDocuments(string directory)
         {
-            return System.IO.Directory.GetFiles(directory, "*.md").Select(f => System.IO.Path.GetFileName(f));
+            return System.IO.Directory.GetFiles(directory, "*.pdf").Select(f => System.IO.Path.GetFileName(f));
         }
 
 
