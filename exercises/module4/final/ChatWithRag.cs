@@ -14,7 +14,7 @@ namespace modulerag
 {
     internal class ChatWithRag
     {
-        private readonly string repoFolder = Path.Combine("", "datasets", "venue-policies");
+        private readonly string repoFolder = "/workspaces/HOLSemanticKernel/exercises/datasets/venue-policies";
 
         public async Task RAG_with_single_prompt(string deploymentName, string endpoint, string apiKey, IConfiguration config)
         {
