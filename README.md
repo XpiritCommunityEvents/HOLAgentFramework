@@ -8,11 +8,12 @@ Welcome! This file helps you (the workshop participant) to quickly understand th
 
 The workshop is structured into five modules. In these modules you will follow a mix of theory and hands-on labs.
 
-- Module 1: Behind the Curtain of AI Models
-- Module 2: Backstage with Semantic Kernel
-- Module 3: Orchestration of AI Agents
-- Module 4: Amplify Performance with Retrieval Augmented Generation
-- Module 5: Semantic Kernel in Concert
+- [Module 0: Workshop Introduction and Prerequisites](./exercises/module0/README.md)
+- [Module 1: Behind the Curtain of AI Models](./exercises/module1/README.md)
+- [Module 2: Backstage with Semantic Kernel](./exercises/module2/README.md)
+- [Module 3: Orchestration of AI Agents](./exercises/module3/README.md)
+- [Module 4: Amplify Performance with Retrieval Augmented Generation](./exercises/module4/README.md)
+- [Module 5: Semantic Kernel in Concert](./exercises/module5/README.md)
 
 ## Where to start
 Start at the [Exercises and labs](./exercises/README.md) to find all hands-on labs and module-specific markdown guides.
