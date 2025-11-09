@@ -1,109 +1,35 @@
-# **Workshop Outline: Building with LLMs, SK, Agents, and RAG**
+# Unlock the Potential of AI in Your Applications with Semantic Kernel
 
----
+Authors: Marcel de Vries, Roy Cornelissen, Rene van Osnabrugge ([Xebia](https://xebia.com))
 
-## Labs
+Welcome! This file helps you (the workshop participant) to quickly understand the repository layout and find the exercises, starters, and final solutions used during the workshop.
 
-### Module 1 - LLM Introduction
+## Workshop agenda
 
-- [Lab 1.1](./exercises/module1/HOL1-1.md)
-- [Lab 1.2](./exercises/module1/HOL1-2.md)
+The workshop is structured into five modules. In these modules you will follow a mix of theory and hands-on labs.
 
-### Module 2 - Semantic Kernel Basics
+- Module 1: Behind the Curtain of AI Models
+- Module 2: Backstage with Semantic Kernel
+- Module 3: Orchestration of AI Agents
+- Module 4: Amplify Performance with Retrieval Augmented Generation
+- Module 5: Semantic Kernel in Concert
 
-- [Lab 2.1](./exercises/module2/HOL2-1.md)
+## Where to start
+Start at the [Exercises and labs](./exercises/README.md) to find all hands-on labs and module-specific markdown guides.
 
----
+- `exercises/` — hands-on labs and module-specific markdown guides.
+- `prompts/` — Example prompts and prompt engineering notes used in the labs.
+- `src/` — Supporting code and sample projects used across the workshop (e.g., `HolSemanticKernel` project)
 
-## **Module I – LLM Introduction** (60 min) (Rene/Marcel)
+## Notes for participants
+- Use the top-level `README.md` to follow the workshop agenda and module timings.
+- Each module folder in `exercises/` contains step-by-step lab instructions. Look for `HOL*-*.md` files.
+- Throughout the exercises there wil be some references to datasets/ You can find these in the `exercises/datasets/` folder.
+- Start projects are in each module's `start/` folder with incomplete code to be filled in during the labs.
+- Final projects live in each module's `final/` folder and are runnable .NET projects with solution files and sample data.
+- If you want to run any .NET sample, open the `.sln` file in the corresponding `final/` folder in Visual Studio or use `dotnet run` from the project directory.
 
-### Theory (30 min)
+## Contact / Help
+If something is missing or a file path doesn't match, ask the workshop instructor 
 
-* What is ML vs LLMs
-* Prompt engineering basics
-* Models overview
-* Base models → blank LLM
-* Reinforced LLM
-* Embeddings & tokens
-
-### Hands-On Lab (30 min)
-
-* Explore GitHub Models → verify / experiment
-* Deploy a model?
-* Adjusting temperature
-* Role-based prompts
-
-  * System
-  * Assistant
-  * User prompts
-* Using **CodeSpace** for exercises
-
----
-
-## **Module II – Semantic Kernel (SK) Basics** (120 min) (Roy)
-
-### Theory
-
-* Intro to SK
-* Functions, plugins, variables
-* Memory (OpenAI + anti-patterns)
-* Zero-shot, one-shot, chain-of-thought prompting
-* Structured output
-* MCP (Model Context Protocol)
-
-### Hands-On Lab
-
-1. Build a **basic console app**
-2. Explore **prompt history**
-3. Functions / Plugins + structured output
-4. Use MCP
-5. Multimodal input + output
-
----
-
-## **Module III – Agents** (120 min) (Marcel)
-
-### Theory (30 min)
-
-* What is an agent?
-* Agents in SK
-* Orchestration strategies
-
-  * Static
-  * Magnetic
-* Human in the loop
-
-### Hands-On Lab
-
-* **Persona-based agents**
-
-  * Customer agent (knows history)
-  * Recommendation agent (knows offer)
-  * Commercial agent (price proposal, package)
-  * Merchandise agent
-* Text-based HOL (20 min)
-* Flows (static vs. dynamic)
-
-  * 15 min theory
-  * 45 min HOL
-
----
-
-## **Module IV – Retrieval-Augmented Generation (RAG)** (60 min) (Marcel/Rene)
-
-### Theory (30 min)
-
-* RAG concepts
-* Vectorization + chunking
-* RAG with Kernel Memory
-
-### Hands-On Lab (30 min)
-
-* Implement **RAG with Kernel Memory**
-
----
-
-## **Total Duration**
-
-Approx. **6 hours** (including short breaks)
 
