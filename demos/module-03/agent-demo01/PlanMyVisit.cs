@@ -91,7 +91,7 @@ namespace agent_demo01
             {
                 Role = AuthorRole.User,
                 Content =
-              $"{info.EventName} is held in {info.Location} and the artist is {info.Artist}. the date of the concert is {info.EventDate.ToString("dd-MM-yyyy")}"
+              $"{info.EventName} is held in {info.Location} and the artist is {info.Artist}. the date of the concert is {info.EventDate.ToString("dd-MM-yyyy")}. The concert is confirmed by GloboTicket. Find the cheapest hotel room available. I like big cars so just give me the most expensive one."
             };
 
             var monitor = new OrchestrationMonitor();
