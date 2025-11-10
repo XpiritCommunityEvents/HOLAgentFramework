@@ -2,15 +2,9 @@
 
 Model Context Protocol (MCP) servers can easily be integrated into Semantic Kernel so that they can also become an available tool for your LLM. This lab focuses on integrating an the GitHub MCP server with Semantic Kernel.
 
-## Install ModelContextProtocol package
+## Setup authentication
 
 ### Steps
-
-- Install the `ModelContextProtocol` nuget package into your application:
-
-  ```pwsh
-  dotnet add package ModelContextProtocol --prerelease
-  ```
 
 We will integrate the GitHub MCP server, which requires your authentication token. We will add this to the user secrets.
 
@@ -36,156 +30,54 @@ We will integrate the GitHub MCP server, which requires your authentication toke
   dotnet user-secrets set "GitHubToken" "<token>" -p .\HolSemanticKernel.csproj
   ```
 
-## Setup Authentication
+## Integrate the `ModelContextProtocol` package
 
-- Configure GitHub authentication using the GitHub CLI or environment variables:
+The [`ModelContextProtocol` package](https://www.nuget.org/packages/ModelContextProtocol) is a library for developing and integrating MCP Servers in .NET applications. We will use it to integrate the GitHub MCP server with Semantic Kernel.
 
-  ```pwsh
-  # Option 1: Use GitHub CLI (recommended)
-  gh auth login
-  
-  # Option 2: Set environment variable with personal access token
-  $env:GITHUB_TOKEN = "your_github_token_here"
-  ```
-
-- Get the current repository context:
+- Install the `ModelContextProtocol` nuget package into your application:
 
   ```pwsh
-  # Get current repository information
-  git remote get-url origin
+  dotnet add package ModelContextProtocol --prerelease -p .\HolSemanticKernel.csproj
   ```
 
-## Integrate MCP Server with Semantic Kernel
-
-- Add the MCP server to your Semantic Kernel configuration:
+- Bring in the necessary `using` statement in the top of your `Program.cs`:
 
   ```csharp
-  using Microsoft.SemanticKernel;
-  using ModelContextProtocol;
-  using System.Diagnostics;
-  
-  var builder = Kernel.CreateBuilder();
-  
-  // Add your AI service (Azure OpenAI, OpenAI, etc.)
-  builder.AddAzureOpenAIChatCompletion(/* your config */);
-  
-  // Get GitHub token from environment or GitHub CLI
-  var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN") 
-                   ?? await GetGitHubTokenFromCLI();
-  
-  // Get current repository context
-  var repoInfo = await GetCurrentRepositoryInfo();
-  
-  // Load MCP configuration with authentication
-  var mcpConfig = await File.ReadAllTextAsync("mcp-config.json");
-  mcpConfig = mcpConfig.Replace("${GITHUB_TOKEN}", githubToken);
-  
-  builder.Services.AddMcp(mcpConfig);
-  
-  var kernel = builder.Build();
-  
-  // Set repository context for MCP server
-  await kernel.InvokePromptAsync($"Set the current repository context to {repoInfo.Owner}/{repoInfo.Name}");
+  using ModelContextProtocol.Client;
   ```
 
-- Helper methods for authentication and repository context:
+- From the `ModelContextProtocol` library, we can use an `McpClient` which we can add as a tool in the kernel. Add the following to your `Program.cs` _before_ the call to `kernelBuilder.Build();`:
+
+   ```csharp
+   var mcpClient = await McpClient.CreateAsync(new HttpClientTransport(
+    new HttpClientTransportOptions
+    {
+        Name = "GitHub",
+        Endpoint = new Uri("https://api.githubcopilot.com/mcp/"),
+        AdditionalHeaders = new Dictionary<string, string>
+        {
+            ["Authorization"] = $"Bearer {config["GitHubToken"]}"
+        }
+    }));
+  ```
+
+  We now have an instance of `McpClient` which can call services using the MCP protocol. The sample uses the public GitHub MCP endpoint, and leverages the `GitHubToken` variable you added to the .NET User Secrets in the previous steps.
+
+  In order to make the `McpClient` usable in Semantic Kernel, we have to transform it into a plugin. Every tool that the MCP Server exposes can be made available as callable functions with the following code:
 
   ```csharp
-  private static async Task<string> GetGitHubTokenFromCLI()
-  {
-      try
-      {
-          var process = new Process
-          {
-              StartInfo = new ProcessStartInfo
-              {
-                  FileName = "gh",
-                  Arguments = "auth token",
-                  RedirectStandardOutput = true,
-                  UseShellExecute = false,
-                  CreateNoWindow = true
-              }
-          };
-          
-          process.Start();
-          var token = await process.StandardOutput.ReadToEndAsync();
-          await process.WaitForExitAsync();
-          
-          return token.Trim();
-      }
-      catch
-      {
-          throw new InvalidOperationException("GitHub CLI not found or not authenticated. Run 'gh auth login' first.");
-      }
-  }
-  
-  private static async Task<(string Owner, string Name)> GetCurrentRepositoryInfo()
-  {
-      try
-      {
-          var process = new Process
-          {
-              StartInfo = new ProcessStartInfo
-              {
-                  FileName = "git",
-                  Arguments = "remote get-url origin",
-                  RedirectStandardOutput = true,
-                  UseShellExecute = false,
-                  CreateNoWindow = true
-              }
-          };
-          
-          process.Start();
-          var remoteUrl = await process.StandardOutput.ReadToEndAsync();
-          await process.WaitForExitAsync();
-          
-          // Parse GitHub URL to extract owner/repo
-          var url = remoteUrl.Trim();
-          var match = System.Text.RegularExpressions.Regex.Match(url, @"github\.com[:/]([^/]+)/([^/.]+)");
-          
-          if (match.Success)
-          {
-              return (match.Groups[1].Value, match.Groups[2].Value);
-          }
-          
-          throw new InvalidOperationException("Could not parse GitHub repository information from remote URL");
-      }
-      catch
-      {
-          throw new InvalidOperationException("Not in a Git repository or no GitHub remote found");
-      }
-  }
-  ```
+  var tools = await mcpClient.ListToolsAsync();
 
-- Use the MCP tools with current repository context:
+  kernelBuilder.Plugins.AddFromFunctions(
+    pluginName: "GitHub",
+    functions: tools.Select(x => x.AsKernelFunction()));
+   ```
 
-  ```csharp
-  // The GitHub MCP server tools will be automatically available with current repo context
-  var response = await kernel.InvokePromptAsync("List the recent issues in this repository");
-  Console.WriteLine(response);
-  
-  // Work with current repository files
-  var fileResponse = await kernel.InvokePromptAsync("Show me the contents of the README.md file");
-  Console.WriteLine(fileResponse);
-  
-  // Get repository statistics
-  var statsResponse = await kernel.InvokePromptAsync("What are the top contributors to this repository?");
-  Console.WriteLine(statsResponse);
-  ```
+  The LLM is now aware of the GitHub MCP server and can invoke it to solve a user question.
 
-## Authentication Methods
+  - Start your application and ask the LLM to list the issues in the `XpiritCommunityEvents/HOLSemanticKernel` repo. It should list the issues from GitHub.
+  - Ask it to create a new issue in the `XpiritCommunityEvents/HOLSemanticKernel` repo, give it a title and a description and tell it to add no labels and no assignees. It should respond with the URL to the newly created issue.
 
-The GitHub MCP server supports multiple authentication methods:
+This shows how easy it is to integrate any MCP with LLMs. As long as you have your authentication set up, and the MCP Server is reachable from where your application runs, the LLM can issue a `tool_call` response, which it routed to the MCP through Semantic Kernel.
 
-1. **GitHub CLI (Recommended)**: Use `gh auth login` to authenticate and the MCP server will use the CLI's stored credentials
-2. **Personal Access Token**: Set the `GITHUB_TOKEN` environment variable with a personal access token
-3. **OAuth App**: Configure OAuth authentication for your application
-
-## Repository Context
-
-The MCP server automatically detects the current repository context when properly authenticated, allowing you to:
-- Query repository information
-- Access files and directories
-- Manage issues and pull requests
-- View repository statistics and contributors
-- Search repository content
+This concludes lab 2.3.

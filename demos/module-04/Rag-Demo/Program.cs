@@ -18,12 +18,17 @@ namespace modulerag
             var token = config["OpenAI:ApiKey"];
 
 
-        //    await new ChatWithRag().RAG_with_single_prompt(model, endpoint, token, config);
-
+            //Demo 1
+            //await new ChatWithRag().RAG_with_single_prompt(model, endpoint, token, config);
+            
+            //Demo 2
             //await new ChatWithRag().IngestDocuments(model, endpoint, token, config);
-
-            // await new ChatWithRag().RaG_With_Memory(model, endpoint, token, config);
-            await new ChatWithRag().AskVenueQuestion(model, endpoint, token, config);
+            
+            //Demo 3
+            //await new ChatWithRag().RaG_With_Memory(model, endpoint, token, config);
+            
+            //Demo 4
+            //await new ChatWithRag().AskVenueQuestion(model, endpoint, token, config);
         }
     }
 }
