@@ -151,18 +151,17 @@ namespace agent_demo01
             OrchestrationResult<string> result = await orchestration.InvokeAsync(InitialChatMessage.Content, runtime);
 
             Console.WriteLine("# Orchestration is running...");
-          
-            await runtime.RunUntilIdleAsync();
 
+            var response = await result.GetValueAsync(TimeSpan.FromSeconds(300));
             Console.WriteLine("# Orchestration is done...");
 
-            var response = await result.GetValueAsync(TimeSpan.FromSeconds(30));
             //write the orchestration history
             var results = monitor.History;
 
             foreach(var message in results)
                 Console.WriteLine(message.ToString());
-           
+
+            await runtime.RunUntilIdleAsync();
             return true;
         }
        
