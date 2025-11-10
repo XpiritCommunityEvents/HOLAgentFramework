@@ -111,11 +111,11 @@ namespace agent_demo01
                             FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
                         })
                         {
-                            InteractiveCallback = async () =>
+                            InteractiveCallback = () =>
                             {
                                 Console.WriteLine("\n# Press Enter to continue the orchestration...");
                                 var userinput = Console.ReadLine();
-                                return await Task.FromResult<ChatMessageContent>(new ChatMessageContent()
+                                return ValueTask.FromResult(new ChatMessageContent()
                                 {
                                     Role = AuthorRole.User,
                                     Content = userinput
