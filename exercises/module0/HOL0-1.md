@@ -18,7 +18,7 @@ Your proctors will get the issue. Once they close the issue, our GitOps automati
 
 Before you can access the repository you will need to accept the invite that has been sent to your GitHub Email address. Since the email might take a while, or ends up in your spam folder, you can also navigate to the [organization section](https://github.com/settings/organizations) of your own GitHub settings. 
 
-There you should see a pending invitation for the XpiritCommunityEvents organization. Accept the invitation to get access to your personal repository.
+There you should see a pending invitation for the XpiritCommunityEvents organization and the repo what was created for you. Accept the invitation to get access to your personal repository.
 
 <img src="./../images/hol0-1.acceptinvite.png" width="600" />
 

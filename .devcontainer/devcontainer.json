@@ -1,5 +1,5 @@
 {
-  "name": "dotnet",
+  "name": "SemanticKernelWorkshop",
   "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
   "customizations": {
     "vscode": {
