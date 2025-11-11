@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Magentic;
 using Microsoft.SemanticKernel.Agents.Orchestration;
+using Microsoft.SemanticKernel.Agents.Orchestration.Handoff;
 using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
@@ -17,7 +18,7 @@ namespace agent_demo01
 {
     public class PlanMyVisit
     {
-        private readonly LogLevel logLevel = LogLevel.Information;
+        private readonly LogLevel logLevel = LogLevel.None;
 
         // goal:
         // Create a personalized visit plan containing parking, bag policy, timing, accessibility and hotel reservation
@@ -30,62 +31,9 @@ namespace agent_demo01
                 FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
             };
 
-            ChatCompletionAgent conciergeAgent =
-              new()
-              {
-                  Name = "Concierge",
-                  Instructions = """
-                  You coordinate the booking of hotels and transportation. You critique the provided solutions until you are 
-                  happy with the results. this is a hotel nights booked and transportation arranged for the customer.
-                  You ask the customer to confirm the purchase of the itinerary and after confirmation you book the various items.
-                  """,
-                  Description = "An agent that orchestrates a visit to a music concert including hotel, dinner and transportation",
-                  Kernel = kernel,
-                  LoggerFactory = LoggerFactory.Create(builder =>
-                  {
-                      // Add Console logging provider
-                      builder.AddConsole().SetMinimumLevel(logLevel);
-                  }),
-                  Arguments = new KernelArguments(settings)
-              };
-
-            ChatCompletionAgent hotelReservationAgent =
-              new()
-              {
-                  Name = "HotelReservationAgent",
-                  Instructions = """
-                  You are an expert in finding hotel rooms close to music concert locations.You provide some options what you have found and
-                  wait for the Concierge to approve the booking of the hotel rooms you suggested. You always suggest 3 options with different price ranges.
-                  """,
-                  Description = "An agent that finds hotel rooms close to the concert location",
-                  Kernel = kernel,
-                  LoggerFactory = LoggerFactory.Create(builder =>
-                  {
-                      // Add Console logging provider
-                      builder.AddConsole().SetMinimumLevel(logLevel);
-                  }),
-                  Arguments = new KernelArguments(settings)
-              };
-
-            ChatCompletionAgent transportationAgent =
-              new()
-              {
-                  Name = "TransportationAgent",
-                  Instructions = """
-                  You are an expert in finding transportation from a given hotel location to the concert location. You will try to get the best option.
-                  that ensures the customers are at least 30 minutes before the concert starts at the venue and you search for options that are most convenient 
-                  and best value for price. You always suggest 3 options with different price ranges. the moment the concierge approves your selection you are allowed to 
-                  book the transportation.
-                  """,
-                  Description = "An agent that finds transportation options from hotel to concert location",
-                  Kernel = kernel,
-                  LoggerFactory = LoggerFactory.Create(builder =>
-                  {
-                      // Add Console logging provider
-                      builder.AddConsole().SetMinimumLevel(logLevel);
-                  }),
-                  Arguments = new KernelArguments(settings)
-              };
+            ChatCompletionAgent conciergeAgent = CreateCongiereAgent(kernel, settings);
+            ChatCompletionAgent hotelReservationAgent = CreateHotelReservationAgent(settings, deploymentName, endpoint, apiKey);
+            ChatCompletionAgent transportationAgent = CreateTransportationAgent(kernel);
 
             var InitialChatMessage = new ChatMessageContent()
             {
@@ -125,7 +73,7 @@ namespace agent_demo01
                         builder.AddConsole().SetMinimumLevel(logLevel);
                     }),
                     //ResponseCallback = monitor.ResponseCallback,
-                    StreamingResponseCallback =  monitor.StreamingResultCallback,
+                    StreamingResponseCallback = monitor.StreamingResultCallback,
                     Description = "Orchestration to plan a visit to a music concert including hotel and transportation",
                     Name = "PlanMyVisitOrchestration",
                 };
@@ -142,17 +90,170 @@ namespace agent_demo01
 
             Console.WriteLine("# Orchestration is done...");
 
-            //write the orchestration history
-            var results = monitor.History;
 
-            foreach(var message in results)
-                Console.WriteLine(message.ToString());
+            Console.WriteLine("# Orchestration result...");
+            Console.WriteLine(response);
 
             await runtime.RunUntilIdleAsync();
             return true;
         }
-       
+        public async Task<bool> PlanVisitWithHandoff(TicketInformation info, string deploymentName, string endpoint, string apiKey)
+        {
+            var kernel = CreateKernelWithChatCompletion(deploymentName, endpoint, apiKey);
+
+            var settings = new AzureOpenAIPromptExecutionSettings()
+            {
+                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+            };
+
+            ChatCompletionAgent conciergeAgent = CreateCongiereAgent(kernel, settings);
+            ChatCompletionAgent hotelReservationAgent = CreateHotelReservationAgent(settings, deploymentName, endpoint, apiKey);
+            ChatCompletionAgent transportationAgent = CreateTransportationAgent(kernel);
+
+            var InitialChatMessage = new ChatMessageContent()
+            {
+                Role = AuthorRole.User,
+                Content =
+              $"{info.EventName} is held in {info.Location} and the artist is {info.Artist}. the date of the concert is {info.EventDate.ToString("dd-MM-yyyy")}. The concert is confirmed by GloboTicket. Find the cheapest hotel room available. I like big cars so just give me the most expensive one."
+            };
+
+            var monitor = new OrchestrationMonitor();
+            HandoffOrchestration orchestration =
+                new(OrchestrationHandoffs
+                        .StartWith(conciergeAgent)
+                        .Add(conciergeAgent, hotelReservationAgent, transportationAgent)
+                        .Add(hotelReservationAgent, conciergeAgent, "Transfer to this agent if you need to book hotels")
+                        .Add(transportationAgent, conciergeAgent, "Transfer to this agent if you need to book transportation options"),
+                    conciergeAgent,
+                    hotelReservationAgent,
+                    transportationAgent)
+                {
+                    InteractiveCallback = () =>
+                    {
+                        
+                        Console.WriteLine("\n# Handoff occurred. Please provide input to continue the orchestration...");
+                        string input = Console.ReadLine();
+                        return ValueTask.FromResult(new ChatMessageContent(AuthorRole.User, input));
+                    },
+                    LoggerFactory = LoggerFactory.Create(builder =>
+                    {
+                        // Add Console logging provider
+                        builder.AddConsole().SetMinimumLevel(LogLevel.Information);
+                    }),
+                    ResponseCallback = monitor.ResponseCallback,
+                    //StreamingResponseCallback = monitor.StreamingResultCallback,
+                };
+
+
+            InProcessRuntime runtime = new();
+            await runtime.StartAsync();
+
+            OrchestrationResult<string> result = await orchestration.InvokeAsync(InitialChatMessage.Content, runtime);
+
+            Console.WriteLine("# Orchestration is running...");
+
+            var response = await result.GetValueAsync(TimeSpan.FromSeconds(300));
+
+            Console.WriteLine("# Orchestration is done...");
+
+
+            Console.WriteLine("# Orchestration result...");
+            Console.WriteLine(response);
+
+            await runtime.RunUntilIdleAsync();
+            return true;
+        }
+
+        private ChatCompletionAgent CreateTransportationAgent(Kernel kernel)
+        {
+            ChatCompletionAgent transportationAgent =
+                          new()
+                          {
+                              Name = "TransportationAgent",
+                              Instructions = """
+                  You are an expert in finding transportation from a given hotel location to the concert location. You will try to get the best option.
+                  that ensures the customers are at least 30 minutes before the concert starts at the venue and you search for options that are most convenient 
+                  and best value for price. You always suggest 3 options with different price ranges. the moment the concierge approves your selection you are allowed to 
+                  book the transportation.
+                  """,
+                              Description = "An agent that finds transportation options from hotel to concert location",
+                              Kernel = kernel,
+                              LoggerFactory = LoggerFactory.Create(builder =>
+                              {
+                                  // Add Console logging provider
+                                  builder.AddConsole().SetMinimumLevel(logLevel);
+                              }),
+                              //Arguments = new KernelArguments(settings)
+                          };
+            return transportationAgent;
+        }
+
+        private ChatCompletionAgent CreateHotelReservationAgent(AzureOpenAIPromptExecutionSettings settings, string deploymentName, string endpoint, string apiKey)
+        {
+            ChatCompletionAgent hotelReservationAgent =
+                          new()
+                          {
+                              Name = "HotelReservationAgent",
+                              Instructions = """
+                  You are an expert in finding hotel rooms close to music concert locations.You provide some options what you have found and
+                  you will ask for approval before you make the booking. You always suggest 3 options with different price ranges.
+                  """,
+                              Description = "An agent that finds hotel rooms close to the concert location",
+                              Kernel = CreateKernelWithChatCompletionAndHotelFunctions(deploymentName, endpoint, apiKey),
+                              LoggerFactory = LoggerFactory.Create(builder =>
+                                builder.AddSimpleConsole(options =>
+                                {
+                                    options.IncludeScopes = true;
+                                    options.SingleLine = true;
+                                    options.TimestampFormat = "HH:mm:ss ";
+                                    options.ColorBehavior = Microsoft.Extensions.Logging.Console.LoggerColorBehavior.Enabled;
+                                }).SetMinimumLevel(LogLevel.Trace)),
+
+                              Arguments = new KernelArguments(settings)
+                              
+                          };
+            return hotelReservationAgent;
+        }
+
+        private ChatCompletionAgent CreateCongiereAgent(Kernel kernel, AzureOpenAIPromptExecutionSettings settings)
+        {
+            ChatCompletionAgent conciergeAgent =
+              new()
+              {
+                  Name = "Concierge",
+                  Instructions = """
+                  
+                  You coordinate the booking of hotels and transportation. You critique the provided solutions until you are 
+                  happy with the results. tThe end result is a hotel booked and transportation arranged.
+                  
+                  """,
+                  Description = "An agent that orchestrates a visit to a music concert including hotel, dinner and transportation",
+                  Kernel = kernel,
+                  LoggerFactory = LoggerFactory.Create(builder =>
+                  {
+                      // Add Console logging provider
+                      builder.AddConsole().SetMinimumLevel(logLevel);
+                  }),
+                  Arguments = new KernelArguments(settings)
+              };
+            return conciergeAgent;
+        }
+
         public Kernel CreateKernelWithChatCompletion(string deploymentName, string endpoint, string apiKey)
+        {
+            IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
+
+            kernelBuilder.AddAzureOpenAIChatCompletion(deploymentName, endpoint, apiKey);
+            //kernelBuilder.AddAzureAIInferenceChatCompletion(deploymentName, apiKey, new Uri(endpoint));
+
+            kernelBuilder.Services.AddLogging(
+                                 s => s.AddConsole().SetMinimumLevel(logLevel));
+
+            Kernel kernel = kernelBuilder.Build();
+
+            return kernel;
+        }
+        public Kernel CreateKernelWithChatCompletionAndHotelFunctions(string deploymentName, string endpoint, string apiKey)
         {
             IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
 
@@ -202,7 +303,9 @@ namespace agent_demo01
             public ValueTask ResponseCallback(ChatMessageContent response)
             {
                 this.History.Add(response);
-                Console.WriteLine(response);
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Response callback called with response:\n {response}");
+                Console.ResetColor();
                 return ValueTask.CompletedTask;
             }
 
