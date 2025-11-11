@@ -8,7 +8,7 @@ In this repo you will find all the labs source code for the workshop. Each lab i
 - Navigate to the [Issues](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/issues) section of the source repository.
 - Create a new issue by clicking the `New Issue` button.
 
-<img src="./../images/hol0-1.newissue.png.png" width="300" />
+<img src="./../images/hol0-1.newissue.png" width="300" />
 
 - In the list of available issue templates select the `Signup Participant`
 - Add your name to the title and if you like also add some infomation about yourself in the description field.
