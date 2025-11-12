@@ -13,12 +13,10 @@ public class ChatHub(ChatAssistant chatAssistant) : Hub
     /// <param name="message">The user message/prompt</param>
     public async Task SendMessage(string message)
     {
-        await Clients.All.SendAsync("NewResponse");
+        await Clients.Client(Context.ConnectionId).SendAsync("NewResponse");
 
-        // TODO: call the chat assistant to handle the message
-        // TODO: remove this for the starter!
         await chatAssistant.Handle(Context.ConnectionId, message);
 
-        await Clients.All.SendAsync("ResponseDone");
+        await Clients.Client(Context.ConnectionId).SendAsync("ResponseDone");
     }
 }
