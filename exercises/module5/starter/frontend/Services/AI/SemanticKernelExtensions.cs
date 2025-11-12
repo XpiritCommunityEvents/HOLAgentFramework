@@ -26,6 +26,8 @@ internal static class SemanticKernelExtensions
                 .CreateBuilder()
                 .AddOpenAIChatCompletion(model!, new Uri(endpoint!), key!);
 
+            kernelBuilder.Plugins.AddFromType<Microsoft.SemanticKernel.Plugins.Core.TimePlugin>();
+
             kernelBuilder.Plugins.AddFromFunctions(
                 pluginName: "EventCatalog",
                 functions: tools.Select(x => x.AsKernelFunction()));
