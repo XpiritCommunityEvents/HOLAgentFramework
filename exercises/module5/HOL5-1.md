@@ -35,6 +35,8 @@ We will use Semantic Kernel in the `frontend` app so that we can have a chat int
 Also, the necessary Nuget packages are already added to the `frontend.csproj` file:
 
 - `Microsoft.SemanticKernel`
+- `Microsoft.SemanticKernel.Plugins.Core` for `TimePlugin`
+- `ModelContextProtocol`
 
 Now it's up to you to bring all the pieces together, so in the remainder of this lab, we'll be less specific about the code snippets you have to add.
 
@@ -85,3 +87,26 @@ Now it's up to you to bring all the pieces together, so in the remainder of this
   💡 You can use `Context.ConnectionId` in the `ChatHub` for the `sessionId` parameter. The `ConnectionId` uniquely identifies the connected client.
 
 Run the application, you should now be able to go to the Chat page (button in top right corner) and interact with the LLM.
+
+## Add the catalog MCP server
+
+### Steps
+
+- Using the `ModelContextProtocol`, add a reference to the `catalog` service MCP endpoint. The details are:
+
+   ```csharp
+   var mcpClient = await McpClient.CreateAsync(new HttpClientTransport(
+      new HttpClientTransportOptions
+      {
+          Name = "EventCatalog",
+          Endpoint = new Uri($"{configuration["ApiConfigs:EventCatalog:Uri"]}/mcp/")
+      }));
+   var tools = await mcpClient.ListToolsAsync();
+   ```
+- Also add the `TimePlugin` from `Microsoft.SemanticKernel.Plugins.Core` to the kernel so it knows the current date and time.
+
+- See if you can get some information about upcoming concerts in january 2026, or ask for one of the artists in the catalog, e.g. "Elton John".
+
+## Add more services
+
+Today you also learned about using agents and RAG. See if you can also build that into the `frontend` app. For example, use the RAG indexed policy documents so you can ask questions about certain venues.
