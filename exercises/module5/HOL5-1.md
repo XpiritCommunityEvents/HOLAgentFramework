@@ -6,13 +6,13 @@ For these exercises, we assume that you went through the exercises in modules 1 
 
 ## Prerequisites
 
-We have a fully functioning GloboTicket application in this repository for you to work with. The solution is located in the [starter](./starter) folder. You can open the solution with the Soluction Explorer in VSCode. It contains of 3 projects:
+We have a fully functioning GloboTicket application in this repository for you to work with. The solution is located in the [src/GloboTickte](../../src/GloboTicket) folder. You can open the solution with the Soluction Explorer in VSCode. It contains of 3 projects:
 
 - `frontend` - An ASP.NET MVC application containing the UI
 - `catalog` - An ASP.NET WebApi application that serves the available shows, et cetera
 - `ordering` - An ASP.NET WebApi application that handles ticket orders and (fake) payments
 
-A short description and sequence diagram of the application can be found in [GloboTicket DataFlow Diagram](./starter/GloboTicket-DataFlow-Diagram.md).
+A short description and sequence diagram of the application can be found in [GloboTicket DataFlow Diagram](./final/GloboTicket-DataFlow-Diagram.md).
 
 The GloboTicket app accesses a SQL Server database via Entity Framework Core. If you are working with this repository from a Dev Container or on GitHub Codespaces, it will automaticall start a SQL Server Docker container with an empty GloboTicket database. You can also start it yourself by running:
 
@@ -20,15 +20,15 @@ The GloboTicket app accesses a SQL Server database via Entity Framework Core. If
 docker run -d -p 1433:1433 marcelv/globoticket-default-db
 ```
 
-Upon startup of the `catalog` service, the database will be populated with sample data automatically.
+Upon startup of the `catalog` service, the database will be populated with sample data automatically. The `catalog` service also has an MCP endpoint for finding events in the catalog. You can inspect how this is set up in the `catalog`'s `Program.cs` and `MCP/CatalogTool.cs`. It uses the same `ModelContextProtocol` package you used in [Lab 2.3](../module2/HOL2-3.md), which can also be used to implement and expose an MCP server in ASP.NET Core.
 
-We will use Semantic Kernel from the `frontend` app so that we can have a chat interface with the user. For your convenience, so you can focus on Semantic Kernel integration, we have some building blocks available for you:
+We will use Semantic Kernel in the `frontend` app so that we can have a chat interface with the user. For your convenience, so you can focus on Semantic Kernel integration, we have some building blocks available for you:
 
-- [ChatHub](./starter/frontend/Services/AI/ChatHub.cs): a `SignalR` hub used for implementing bi-directional chat between the UI and the LLM
-- [chat.js](./starter/frontend/wwwroot/js/chat.js): client side JavaScript client for the `ChatHub` SignalR hub
-- [Chat view](./starter/frontend/Views/Chat/Index.cshtml): UI for the Chat Assistant
-- [ChatHistoryRepository](./starter/frontend/Services/AI/ChatHistoryRepository.cs): this static class stores `ChatHistory` objects in a simple `Dictionary`. It allows you to keep track of `ChatHistory` for multiple users. The `Dictionary` is indexed by a `sessionId`. We recommend using the SignalR connection ID for the key to store and retrieve a user's `ChatHistory`
-- Configuration: the [`frontend/appsettings.json`](./starter/frontend/appsettings.json) has an `OpenAI` section that already has the `Endpoint` and `Model` pre-filled. You will need to add the `OpenAI:ApiKey` setting as a .NET User Secret to this project yourself.
+- `Services/AI/ChatHub.cs`: a `SignalR` hub used for implementing bi-directional chat between the UI and the LLM
+- `wwwroot/js/chat.js`: client side JavaScript client for the `ChatHub` SignalR hub
+- `Views/Chat/Index.cshtml`: UI for the Chat Assistant
+- `Services/AI/ChatHistoryRepository.cs`: this static class stores `ChatHistory` objects in a simple `Dictionary`. It allows you to keep track of `ChatHistory` for multiple users. The `Dictionary` is indexed by a `sessionId`. We recommend using the SignalR connection ID for the key to store and retrieve a user's `ChatHistory`
+- Configuration: the `frontend/appsettings.json` has an `OpenAI` section that already has the `Endpoint` and `Model` pre-filled. You will need to add the `OpenAI:ApiKey` setting as a .NET User Secret to this project yourself.
 
   > ⚠️ Make sure not to commit any secrets to your Git repo!
 
@@ -44,7 +44,7 @@ Now it's up to you to bring all the pieces together, so in the remainder of this
 
 #### Add the Kernel as a DI service
 
-- Open the [`globoticket.sln`](./starter/globoticket.sln) solution in the [`starter`](./starter/) folder.
+- Open the `globoticket.sln` solution in the `/src/GloboTicket` folder.
 - First, make the `Kernel` object available for use in the `frontend` app by adding it to the ASP.NET dependency injection container. You can add the kernel with a `Scoped` lifecycle, which creates a new `Kernel` instance for every user request. The `Kernel` is a lightweight resource, so `Scoped` is a well suited lifetime, ensuring user isolation.
 
   💡 Hint: use this overload to add the `Kernel`:
