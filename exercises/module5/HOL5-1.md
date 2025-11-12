@@ -35,7 +35,6 @@ We will use Semantic Kernel from the `frontend` app so that we can have a chat i
 Also, the necessary Nuget packages are already added to the `frontend.csproj` file:
 
 - `Microsoft.SemanticKernel`
-- `Microsoft.SemanticKernel.Connectors.AzureAIInference`
 
 Now it's up to you to bring all the pieces together, so in the remainder of this lab, we'll be less specific about the code snippets you have to add.
 

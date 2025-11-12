@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace GloboTicket.Frontend.Services.AI;
 
 /// <summary>
 /// TODO: remove this for the starter!
 /// </summary>
-public class ChatAssistant(Kernel kernel, IHubContext<ChatHub> hubContext, AzureOpenAIPromptExecutionSettings settings)
+public class ChatAssistant(Kernel kernel, IHubContext<ChatHub> hubContext, OpenAIPromptExecutionSettings settings)
 {
     public async Task Handle(string sessionId, string prompt)
     {

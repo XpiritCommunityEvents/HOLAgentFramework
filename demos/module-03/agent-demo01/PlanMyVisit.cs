@@ -244,7 +244,6 @@ namespace agent_demo01
             IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
 
             kernelBuilder.AddAzureOpenAIChatCompletion(deploymentName, endpoint, apiKey);
-            //kernelBuilder.AddAzureAIInferenceChatCompletion(deploymentName, apiKey, new Uri(endpoint));
 
             kernelBuilder.Services.AddLogging(
                                  s => s.AddConsole().SetMinimumLevel(logLevel));
@@ -258,7 +257,6 @@ namespace agent_demo01
             IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
 
             kernelBuilder.AddAzureOpenAIChatCompletion(deploymentName, endpoint, apiKey);
-            //kernelBuilder.AddAzureAIInferenceChatCompletion(deploymentName, apiKey, new Uri(endpoint));
 
             kernelBuilder.Services.AddLogging(
                                  s => s.AddConsole().SetMinimumLevel(logLevel));

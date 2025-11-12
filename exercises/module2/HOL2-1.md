@@ -14,11 +14,9 @@ In this lab, we will introduce Semantic Kernel into your application to make com
 
     ```pwsh
     dotnet add package Microsoft.SemanticKernel
-
-    dotnet add package Microsoft.SemanticKernel.Connectors.AzureAIInference --prerelease
     ```
 
-    This adds the base package for using Semantic Kernel plus a separate extension package for connecting with Azure AI Inference models.
+    This adds the base package for using Semantic Kernel.
 
 2. Leave the code for reading the API token from user secrets in your code, but remove the rest of the code added in the previous lab that works with the `ChatCompletionsClient`.
 3. Replace the removed code with:
@@ -26,12 +24,12 @@ In this lab, we will introduce Semantic Kernel into your application to make com
     ```csharp
     var kernelBuilder = Kernel
         .CreateBuilder()
-        .AddAzureAIInferenceChatCompletion(model, token, new Uri(endpoint));
+        .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
 
     var kernel = kernelBuilder.Build();
     ```
 
-    We now have an instance of the Semantic Kernel to interact with. The `AddAzureAIInferenceChatCompletion` comes from the `Microsoft.SemanticKernel.Connectors.AzureAIInference`. Semantic Kernel is pluggable, so by adding connector packages for other AI vendors, you can mix and match them using the kernel instance.
+    We now have an instance of the Semantic Kernel to interact with.
 
 ## Build a simple chat client
 

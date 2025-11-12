@@ -3,9 +3,9 @@ using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 using ModelContextProtocol.Client;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 // Make sure to add ApiKey to your dotnet user secrets...
 // dotnet user-secrets set "ApiKey"="<your API key>" -p .\module2.csproj
@@ -23,7 +23,7 @@ var endpoint = "https://models.github.ai/inference";
 
 var kernelBuilder = Kernel
     .CreateBuilder()
-    .AddAzureAIInferenceChatCompletion(model, token, new Uri(endpoint));
+    .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
 
 var mcpClient = await McpClient.CreateAsync(new HttpClientTransport(
     new HttpClientTransportOptions
@@ -57,7 +57,7 @@ var musicRecommender = kernel.CreateFunctionFromPromptYaml(
     });
 kernel.Plugins.AddFromFunctions("music_recommender", [musicRecommender]);
 
-var executionSettings = new AzureOpenAIPromptExecutionSettings
+var executionSettings = new OpenAIPromptExecutionSettings
 {
     MaxTokens = 500,
     Temperature = 0.5,

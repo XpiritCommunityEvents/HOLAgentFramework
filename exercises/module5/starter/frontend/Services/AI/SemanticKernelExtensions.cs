@@ -1,5 +1,5 @@
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using ModelContextProtocol.Client;
 
 namespace GloboTicket.Frontend.Services.AI;
@@ -24,7 +24,7 @@ internal static class SemanticKernelExtensions
         {
             var kernelBuilder = Kernel
                 .CreateBuilder()
-                .AddAzureAIInferenceChatCompletion(model!, key!, new Uri(endpoint!));
+                .AddOpenAIChatCompletion(model!, new Uri(endpoint!), key!);
 
             kernelBuilder.Plugins.AddFromFunctions(
                 pluginName: "EventCatalog",
@@ -33,7 +33,7 @@ internal static class SemanticKernelExtensions
             return kernelBuilder.Build();
         });
 
-        services.AddSingleton(new AzureOpenAIPromptExecutionSettings
+        services.AddSingleton(new OpenAIPromptExecutionSettings
         {
             MaxTokens = 500,
             Temperature = 0.5,
