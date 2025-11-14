@@ -6,7 +6,7 @@ Model Context Protocol (MCP) servers can easily be integrated into Semantic Kern
 
 ### Steps
 
-We will integrate the GitHub MCP server, which requires your authentication token. We will add this to the user secrets.
+GloboTicket wants to use GitHub issues for customer requests. We will integrate the GitHub MCP server, which requires your authentication token. We will add this to the user secrets.
 
 - Open a Terminal and sign in to GitHub with the GitHub CLI:
 
