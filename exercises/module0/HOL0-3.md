@@ -35,7 +35,7 @@ docker run -d -p 1433:1433 marcelv/globoticket-default-db
 ### Starting the application
 First we want to open the solution form the solutionexplorer to easily work with the Globoticket application. In the `src\Globoticket` folder you will find a `globoticket.sln` file. Right click this file and select `Open Solution` from the context menu.
 
-In the solution folder you can then start the application. Right click the `catalog` project and select `Debug\Start without Debugging` from the context menu. Do the same for the `ordering` project.
+In the solution folder you can then start the application. Right click the `catalog` project and select `Debug\Start without Debugging` from the context menu. Do the same for the `ordering` project. Lastly right click the `frontend` project and select `Debug\Start without Debugging` from the context menu.
 
 ## Exploring GloboTicket application
 The homepage of the GloboTicket webshop shows three available events. 
@@ -58,9 +58,9 @@ After completing the order you should get a confirmation page.
 
 <img src="https://user-images.githubusercontent.com/5504642/173663153-547ef3b5-177b-471e-8116-b2099e844256.png" width="300" />
 
-Finally click the Chat button on top of the homepage. This will open up a simple chat window where you can interact with a chatbot. Onky the chatbot is quite limited at the moment. In the rest of the workshop we will use Semantic Kernel to enhance the chatbot experience. We will do exercises in simple console applications to get familiar with Semantic Kernel and then integrate the functionality in the GloboTicket application in the final lab.
+Finally click the `Chat` button on top of the homepage. This will open up a simple chat window where you can interact with a chatbot. Only the chatbot is quite limited at the moment. In the rest of the workshop we will use Semantic Kernel to enhance the chatbot experience. We will do exercises in simple console applications to get familiar with Semantic Kernel and then integrate the functionality in the GloboTicket application in the final lab.
 
 ## Finish lab
 You are all done. You have given the GloboTicket application a spin. 
 
-Stop running your application. In Visual Studio Code and GitHub CodeSpaces you can stop the composition by pressing Ctrl+C in the terminal window. 
+Stop running your application. 
