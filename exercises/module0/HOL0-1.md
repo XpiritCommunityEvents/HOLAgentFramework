@@ -10,9 +10,9 @@ In this repo you will find all the labs source code for the workshop. Each lab i
 
 <img src="./../images/hol0-1.newissue.png" width="300" />
 
-- In the list of available issue templates select the `Signup Participant`
+- In the list of available issue templates select the **Signup Participant**
 - Add your name to the title and if you like also add some infomation about yourself in the description field.
-- Click the `Create` button to create the issue.
+- Click the **Create** button to create the issue.
 
 Your proctors will get the issue. Once they close the issue, our GitOps automation will create a repository for you based on the template repository. the GitHub user that you signed in with. 
 

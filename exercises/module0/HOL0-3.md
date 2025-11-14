@@ -33,9 +33,9 @@ docker run -d -p 1433:1433 marcelv/globoticket-default-db
 ```
 
 ### Starting the application
-First we want to open the solution form the solutionexplorer to easily work with the Globoticket application. In the `src\Globoticket` folder you will find a `globoticket.sln` file. Right click this file and select `Open Solution` from the context menu.
+First we want to open the solution form the solutionexplorer to easily work with the Globoticket application. In the `src\Globoticket` folder you will find a `globoticket.sln` file. Right click this file and select **Open Solution**` from the context menu.
 
-In the solution folder you can then start the application. Right click the `catalog` project and select `Debug\Start without Debugging` from the context menu. Do the same for the `ordering` project. Lastly right click the `frontend` project and select `Debug\Start without Debugging` from the context menu.
+In the solution folder you can then start the application. Right click the `catalog` project and select **Debug\Start without Debugging** from the context menu. Do the same for the `ordering` project. Lastly right click the `frontend` project and select **Debug\Start without Debugging** from the context menu.
 
 ## Exploring GloboTicket application
 The homepage of the GloboTicket webshop shows three available events. 

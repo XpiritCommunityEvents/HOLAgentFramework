@@ -2,13 +2,15 @@
 
 In this lab, you will explore GitHub Models and learn the fundamentals of prompt engineering. You will experiment with system and user prompts, model parameters such as temperature and top-p, and evaluate how different configurations influence the model’s output.
 
->Start with new prompts by clicking on the 🗑️ icon to clear previous content in the Playground. The chat has "memory" that retains context from previous interactions. To have a clear view, removing previous content is recommended.
+This Lab is designed to let you experiment with prompts, model settings and different models. Do not spend too much time in each step. We will use more of the models in the next labs.
 
 ---
 
 ## Enable GitHub Models
 
 **Goal:** Enable GitHub Models in your repository and open the Playground to run your first prompts.
+
+>Start with new prompts by clicking on the 🗑️ icon to clear previous content in the Playground. The chat has "memory" that retains context from previous interactions. To have a clear view, removing previous content is recommended.
 
 ### Steps
 
@@ -38,6 +40,7 @@ In this lab, you will explore GitHub Models and learn the fundamentals of prompt
 
 ### Steps
 
+
 1. In **GitHub Models → Playground**, select **OpenAI GPT-4.1**.
 
 2. Paste the following user prompt:
@@ -46,7 +49,7 @@ In this lab, you will explore GitHub Models and learn the fundamentals of prompt
    Write an email to a GloboTicket customer explaining a refund is approved for order #GT-48321.
    ```
 
-3. Add this system prompt and run again:
+3. You can influence behavior of the chatbot bu adding a system prompt. Add this system prompt and run again:
 
    ```txt
    You are a GloboTicket support agent. Tone: warm but concise. ≤120 words. Include refund amount and resolution time (3–5 business days).
@@ -62,6 +65,7 @@ In this lab, you will explore GitHub Models and learn the fundamentals of prompt
    ```txt
    Use greeting, 3 bullet points, closing.
    ```
+6. Remove the System prompt
 
 > Reflect: How did the output change with each adjustment? Which part—role, tone, or structure—had the largest impact?
 
@@ -69,64 +73,29 @@ In this lab, you will explore GitHub Models and learn the fundamentals of prompt
 
 ## Temperature and Creativity
 
-**Goal:** Observe how the temperature parameter affects creativity and randomness in model responses.
+**Goal:** Observe how the temperature, top_p and frequency parameter affects creativity and randomness in model responses.
 
 ### Steps
 
 1. Use this prompt:
 
    ```txt
-   Suggest a place to eat before a concert at Madison Square Garden.
+   I am visiting a concert at Madison Square Garden. What can I do before the concert starts ?
    ```
 
-2. Set **temperature = 0** (factual) and run.
-   Then set **temperature = 1.0** (creative) and run again.
+2. Play around with temperature, top_p, frequency and presence penalty to see if you difference in reponse
 
-> Reflect: When would you prefer a high temperature, and when a low one?
+**Temperature** controls how random or creative a language model’s responses are — lower values make answers more focused and deterministic, while higher values make them more varied and imaginative.
 
----
+**Top-p (nucleus sampling)** limits the model’s word choices to the smallest set whose combined probability is at least *p*, so lower values make responses more focused and higher values allow more diverse phrasing.
 
-## Top-P vs. Temperature
+**Frequency penalty** reduces the likelihood of the model repeating the same words or phrases within a response. Higher values make the output less repetitive and encourage varied wording.
 
-**Goal:** Compare how `top_p` (nucleus sampling) and `temperature` influence variety and quality of responses.
+**Presence penalty** discourages the model from reusing words or ideas it has already mentioned, promoting the introduction of new topics or concepts in the response.
 
-### Steps
+>Reflect: Do you notice differences in creativity or relevance with different settings? Which combinations worked best for your prompt?
 
-1. Keep **temperature = 0.7** and use this prompt:
-
-   ```txt
-   List 10 perks of buying early for GloboTicket shows.
-   ```
-
-2. Run once with **top_p = 0.3**, and again with **top_p = 0.9**.
-
-3. Now fix **top_p = 1.0** and try the same prompt with **temperature = 0.2**, **0.7**, and **1.0**.
-
-> Reflect: Which combination produced the most interesting yet relevant output? How would you describe the difference between `top_p` and `temperature`?
-
----
-
-## Frequency and Presence Penalty
-
-**Goal:** Reduce repetition and increase variation—important when generating lists or FAQs.
-
-### Steps
-
-1. Retrieve a **venue policy** (Markdown) from your `exercises/datasets/venue-policies` folder (for example, Friends Arena).
-
-2. Paste the following prompt and include your policy after the separator:
-
-   ```txt
-   ## From the policy below, generate 12 distinct customer FAQs with answers. Avoid repeating phrasing.
-   ---
-   [PASTE POLICY HERE]
-   ```
-
-3. Run with **frequency_penalty = 0** and **presence_penalty = 0**.
-
-4. Run again with **frequency_penalty = 0.7** and **presence_penalty = 0.7**.
-
-> Reflect: What changed between runs? Did the model create more diverse questions or simply rephrase existing ones?
+Do not spend too much time here—just get a feel for how these parameters influence output. In the newer models you can not influence the output that much with these parameters. With Semantic Kernel we can still send these parameters so it is good to know that they exist. But in most cases you will get good results with the default settings.
 
 ---
 
@@ -150,7 +119,7 @@ In this lab, you will explore GitHub Models and learn the fundamentals of prompt
    Extract into JSON with keys: {bag_max_cm:[L,W,H], backpacks_rule, bottle_empty_allowed, reentry, cashless, service_animals_only, accessibility:{wheelchair,lifts,hearing_loops}}. Output ONLY JSON.
    ```
 
-> Reflect: How could you automate these steps to power real-time customer support or web APIs?
+> Reflect: How could you use an LLM to format or parse text when working with APIs?
 
 ---
 

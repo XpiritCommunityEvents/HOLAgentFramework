@@ -8,7 +8,7 @@ You can use GitHub Codespaces to run your development machine from the cloud. Th
 
 Go to `https://github.com/XpiritCommunityEvents/attendee-workshopSK-<your-github-username>`, replacing `<your-github-username>` to find your repository for the Semantic Kernel workshop. From now on, all the labs will be done in this repository.
 
-On this page you should find a drop down with `<> Code` on it. Select the `Codespaces` tab.
+On this page you should find a drop down with `<> Code` on it. Select the **Codespaces** tab.
 
 <img src="./../images/hol0-1.newcodespace.png" width="300" />
 
@@ -20,10 +20,10 @@ A new dialog appears that allows you to specify details of your codespace.
 
 <img src="./../images//hol0-newwithoptions.png" width="300" />
 
-Select "4-core, 8GB RAM" from the last option `Machine type` and change the region to be near to your location if needed. Click `Create codespace` to start the creation of your private development environment in the cloud.
+Select "4-core, 8GB RAM" from the last option **Machine type** and change the region to be near to your location if needed. Click **Create codespace** to start the creation of your private development environment in the cloud.
 
 Alternatively you can select one of the existing codespaces if you happen to return and continue work on a previous codespace session. 
-You can get to manage your codespaces in more detail by following the link to `Manage All` in the first screenshot.
+You can get to manage your codespaces in more detail by following the link to **Manage All** in the first screenshot.
 
 <img src="./../images/hol0-1.manage-cs.png" width="300" />
 
