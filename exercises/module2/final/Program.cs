@@ -6,6 +6,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
 using ModelContextProtocol.Client;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.Extensions.Logging;
 
 // Make sure to add ApiKey to your dotnet user secrets...
 // dotnet user-secrets set "ApiKey"="<your API key>" -p .\module2.csproj
@@ -35,6 +36,8 @@ var kernelBuilder = Kernel
 //             ["Authorization"] = $"Bearer {config["GitHubToken"]}"
 //         }
 //     }));
+kernelBuilder.Services.AddLogging(
+    s => s.AddConsole().SetMinimumLevel(LogLevel.Debug));
 
 var kernel = kernelBuilder.Build();
 
