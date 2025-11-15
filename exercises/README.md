@@ -17,7 +17,7 @@ All workshop lab materials can be found in this repository in the exercises fold
 
 ## Module 1: Behind the Curtain of AI Models
 - Lab 1.1 - [Prompting and Performance Tuning](./module1/HOL1-1.md)
-- Lab 1.2 - [Connect Semantic Kernel to GitHub Models](./module1/HOL1-2.md)
+- Lab 1.2 - [ Connect to an LLM](./module1/HOL1-2.md)
 
 ## Module 2: Backstage with Semantic Kernel
 - Lab 2.1 - [Turning Prompts into Conversations](./module2/HOL2-1.md)
