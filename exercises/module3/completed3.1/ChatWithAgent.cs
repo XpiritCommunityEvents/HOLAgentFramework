@@ -1,69 +1,63 @@
-﻿using Azure;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 
-namespace modulerag
+namespace modulerag;
+
+internal class ChatWithAgent
 {
-    internal class ChatWithAgent
+
+    public async Task LetAgentFindRide(Kernel kernel)
     {
+        var question = """
+        I stay at the WestIn Seattle and the venue is the Seattle Kraken stadium.
+        the Concert starts at 7:30 pm and is November 20th this year. 
+        """;
 
-        public async Task let_agent_find_ride(string deploymentName, string endpoint, string apiKey)
+        Console.WriteLine("******** Create the agent ***********");
+        var transportationAgent = CreateTransportationAgent(kernel);
+
+        Console.WriteLine("******** Start the agent ***********");
+        var agentresult = transportationAgent.InvokeAsync(question);
+
+        Console.WriteLine("******** RESPONSE ***********");
+        await PrintResult(agentresult);
+    }
+
+
+    private static async Task PrintResult(IAsyncEnumerable<AgentResponseItem<ChatMessageContent>> agentResponse)
+    {
+        await
+        foreach (var item in agentResponse)
         {
-
-            var question =
-            """
-            I stay at the WestIn Seattle and the venue is the seattle cracken stadium.
-            the Concert starts at 7:30 pm and is November 20th this year. 
-            """;
-
-            Console.WriteLine("******** Create the kernel ***********");
-            IKernelBuilder kernelBuilder = Kernel.CreateBuilder();
-            var credential = new AzureKeyCredential(apiKey);
-            kernelBuilder.AddOpenAIChatCompletion(deploymentName,new Uri(endpoint), apiKey);
-            Kernel kernel = kernelBuilder.Build();
-            Console.WriteLine("******** Create the agent ***********");
-            var agent = CreateChatcompletionAgent(kernel);
-
-            Console.WriteLine("******** Start the agent ***********");
-
-            var agentresult = agent.InvokeAsync(question);
-            Console.WriteLine("******** RESPONSE ***********");
-            await PrintResult(agentresult);
-
+            Console.WriteLine($"Thread: {item.Thread.Id}");
+            Console.WriteLine($"Thread data: {item.Thread.ToString()}");
+            Console.WriteLine($"Author: {item.Message.AuthorName}");
+            Console.WriteLine($"Message:{item.Message}");
         }
+    }
 
-        private ChatCompletionAgent CreateChatcompletionAgent(Kernel kernel)
-        {
-            var instructions = """
+    private ChatCompletionAgent CreateTransportationAgent(Kernel kernel)
+    {
+        var instructions = """
             You are an expert in finding transportation options from a given hotel location to the concert location.
             You will try to get the best options available for an afordable price.Make sure the customer will be there at least 30 minutes
             before the concert starts at the venue. You always suggest 3 options with different price ranges.
             You will ask for approval before you make the booking
             """;
 
-            ChatCompletionAgent agent = new()
-            {
-                Name = "TransportationAgent",
-                Instructions = instructions,
-                Description = "An agent that finds transportation options from hotel to concert location",
-                Kernel = kernel,
-            };
-
-            return agent;
-        }
-
-        private static async Task PrintResult(IAsyncEnumerable<AgentResponseItem<ChatMessageContent>> agentResponse)
+        ChatCompletionAgent agent = new()
         {
-            await
-            foreach (var item in agentResponse)
+            Name = "TransportationAgent",
+            Instructions = instructions,
+            Description = "An agent that finds transportation options from hotel to concert location",
+            Kernel = kernel,
+            LoggerFactory = LoggerFactory.Create(builder =>
             {
-                Console.WriteLine($"Thread: {item.Thread.Id}");
-                Console.WriteLine($"Thread data: {item.Thread.ToString()}");
-                Console.WriteLine($"Author: {item.Message.AuthorName}");
-                Console.WriteLine($"Message:{item.Message}");
-            }
-        }
-
-
+                // Add Console logging provider
+                builder.AddConsole().SetMinimumLevel(LogLevel.Trace);
+            })
+        };
+        return agent;
     }
 }
