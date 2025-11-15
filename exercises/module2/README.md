@@ -1,6 +1,3 @@
 # Module 2: Backstage with Semantic Kernel
 
-- Lab 2.1 - [Turning Prompts into Conversations](./HOL2-1.md)
-- Lab 2.2 - [Plugins & Function Calling](./HOL2-2.md)
-- Lab 2.3 - [Model Context Protocol integration](./HOL2-3.md)
-- Lab 2.4 - [Structured Reponses](./HOL2-4.md)
+All exercises and labs are described in detail on the [Wiki page](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki) that comes with this workshop.

@@ -1,3 +1,3 @@
 # Module 5: Semantic Kernel in Concert
 
-- [Lab 5.1 - Integrating Semantic Kernel into an existing application](./HOL5-1.md)
+All exercises and labs are described in detail on the [Wiki page](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki) that comes with this workshop.
