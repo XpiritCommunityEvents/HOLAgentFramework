@@ -40,7 +40,7 @@ namespace agent_demo01.Plugins
             return true;
         }
 
-        private AvailableRide[] availableRides = new AvailableRide[]
+        private readonly AvailableRide[] availableRides = new AvailableRide[]
         {
             new AvailableRide { RideId = 1, RideType = "Taxi", Price = 25.00m, ServiceName = "City Cabs", City = "New York" },
             new AvailableRide { RideId = 2, RideType = "Ride Share", Price = 20.00m, ServiceName = "Uber", City = "New York" },
