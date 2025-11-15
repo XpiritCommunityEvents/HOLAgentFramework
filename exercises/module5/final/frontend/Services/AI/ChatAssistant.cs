@@ -1,31 +1,38 @@
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace GloboTicket.Frontend.Services.AI;
 
-/// <summary>
-/// TODO: remove this for the starter!
-/// </summary>
-public class ChatAssistant(Kernel kernel, IHubContext<ChatHub> hubContext, OpenAIPromptExecutionSettings settings)
+public static class ChatAssistant
 {
-    public async Task Handle(string sessionId, string prompt)
+    public static ChatCompletionAgent CreateChatAssistantAgent(Kernel kernel)
     {
-        var chatHistory = ChatHistoryRepository.GetOrCreateHistory(sessionId);
-        chatHistory.AddUserMessage(prompt);
+        var instructions = """
+            You are a digital assistant for GloboTicket, a concert ticketing company.
+            You help customers with their ticket purchasing. Tone: warm and friendly, 
+            but to the point. Do not make things up when you don't know the answer. Just
+            tell the user that you don't know the answer based on your knowledge.
+            
+            You can help customer find tickets for concerts, provide information about concert dates, venues, and artists,
 
-        var chatCompletionService = kernel.Services.GetService<IChatCompletionService>();
+            Also, you can help customers with transportation options from their hotel to the concert location. Booking hotels is also possible using the available tools.
 
-        var responseStream = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, settings, kernel);
-        await foreach (var response in responseStream)
+            Before you book anything, always ask for confirmation.
+        """;
+
+        ChatCompletionAgent agent = new()
         {
-            if (response.Content != null)
+            Name = "ChatAssistantAgent",
+            Instructions = instructions,
+            Description = "A chat agent that assists GloboTicket users with their questions and requests",
+            Kernel = kernel,
+            Arguments = new KernelArguments(new OpenAIPromptExecutionSettings()
             {
-                await hubContext.Clients
-                    .Client(sessionId.ToString())
-                    .SendAsync("ReceiveMessagePart", response.Content);
-            }
-        }
+                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            }),
+        };
+
+        return agent;
     }
 }

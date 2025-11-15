@@ -7,9 +7,20 @@ using HealthChecks.UI.Client;
 using GloboTicket.Frontend.HealthChecks;
 using Microsoft.Extensions.Options;
 using GloboTicket.Frontend.Services.AI;
-using ModelContextProtocol.Client;
+using Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseWolverine(opts =>
+{
+    // Sample setup for asynchronous message handling with Wolverine
+    // You can also use other frameworks like Dapr, MassTransit, NServiceBus, or MediatR
+
+    opts.PublishMessage<UserRequest>().ToLocalQueue("q1");
+    opts.Policies.UseDurableLocalQueues();
+    opts.Durability.KeepAfterMessageHandling = TimeSpan.FromHours(1);
+    opts.LocalQueue("q1").UseDurableInbox();
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -23,7 +34,6 @@ builder.Services.AddHttpClient<IOrderSubmissionService, HttpOrderSubmissionServi
 {
     c.BaseAddress = new Uri(sp.GetService<IConfiguration>()["ApiConfigs:Ordering:Uri"]);
 });
-
 
 builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketService>();
 builder.Services.AddSingleton<Settings>();
@@ -86,4 +96,4 @@ app.UseMetricServer();
 
 app.MapMetrics();
 
-app.Run();
+await app.RunAsync();

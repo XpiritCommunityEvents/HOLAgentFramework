@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.SignalR;
+using Wolverine;
 
 namespace GloboTicket.Frontend.Services.AI;
 
 /// <summary>
 /// SignalR Hub for chat communication.
 /// </summary>
-public class ChatHub(ChatAssistant chatAssistant) : Hub
+public class ChatHub(IMessageBus messageBus) : Hub
 {
     /// <summary>
     /// Method invoked by clients to send a message to the chat assistant.
@@ -13,10 +14,10 @@ public class ChatHub(ChatAssistant chatAssistant) : Hub
     /// <param name="message">The user message/prompt</param>
     public async Task SendMessage(string message)
     {
-        await Clients.Client(Context.ConnectionId).SendAsync("NewResponse");
+        // Dispatch message to a background handler via Wolverine message bus
+        await messageBus.SendAsync(new UserRequest(Context.ConnectionId, message));
 
-        await chatAssistant.Handle(Context.ConnectionId, message);
-
-        await Clients.Client(Context.ConnectionId).SendAsync("ResponseDone");
+        // Response will be streamed back via SignalR from the background handler
+        // This will keep the web app responsive and scalable
     }
 }

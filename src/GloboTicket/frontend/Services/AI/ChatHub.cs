@@ -16,7 +16,7 @@ public class ChatHub : Hub
         await Clients
             .Client(Context.ConnectionId).SendAsync("NewResponse");
 
-        // TODO: call the chat assistant to handle the message
+        // TODO: call the chat agent to handle the message
         await Clients
             .Client(Context.ConnectionId)
             .SendAsync("ReceiveMessagePart", "Hi, I am a dummy assistant. There is no AI here yet ☹️");
