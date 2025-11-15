@@ -8,27 +8,29 @@ Welcome! This file helps you (the workshop participant) to quickly understand th
 
 The workshop is structured into five modules. In these modules you will follow a mix of theory and hands-on labs.
 
-- [Module 0: Workshop Introduction and Prerequisites](./exercises/module0/README.md)
-- [Module 1: Behind the Curtain of AI Models](./exercises/module1/README.md)
-- [Module 2: Backstage with Semantic Kernel](./exercises/module2/README.md)
-- [Module 3: Orchestration of AI Agents](./exercises/module3/README.md)
-- [Module 4: Amplify Performance with Retrieval Augmented Generation](./exercises/module4/README.md)
-- [Module 5: Semantic Kernel in Concert](./exercises/module5/README.md)
+- [Module 0: Workshop Introduction and Prerequisites](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki)
+- [Module 1: Behind the Curtain of AI Models](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki)
+- [Module 2: Backstage with Semantic Kernel](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki)
+- [Module 3: Amplify Performance with Retrieval Augmented Generation](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki)
+- [Module 4: Orchestration of AI Agents](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki)
+- [Module 5: Semantic Kernel in Concert](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki)
+
+All exercises and labs are described in detail on the [Wiki page](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki) that comes with this workshop.
 
 ## Where to start
-Start at the [Exercises and labs](./exercises/README.md) to find all hands-on labs and module-specific markdown guides.
+Start at the [Workshop Wiki](https://github.com/XpiritCommunityEvents/HOLSemanticKernel/wiki) to find all hands-on labs and module-specific markdown guides.
 
+In your own (this) repository you can find the following folders and files:
+
+- `demos/` — Demo projecs and code snippets used during the workshop.
 - `exercises/` — hands-on labs and module-specific markdown guides.
-- `prompts/` — Example prompts and prompt engineering notes used in the labs.
 - `src/` — Supporting code and sample projects used across the workshop (e.g., `HolSemanticKernel` project)
-
-## Notes for participants
-- Use the top-level `README.md` to follow the workshop agenda and module timings.
-- Each module folder in `exercises/` contains step-by-step lab instructions. Look for `HOL*-*.md` files.
-- Throughout the exercises there wil be some references to datasets/ You can find these in the `exercises/datasets/` folder.
-- Start projects are in each module's `start/` folder with incomplete code to be filled in during the labs.
-- Final projects live in each module's `final/` folder and are runnable .NET projects with solution files and sample data.
-- If you want to run any .NET sample, open the `.sln` file in the corresponding `final/` folder in Visual Studio or use `dotnet run` from the project directory.
+    - `GloboTicket` - The solution containing the starter website for the GloboTicket website
+    - `HolSemanticKernel` - A starter console application to get started with the first exercises
+- `exercises/<module>/start/` — Starter projects for each module.
+- `exercises/<module>/final/` — Final projects for each module.
+- `exercises/<module>/completedx.x` — In between starter solutions for exercises where applicable.
+- `exercises/datasets/` — Datasets used in the exercises.
 
 ## Contact / Help
 If something is missing or a file path doesn't match, ask the workshop instructor 
