@@ -18,7 +18,7 @@ In your project, create a new file named `ChatWithRag.cs`. Leave the constructor
 Use the following code
 
 ```csharp
-public async Task RAG_with_single_prompt(string deploymentName, string endpoint, string apiKey, IConfiguration config)
+public async Task RAG_with_single_prompt(Kernel kernel)
 {
 ...
 }
@@ -28,7 +28,7 @@ public async Task RAG_with_single_prompt(string deploymentName, string endpoint,
 Call this function from the main `Program.cs`
 
 ```csharp
-await new ChatWithRag().RAG_with_single_prompt(Kernel kernel);
+await new ChatWithRag().RAG_with_single_prompt(kernel);
 ```
 
 #### 5. Create a simple sample question 
@@ -48,145 +48,173 @@ Is this allowed?
 ```
 Imagine asking this question to a model without any context about the venue policies. The model could give all kinds of answers, but they will not be based on the actual venue policies. So we need to make sure that the model has the right context to answer this question correctly.
 
-### 6. Add the question in the application
+#### 6. Add the question in the application
 Now we will add the question to the application. Normally we would do this by getting this question from user input or a chat, but for now we will just code this directly in the `RAG_with_single_prompt` method.
 
-```csharp
-var question = 
-"""
-I booked tickets for a concert tonight in venue AFAS Live!.
-I have this small black backpack, not big like for school, more like the mini
-festival type 😅. it just fits my wallet, a hoodie and a bottle of water.
-Is this allowed?
-""";
+    ```csharp
+    var question = 
+    """
+    I booked tickets for a concert tonight in venue AFAS Live!.
+    I have this small black backpack, not big like for school, more like the mini
+    festival type 😅. it just fits my wallet, a hoodie and a bottle of water.
+    Is this allowed?
+    """;
 
-chatHistory.AddUserMessage(question);
-var questionResponse = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, kernel:kernel);
-await foreach (var response in questionResponse)
-{
-    Console.Write(response.Content);
-}
-```
+    await GetResponseOnQuestion(kernel, question);
+    ```
 
-#### 8. Getting a response
-Now we need to add a method to generate a good response based on the question and the venue policy. For that we will pick a venue policy. In our example we ask something for AFAS Live in Amsterdam. So we will use the venue policy from the `exercises/datasets/venue-policies/AFAS_Live.md`
+#### 7. Create the GetResponseOnQuestion method
 
-We will add the following code
+Create a new method on the `ChatWithRag` class that will be responsible for giving answers to the questions by calling the LLM. The method's name is `GetResponseOnQuestion`:
 
-```csharp
-private async Task<string> GetResponseOnQuestion(Kernel kernel, string question)
-{
-    var policyContext = File.ReadAllText("/workspaces/HOLSemanticKernel/exercises/module4/datasets/venue-policies/AFAS_Live.md");
-
-    ChatHistory chatHistory = new();
-    chatHistory.AddSystemMessage("You are a helpful assistant that answers questions from people that go to a concert and have questions about the venue.");
-    chatHistory.AddSystemMessage("Always use the policy information provided in the prompt");
-    chatHistory.AddSystemMessage($"### Venue Policy\n {policyContext}");
-
-    chatHistory.AddUserMessage(question);
-
-    var executionSettings = new OpenAIPromptExecutionSettings
+    ```csharp
+    private async Task GetResponseOnQuestion(Kernel kernel, string question)
     {
-        ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
-    };
-    
-    var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-    var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
-    return result.Content;
-}
-```
+        ChatHistory chatHistory = new();
+        chatHistory.AddUserMessage(question);
+        
+        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        var questionResponse = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, kernel:kernel);
+        await foreach (var response in questionResponse)
+        {
+            Console.Write(response.Content);
+        }
+    }
+    ```
 
-This are the step we do here:
-- Load policy file - Reads venue policy from disk
-- Create chat history - Initialize conversation container
-- Add system messages - Define AI role, rules, and inject policy data
-- Add user question - Include customer's question
-- Configure settings - Enable automatic function calling
-- Get AI service - Retrieve chat completion service from kernel
-- Send & receive - Process conversation and return AI response
+Run the application. You will see that it will generate some random answer based on nothing.
+
+#### 8. Getting a good response
+
+Now we will modify the `GetResponseOnQuestion` method to generate a good response based on the question and the venue policy. For that we will pick a venue policy. In our example we ask about AFAS Live in Amsterdam. So we will use the venue policy from the `exercises/datasets/venue-policies/AFAS_Live.md`
+
+Change the `GetResponseOnQuestion` to:
+
+    ```csharp
+    private async Task GetResponseOnQuestion(Kernel kernel, string question)
+    {
+        // Path is relative to the bin/Debug/net9.0 folder where your application runs
+        var policyContext = File.ReadAllText("../../../../datasets/venue-policies/AFAS_Live.md");
+
+        ChatHistory chatHistory = new();
+        chatHistory.AddSystemMessage("You are a helpful assistant that answers questions from people that go to a concert and have questions about the venue.");
+        chatHistory.AddSystemMessage("Always use the policy information provided in the prompt");
+        chatHistory.AddSystemMessage($"### Venue Policy\n {policyContext}");
+
+        chatHistory.AddUserMessage(question);
+        
+        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        var questionResponse = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, kernel:kernel);
+        await foreach (var response in questionResponse)
+        {
+            Console.Write(response.Content);
+        }
+    }
+    ```
 
 Make sure you use the right path to the venue policy file on your system. In this case we just inject the policy as context to the prompt.
 
 #### 9. Use an LLM to understand the question
-We inject the venue poliy as context to the prompt. But we have more venues, more policies and questions can be about all of them. The code we made is not flexible enough. We should make it smarter. We could use an LLM to pick the right venue policy based on the question. For that we will forst create a method that tries to determine the venue based on the question. Add this method to the `ChatWithRag` class. We want to use structured output for this. So we will create a class called `SelectedVenue` in a new file `SelectedVenue.cs`
 
-```csharp
-public class SelectedVenue
-{
-    public string VenueName { get; set; }
-}
-```
+We inject the venue policy as context to the prompt. But we have more venues, more policies and questions can be about all of them. The code we made is not flexible enough. We should make it smarter. We could use an LLM to pick the right venue policy based on the question. For that we will first create a method that tries to determine the venue based on the question. Add this method to the `ChatWithRag` class. We want to use structured output for this. So we will create a class called `SelectedVenue` in a new file `SelectedVenue.cs`
 
-```csharp 
-private async Task<string> GetVenueFromQuestion(Kernel kernel, string question)
-{
-    ChatHistory chatHistory = new();
-
-    chatHistory.AddSystemMessage("You are a helpful asistant that finds the name of a venue from a question.");
-    chatHistory.AddSystemMessage("Always get the information from the question. Never search the web or use internal knowledge!");
-    chatHistory.AddUserMessage(question);
-    var executionSettings = new OpenAIPromptExecutionSettings
+    ```csharp
+    public class SelectedVenue
     {
-        ResponseFormat = typeof(SelectedVenue)
-    };
-    var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-    var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
-    var selectedVenue = JsonSerializer.Deserialize<SelectedVenue>(result.ToString());
-    return selectedVenue.venueName;
-}
-```
-#### 10. Get the right policy based on the venue name
-Now we know the venue name we can use this to load the right venue policy file. For that we can also use an LLM.To make things a bit more string typed we will create a new class called `SelectedFile` in a new file `SelectedFile.cs`
-
-```csharp
-public class SelectedFile
-{
-    public string File { get; set; }
-}
-```
-Then we can create the method that will get the right file based on the venue name. Becuase the files are not always named exactly like the venue name we will use an LLM to pick the right file. Add the following code to the `ChatWithRag` class.
-
-```csharp
-private async Task<string> GetFileContentsFromRepo(Kernel kernel, string venueName)
-{
-    //Get a list of files from the venue policy repository
-    var directory = "/workspaces/HOLSemanticKernel/exercises/module4/datasets/venue-policies";
-    var fileList = string.Join("\n", System.IO.Directory.GetFiles(directory, "*.md").Select(f => System.IO.Path.GetFileName(f)));
-    
-    var systemprompt = "You are an expert at finding the correct file based on a user question.";
-    var fileListPrompt = $"The following is a list of files available:\n{fileList}";
-    var fileQuestion = $"Which file contains the venue policy for the venue named '{venueName}'?";
-    
-    var chatHistory = new ChatHistory();
-    chatHistory.AddSystemMessage(systemprompt);
-    chatHistory.AddUserMessage(fileListPrompt);
-    chatHistory.AddUserMessage(fileQuestion);
-
-    var executionSettings = new OpenAIPromptExecutionSettings
-    {
-        ResponseFormat = typeof(SelectedFile)
-    };
-
-    var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-    var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
-    
-    var fileResult = JsonSerializer.Deserialize<SelectedFile>(result.ToString());
-    var fullfilename = Path.Combine(directory, fileResult.file);
-
-    if (System.IO.File.Exists(fullfilename))
-    {
-        using (var file = File.OpenText(fullfilename))
-        {
-            return file.ReadToEnd();
-        }
+        public required string VenueName { get; set; }
     }
-    
-    return "No Policy information found";
+    ```
 
-}
-```
+Add the following new method `GetVenueFromQuestion` to the `ChatWithRag` class:
+
+    ```csharp 
+    private async Task<string> GetVenueFromQuestion(Kernel kernel, string question)
+    {
+        ChatHistory chatHistory = new();
+
+        chatHistory.AddSystemMessage("You are a helpful asistant that finds the name of a venue from a question.");
+        chatHistory.AddSystemMessage("Always get the information from the question. Never search the web or use internal knowledge!");
+        chatHistory.AddUserMessage(question);
+        var executionSettings = new OpenAIPromptExecutionSettings
+        {
+            ResponseFormat = typeof(SelectedVenue)
+        };
+        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
+        var selectedVenue = JsonSerializer.Deserialize<SelectedVenue>(result.ToString());
+        return selectedVenue!.VenueName;
+    }
+    ```
+
+Call the new method from the `RAG_with_single_prompt` method to verify that it works:
+
+    ```csharp
+
+    //...
+
+    var venue = await GetVenueFromQuestion(kernel, question);
+    Console.WriteLine($"Identified venue: {venue}");
+
+    await GetResponseOnQuestion(kernel, question);
+
+    ```
+
+Run the application to verify that it identifies AFAS Live venue from the question.
+
+#### 10. Get the right policy based on the venue name
+
+Now that we know the venue name, we can use this to load the right venue policy file. For that we can also use an LLM. To make things a bit more strongly typed, we will create a new class called `SelectedFile` in a new file `SelectedFile.cs`
+
+    ```csharp
+    public class SelectedFile
+    {
+        public required string File { get; set; }
+    }
+    ```
+
+Then we can create the method that will get the right file based on the venue name. Because the files are not always named exactly like the venue name, we will use an LLM to pick the right file. Add the following method to the `ChatWithRag` class:
+
+    ```csharp
+    private async Task<string> GetVenuePolicyFileContents(Kernel kernel, string venueName)
+    {
+        //Get a list of files from the venue policy repository
+        var directory = "../../../../datasets/venue-policies";
+        var fileList = string.Join("\n", System.IO.Directory.GetFiles(directory, "*.md").Select(f => System.IO.Path.GetFileName(f)));
+        
+        var systemPrompt = "You are an expert at finding the correct file based on a user question.";
+        var fileListPrompt = $"The following is a list of files available:\n{fileList}";
+        var fileQuestion = $"Which file contains the venue policy for the venue named '{venueName}'?";
+        
+        var chatHistory = new ChatHistory();
+        chatHistory.AddSystemMessage(systemPrompt);
+        chatHistory.AddUserMessage(fileListPrompt);
+        chatHistory.AddUserMessage(fileQuestion);
+
+        var executionSettings = new OpenAIPromptExecutionSettings
+        {
+            ResponseFormat = typeof(SelectedFile)
+        };
+
+        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
+        
+        var fileResult = JsonSerializer.Deserialize<SelectedFile>(result.ToString());
+        var fullFileName = Path.Combine(directory, fileResult.File);
+
+        if (System.IO.File.Exists(fullFileName))
+        {
+            using (var file = await File.OpenTextAsync(fullFileName))
+            {
+                return await file.ReadToEndAsync();
+            }
+        }
+        
+        return "No Policy information found";
+    }
+    ```
 
 #### 11. Update GetResponseOnQuestion method
+
 Now we need to update the `GetResponseOnQuestion` method to use the new methods to get the right venue policy based on the question. Update the method as follows:
 
 ```csharp
