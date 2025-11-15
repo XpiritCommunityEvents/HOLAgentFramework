@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <IsPackable>false</IsPackable>
+    <UserSecretsId>dabd1f7a-1cf0-48a8-a5f6-2acc292c8729</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
