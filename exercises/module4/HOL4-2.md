@@ -9,7 +9,7 @@ KernelMemory provides a flexible architecture that supports various vector datab
 ### Steps
 
 #### 1. Open the solution 
-In the solution explorer in your codespace by right-clickin the solution file and choose `Open Solution`
+In the solution explorer in your codespace by right-clicking the solution file and choose **Open Solution**
 
 #### 3. Add a new function called IngestDocuments
 We need to have a new method that will handle the ingestion of documents into the vector database. In the `ChatWithRag.cs` file, add a new method called `IngestDocuments`.
@@ -17,173 +17,149 @@ We need to have a new method that will handle the ingestion of documents into th
 Use the following code
 
 ```csharp
-        public async Task IngestDocuments(string deploymentName, string endpoint, string apiKey, IConfiguration config)
-        {
-            var directory = "/workspaces/HOLSemanticKernel/exercises/module4/datasets/venue-policies";
-            var memoryConnector = GetLocalKernelMemory(deploymentName, endpoint, apiKey);
+public async Task IngestDocuments(IConfiguration config)
+{
+    var directory = "../../../../datasets/venue-policies";
 
-            foreach (var file in GetFileListOfPolicyDocuments(directory))
-            {
-                var fullfilename = Path.Combine(directory, file);
-                var importResult = await memoryConnector.ImportDocumentAsync(filePath: fullfilename, documentId: file);
-                Console.WriteLine($"Imported file {file} with result: {importResult}");
-            }
+    var memoryConnector = GetLocalKernelMemory(config);
 
-        }
+    foreach (var file in GetFileListOfPolicyDocuments(directory))
+    {
+        var fullfilename = Path.Combine(directory, file);
+        var importResult = await memoryConnector.ImportDocumentAsync(filePath: fullfilename, documentId: file);
+        Console.WriteLine($"Imported file {file} with result: {importResult}");
+    }
+}
 ```
+You can see that based on the configuration, we create a `KernelMemory` connector. Then we loop through all the files in the specified directory and call the `ImportDocumentAsync` method to ingest each document into the vector database. 
 
 #### 4. Add the GetLocalKernelMemory method
-Now we need to add the method that will create the KernelMemory connector to the vector database.
+Now we need to add the `GetLocalKernelMemory` method that will create the KernelMemory connector to the vector database. We will host the vector database on the file system for now. This method is explained step by step. You can find the whole implementation at the end of this section. Bring in the neccessary namespaces at the top of the file:
 
-1. Extract and prepare API credentials
-
-```csharp
-var openAIApiKey = new ApiKeyCredential(apiKey);
-string key = "";
-openAIApiKey.Deconstruct(out key);
-```
-
-The method begins by taking the provided API key and converting it into the proper credential format. It extracts the raw key string from the ApiKeyCredential object to use in various configuration objects throughout the setup process.
-
-2. Configure text generation service
+1. Create the TextModel Configuration 
 
 ```csharp
-var openAIConfig = new OpenAIConfig
+// 1. Configure text generation service
+var textGenerationConfig = new OpenAIConfig
 {
-    Endpoint = endpoint,
-    APIKey = key,
-    TextModel = deploymentName,
-};
-```
-Creates an OpenAI configuration object specifically for text generation capabilities. This configuration specifies the endpoint URL, API key, and the deployment name of the language model that will be used for generating responses and processing user queries.
-
-3. Initialize OpenAI client
-
-```csharp
-var client = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions { Endpoint = new Uri(endpoint) });
-```
-
-4. Set up embedding generation configuration
-
-```csharp
-var openAiEmbedingsConfig = new OpenAIConfig
-{
-    APIKey = key,
-    Endpoint = endpoint,
-    EmbeddingModel = "openai/text-embedding-3-small",
+    Endpoint = config["OpenAI:EndPoint"]!,
+    APIKey = config["OpenAI:ApiKey"]!,
+    TextModel = config["OpenAI:Model"]!,
 };
 ```
 
-Creates a separate OpenAI configuration specifically for the embedding service. This uses the "text-embedding-3-small" model to convert text documents and queries into vector representations that enable semantic similarity searches in the vector database.
+The method starts by extracting the API credentials from the configuration. It creates an `OpenAIConfig` object specifically for text generation, specifying the endpoint URL, API key, and the deployment name of the language model that will be used for generating responses and processing user queries.
 
-5. Configure file storage backend
+1. Create the EmbeddingModel Configuration 
 
 ```csharp
-.WithSimpleFileStorage(new SimpleFileStorageConfig
+// 2. Configure embedding generation service
+var openAiEmbeddingsConfig = new OpenAIConfig
 {
-    Directory = "kernel-memory/km-file-storage",
+    APIKey = config["OpenAI:ApiKey"]!,
+    Endpoint = config["OpenAI:EndPoint"]!,
+    EmbeddingModel = config["OpenAI:EmbeddingModel"]!,
+};
+```
+
+This creates a separate `OpenAIConfig` object specifically for the embedding service. This uses the "text-embedding-3-small" model to convert text documents and queries into vector representations that enable semantic similarity searches in the vector database.
+
+3. Initialize the KernelMemory
+
+```csharp
+var kernelMemoryBuilder = new KernelMemoryBuilder()
+    // 3. Configure file storage backend
+    .WithSimpleFileStorage(new SimpleFileStorageConfig
+    {
+        Directory = "kernel-memory/km-file-storage",
+        StorageType = FileSystemTypes.Disk
+    })
+```
+Initializes a `KernelMemoryBuilder` instance to start configuring the KernelMemory system. The first step is to set up the file storage backend using local disk storage. This backend will store the original document files in the specified directory on the local filesystem.
+
+4. Configure text database backend
+
+```csharp
+// 4. Configure text database backend
+.WithSimpleTextDb(new SimpleTextDbConfig
+{
+    Directory = "kernel-memory/km-text-db",
     StorageType = FileSystemTypes.Disk
 })
 ```
+Now add the text database backend configuration. This backend stores the textual content of the documents in a structured format that allows for efficient retrieval and management of text data.
 
-Sets up local disk storage for storing original document files. All uploaded documents will be saved in the specified directory on the local filesystem.
-
-6. Configure text database backend
-
+5. Configure vector database backend
 ```csharp
-.WithSimpleFileStorage(new SimpleFileStorageConfig
-{
-    Directory = "kernel-memory/km-file-storage",
-    StorageType = FileSystemTypes.Disk
-})
-```
-
-Configures storage for processed and chunked text content. This database manages the text segments that are extracted and processed from the original documents.
-
-7. Configure vector database backend
-
-```csharp
+// 5. Configure vector database backend
 .WithSimpleVectorDb(new SimpleVectorDbConfig
 {
     Directory = "kernel-memory/km-vector-db",
     StorageType = FileSystemTypes.Disk
 })
 ```
+Sets up the vector database backend using local disk storage. This backend is responsible for storing the vector representations of document chunks, enabling semantic search capabilities based on vector similarity.
 
-Sets up the vector database for storing mathematical vector representations (embeddings) of text chunks. This enables semantic similarity searches based on meaning rather than exact keyword matches.
-
-8. Integrate AI services
+6. Integrate AI services and build the memory instance
 
 ```csharp
-.WithOpenAITextEmbeddingGeneration(openAiEmbedingsConfig)
-.WithOpenAITextGeneration(openAIConfig);
+// 6. Integrate AI services
+.WithOpenAITextEmbeddingGeneration(openAiEmbeddingsConfig)
+.WithOpenAITextGeneration(textGenerationConfig);
+
+return kernelMemoryBuilder.Build();
 ```
 
 Connects both the embedding generation service and text generation service to the KernelMemory system. The embedding service automatically converts documents into searchable vectors during ingestion, while the text generation service generates responses based on retrieved context.
 
-9. Build and return the memory instance
-
-```csharp
-return kernelMemoryBuilder.Build();
-```
-
-Finalizes the configuration and returns a fully functional KernelMemory instance that can ingest documents, perform semantic searches, and integrate with language models for RAG operations. This instance encapsulates all the storage backends and AI services needed for the complete document processing and retrieval pipeline.
+Then finalize the configuration and returns a fully functional KernelMemory instance that can ingest documents, perform semantic searches, and integrate with language models for RAG operations. 
 
 <details>
 <summary>Complete GetLocalKernelMemory Method Code</summary>
 
 ```csharp
-private IKernelMemory GetLocalKernelMemory(string deploymentName, string endpoint, string apiKey)
+private IKernelMemory GetLocalKernelMemory(IConfiguration config)
 {
-    // 1. Extract and prepare API credentials
-    var openAIApiKey = new ApiKeyCredential(apiKey);
-    string key = "";
-    openAIApiKey.Deconstruct(out key);
-
-    // 2. Configure text generation service
-    var openAIConfig = new OpenAIConfig
+    // 1. Configure text generation service
+    var textGenerationConfig = new OpenAIConfig
     {
-        Endpoint = endpoint,
-        APIKey = key,
-        TextModel = deploymentName,
+        Endpoint = config["OpenAI:EndPoint"]!,
+        APIKey = config["OpenAI:ApiKey"]!,
+        TextModel = config["OpenAI:Model"]!,
     };
 
-    // 3. Initialize OpenAI client
-    var client = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions { Endpoint = new Uri(endpoint) });
-
-    // 4. Set up embedding generation configuration
-    var openAiEmbedingsConfig = new OpenAIConfig
+    // 2. Configure embedding generation service
+    var openAiEmbeddingsConfig = new OpenAIConfig
     {
-        APIKey = key,
-        Endpoint = endpoint,
-        EmbeddingModel = "openai/text-embedding-3-small",
+        APIKey = config["OpenAI:ApiKey"]!,
+        Endpoint = config["OpenAI:EndPoint"]!,
+        EmbeddingModel = config["OpenAI:EmbeddingModel"]!,
     };
 
-    // 5-8. Build comprehensive KernelMemory system
+    // 3-6. Build comprehensive KernelMemory system
     var kernelMemoryBuilder = new KernelMemoryBuilder()
-        // 5. Configure file storage backend
+        // 3. Configure file storage backend
         .WithSimpleFileStorage(new SimpleFileStorageConfig
         {
             Directory = "kernel-memory/km-file-storage",
             StorageType = FileSystemTypes.Disk
         })
-        // 6. Configure text database backend
+        // 4. Configure text database backend
         .WithSimpleTextDb(new SimpleTextDbConfig
         {
             Directory = "kernel-memory/km-text-db",
             StorageType = FileSystemTypes.Disk
         })
-        // 7. Configure vector database backend
+        // 5. Configure vector database backend
         .WithSimpleVectorDb(new SimpleVectorDbConfig
         {
             Directory = "kernel-memory/km-vector-db",
             StorageType = FileSystemTypes.Disk
         })
-        // 8. Integrate AI services
-        .WithOpenAITextEmbeddingGeneration(openAiEmbedingsConfig)
-        .WithOpenAITextGeneration(openAIConfig);
+        // 6. Integrate AI services
+        .WithOpenAITextEmbeddingGeneration(openAiEmbeddingsConfig)
+        .WithOpenAITextGeneration(textGenerationConfig);
 
-    // 9. Build and return the memory instance
     return kernelMemoryBuilder.Build();
 }
 ```
@@ -196,23 +172,23 @@ Add the following method to get the list of files from the directory
 ```csharp
 private IEnumerable<string> GetFileListOfPolicyDocuments(string directory)
 {
-    return System.IO.Directory.GetFiles(directory, "*.pdf").Select(f => System.IO.Path.GetFileName(f));
+    return Directory.GetFiles(directory, "*.pdf").Select(f => Path.GetFileName(f));
 }
 ```
 
 #### 6. Call the IngestDocuments method
-Finally, we need to call the IngestDocuments method from the Main method in Program.cs to ingest the documents when we run the application.
+Finally, we need to call the IngestDocuments method from Program.cs to ingest the documents when we run the application.
 
 ```csharp
-await new ChatWithRag().IngestDocuments(model, endpoint, token, config);
+await new ChatWithRag().IngestDocuments(config);
 ```
 
 #### 7. Run the application
-Now run the application. This will ingest all the documents from the specified directory into the vector database. In the solutition explorer you will see a new folder called `kernel-memory` with the files stored in the vector database. This can also be found in bin/debug depending on your build configuration.
+Now run the application. This will ingest all the documents from the specified directory into the vector database. In the solutition explorer you will see a new folder called `kernel-memory` with the files stored in the vector database. This can also be found in `bin/debug` depending on your build configuration.
 
-Check the km-file-storage folder to see the ingested documents. Each document will be chunked into smaller pieces and stored in the km-vector-db folder as vectors.
+Check the `km-file-storage` folder to see the ingested documents. Each document will be chunked into smaller pieces and stored in the `km-vector-db` folder as vectors.
 
-In the km-vector-db folder you will see files that contain the vector representations of the document chunks. These vectors are what enable semantic search capabilities in the RAG system.
+In the `km-vector-db` folder you will see files that contain the vector representations of the document chunks. These vectors enable semantic search capabilities in the RAG system.
 
 ## The End 
 This concludes the ingestion part of the lab. In the next part, we will modify the chat method to perform semantic search using the vector database.
