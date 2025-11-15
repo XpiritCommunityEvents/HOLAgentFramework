@@ -9,7 +9,8 @@ KernelMemory provides a flexible architecture that supports various vector datab
 ### Steps
 
 #### 1. Open the solution 
-In the solution explorer in your codespace by right-clicking the solution file and choose **Open Solution**
+
+In the **Solution Explorer** in your codespace by right-clicking the solution file and choose `Open Solution`
 
 #### 3. Add a new function called IngestDocuments
 We need to have a new method that will handle the ingestion of documents into the vector database. In the `ChatWithRag.cs` file, add a new method called `IngestDocuments`.

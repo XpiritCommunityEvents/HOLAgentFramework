@@ -9,6 +9,7 @@ In this lab you will learn how to build a simple Retrieval-Augmented Generation 
 ### Steps
 
 #### 1. Open the solution 
+
 In the **Solution Explorer** in your codespace by right-clicking the solution file and choose `Open Solution`
 
 #### 2. Create ChatWithRag file 

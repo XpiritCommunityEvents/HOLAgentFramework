@@ -1,18 +1,44 @@
-﻿using System.Text.Json;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.KernelMemory;
 using Microsoft.KernelMemory.DocumentStorage.DevTools;
 using Microsoft.KernelMemory.FileSystem.DevTools;
 using Microsoft.KernelMemory.MemoryStorage.DevTools;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace modulerag;
 
 public class ChatWithRag
 {
-        public async Task IngestDocuments(IConfiguration config)
+    public async Task RAG_with_memory(IConfiguration config)
+    {
+        var memoryConnector = GetLocalKernelMemory(config);
+
+        var question =
+            """
+            I booked tickets for a concert tonight in venue AFAS Live!.
+            I have this small black backpack, not big like for school, more like the mini
+            festival type 😅. it just fits my wallet, a hoodie and a bottle of water.
+            Is this allowed? 
+            """;
+
+        var response = await memoryConnector.AskAsync(question);
+        Console.WriteLine("******** RESPONSE WITH MEMORY ***********");
+        Console.WriteLine(response.Result);
+    }
+
+    public async Task AskVenueQuestion(IConfiguration config)
+    {
+        var memoryConnector = GetLocalKernelMemory(config);
+        var question =
+            """
+            Which venue allows a backpack?
+            """;
+        var response = await memoryConnector.AskAsync(question);
+        Console.WriteLine("******** RESPONSE WITH MEMORY ***********");
+        Console.WriteLine(response.Result);
+    }
+
+    public async Task IngestDocuments(IConfiguration config)
     {
         var directory = "../../../../datasets/venue-policies";
 
