@@ -17,9 +17,14 @@ public class ChatWithRag
         Is this allowed?
         """;
 
-        var venue = await GetVenueFromQuestion(kernel, question);
-        var policyContext = await GetVenuePolicyFileContents(kernel, venue);
-        await GetResponseOnQuestion(kernel, question, policyContext);
+        var policyContext = "";
+        //var policyContext = File.ReadAllText("../../../../datasets/venue-policies/AFAS_Live.md");
+
+        //var venue = await GetVenueFromQuestion(kernel, question);
+        //var policyContext = await GetVenuePolicyFileContents(kernel, venue);
+
+        await GetResponseOnQuestionSimple(kernel, question, policyContext);
+        //await GetResponseOnQuestion(kernel, question, policyContext);
     }
 
     private async Task<string> GetVenuePolicyFileContents(Kernel kernel, string venueName)
@@ -83,6 +88,19 @@ public class ChatWithRag
         chatHistory.AddSystemMessage("Always use the policy information provided in the prompt");
         chatHistory.AddSystemMessage($"### Venue Policy\n {policyContext}");
 
+        chatHistory.AddUserMessage(question);
+        
+        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        var questionResponse = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, kernel:kernel);
+        await foreach (var response in questionResponse)
+        {
+            Console.Write(response.Content);
+        }
+    }
+
+    private async Task GetResponseOnQuestionSimple(Kernel kernel, string question, string policyContext)
+    {
+        ChatHistory chatHistory = new();
         chatHistory.AddUserMessage(question);
         
         var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
