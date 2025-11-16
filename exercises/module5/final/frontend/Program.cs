@@ -16,10 +16,9 @@ builder.Host.UseWolverine(opts =>
     // Sample setup for asynchronous message handling with Wolverine
     // You can also use other frameworks like Dapr, MassTransit, NServiceBus, or MediatR
 
-    opts.PublishMessage<UserRequest>().ToLocalQueue("q1");
     opts.Policies.UseDurableLocalQueues();
     opts.Durability.KeepAfterMessageHandling = TimeSpan.FromHours(1);
-    opts.LocalQueue("q1").UseDurableInbox();
+    opts.LocalQueue("llmqueue").UseDurableInbox();
 });
 
 // Add services to the container.
