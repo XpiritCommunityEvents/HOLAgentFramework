@@ -51,6 +51,9 @@ chatHistory.AddSystemMessage("""
 
 var chatCompletionService = kernel.Services.GetRequiredService<IChatCompletionService>();
 
+var reducer = new ChatHistorySummarizationReducer(chatCompletionService, targetCount: 4, thresholdCount: 4);
+//var reducer = new ChatHistoryTruncationReducer(4, thresholdCount: 4);
+
 while (true)
 {
     Console.WriteLine();
@@ -64,9 +67,14 @@ while (true)
     Console.WriteLine(response.Last().Content);
 
     // streaming call
-    // var responseStream = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel);
-    // await foreach (var response in responseStream)
-    // {
-    //     Console.Write(response.Content);
-    // }
+    //var responseStream = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel);
+    //await foreach (var response in responseStream)
+    //{
+    //    Console.Write(response.Content);
+    //}
+
+    if (await chatHistory.ReduceInPlaceAsync(reducer, CancellationToken.None))
+    {
+       Console.WriteLine(" (history reduced)");
+    }
 }
