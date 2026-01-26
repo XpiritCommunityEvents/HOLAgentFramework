@@ -1,22 +1,39 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
-namespace HOLSemanticKernel;
+namespace AgentFramework101;
 
-public class AnonymousUserFilter : IFunctionInvocationFilter
+/// <summary>
+/// Function calling middleware that filters anonymous user discount requests.
+/// This is the Agent Framework equivalent of the Semantic Kernel IFunctionInvocationFilter.
+/// </summary>
+public static class AnonymousUserFilter
 {
-    public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
+    /// <summary>
+    /// Middleware that intercepts function calls and blocks discount code generation for anonymous users.
+    /// </summary>
+    public static async ValueTask<object?> FilterAnonymousUsers(
+        AIAgent agent,
+        FunctionInvocationContext context,
+        Func<FunctionInvocationContext, CancellationToken, ValueTask<object?>> next,
+        CancellationToken cancellationToken)
     {
-        if (context.Function.Name == "get_discount_code")
+        // Check if this is a discount code request for an anonymous user
+        if (context.Function.Name == "GetDiscountCode")
         {
-            if (context.Arguments["userName"]!.ToString() == "guest")
+            // Try to get the userName argument
+            var userNameArg = context.Arguments?.FirstOrDefault(a => a.Key == "userName");
+            if (userNameArg?.Value?.ToString() == "guest")
             {
-                context.Result = new FunctionResult(context.Function, "No discounts for anonymous users allowed");
-                return;
+                // Block the function call for anonymous users
+                return "No discounts for anonymous users allowed";
             }
         }
-            
-        await next(context);
 
-        // you can inspect the results here too to filter for unwanted data
+        // Continue with the function call
+        var result = await next(context, cancellationToken);
+        
+        // You can also inspect/modify results here if needed
+        return result;
     }
 }
