@@ -1,11 +1,14 @@
 using System.ComponentModel;
-using Microsoft.SemanticKernel;
 
-namespace HOLSemanticKernel;
+namespace AgentFramework101;
 
-public class DiscountPlugin()
+/// <summary>
+/// Tools for generating discount codes for GloboTicket customers.
+/// In Agent Framework, methods can be used directly without [KernelFunction] attributes.
+/// Anonymous user filtering is handled by the AnonymousUserFilter middleware.
+/// </summary>
+public class DiscountTools()
 {
-    [KernelFunction("get_discount_code")]
     [Description("Generate a simple GloboTicket discount code for a user.")]
     public string GetDiscountCode([Description("The name of the user")] string userName = "guest")
     {
