@@ -61,7 +61,9 @@ var instructions = """
 // This replaces the Semantic Kernel ChatHistorySummarizationReducer
 // targetCount: target number of messages to keep after reduction
 // threshold: number of messages allowed beyond targetCount before summarization is triggered
+#pragma warning disable MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 var chatReducer = new SummarizingChatReducer(chatClient, targetCount: 2, threshold: 4);
+#pragma warning restore MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 // Create agent with ChatMessageStoreFactory to enable chat history reduction
 // Note: ChatClientAgentOptions uses ChatOptions.Instructions for system instructions

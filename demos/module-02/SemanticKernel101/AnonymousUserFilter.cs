@@ -23,7 +23,8 @@ public static class AnonymousUserFilter
         {
             // Try to get the userName argument
             var userNameArg = context.Arguments?.FirstOrDefault(a => a.Key == "userName");
-            if (userNameArg?.Value?.ToString() == "guest")
+            var userName = userNameArg?.Value?.ToString();
+            if (string.IsNullOrEmpty(userName) || userName == "guest")
             {
                 // Block the function call for anonymous users
                 return "No discounts for anonymous users allowed";
