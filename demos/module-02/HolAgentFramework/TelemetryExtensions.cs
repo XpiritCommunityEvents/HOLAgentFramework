@@ -1,22 +1,31 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace HOLSemanticKernel;
+namespace AgentFramework101;
 
+/// <summary>
+/// Extension methods for configuring telemetry with Agent Framework.
+/// Agent Framework uses OpenTelemetry with GenAI Semantic Conventions.
+/// See: https://learn.microsoft.com/en-us/agent-framework/user-guide/observability
+/// </summary>
 public static class TelemetryExtensions
 {
-    public static IKernelBuilder UseTelemetry(this IKernelBuilder builder, string serviceName, IConfiguration configuration)
-    {
-        // WARNING: This switch exposes PII to the telemetry collection system.
-        AppContext.SetSwitch("Microsoft.SemanticKernel.Experimental.GenAI.EnableOTelDiagnosticsSensitive", true);
+    /// <summary>
+    /// The source name used for OpenTelemetry instrumentation.
+    /// </summary>
+    public const string SourceName = "AgentFramework101";
 
+    /// <summary>
+    /// Adds OpenTelemetry telemetry configuration for Agent Framework.
+    /// </summary>
+    public static IServiceCollection AddTelemetry(this IServiceCollection services, string serviceName, IConfiguration configuration)
+    {
         var otlpEndpoint = configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
         var useOtlpExporter = !string.IsNullOrWhiteSpace(otlpEndpoint);
 
@@ -25,11 +34,15 @@ public static class TelemetryExtensions
             .AddService(serviceName);
 
         // Register TracerProvider factory
-        builder.Services.AddSingleton<TracerProvider>(serviceProvider =>
+        services.AddSingleton<TracerProvider>(serviceProvider =>
         {
             var tracerProviderBuilder = Sdk.CreateTracerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddSource("Microsoft.SemanticKernel*");
+                .AddSource(SourceName)
+                // Listen to the Microsoft.Extensions.AI source for chat client telemetry
+                .AddSource("*Microsoft.Extensions.AI")
+                // Listen to the Microsoft.Extensions.Agents source for agent telemetry
+                .AddSource("*Microsoft.Extensions.Agents*");
 
             if (useOtlpExporter)
             {
@@ -47,11 +60,13 @@ public static class TelemetryExtensions
         });
 
         // Register MeterProvider factory
-        builder.Services.AddSingleton<MeterProvider>(serviceProvider =>
+        services.AddSingleton<MeterProvider>(serviceProvider =>
         {
             var meterProviderBuilder = Sdk.CreateMeterProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddMeter("Microsoft.SemanticKernel*");
+                .AddMeter(SourceName)
+                // Agent Framework metrics
+                .AddMeter("*Microsoft.Agents.AI");
 
             if (useOtlpExporter)
             {
@@ -69,7 +84,7 @@ public static class TelemetryExtensions
         });
 
         // Configure logging
-        builder.Services.AddLogging(loggingBuilder =>
+        services.AddLogging(loggingBuilder =>
         {
             loggingBuilder.AddOpenTelemetry(options =>
             {
@@ -87,13 +102,14 @@ public static class TelemetryExtensions
                     options.AddConsoleExporter();
                 }
 
+                // Format log messages
                 options.IncludeFormattedMessage = true;
                 options.IncludeScopes = true;
             });
             
-            loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+            loggingBuilder.SetMinimumLevel(LogLevel.Debug);
         });
 
-        return builder;
+        return services;
     }
 }
