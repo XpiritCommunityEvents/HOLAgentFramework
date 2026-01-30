@@ -1,6 +1,6 @@
 {
   "name": "SemanticKernelWorkshop",
-  "image": "mcr.microsoft.com/devcontainers/dotnet:9.0",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:dev-10.0-noble",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -23,7 +23,6 @@
       "version": "latest",
       "dockerDashComposeVersion": "v2"
     },
-    "ghcr.io/devcontainers/features/dotnet:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/powershell:1": {},
     "ghcr.io/devcontainers/features/azure-cli:1": {}
