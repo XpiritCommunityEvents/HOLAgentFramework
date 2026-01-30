@@ -52,7 +52,7 @@
   </Folder>
 
   <Folder Name="/src/">
-    <Project Path="src/HolSemanticKernel/HolSemanticKernel.csproj" />
+    <Project Path="src/HolAgentFramework/HolAgentFramework.csproj" />
   </Folder>
 
 </Solution>
