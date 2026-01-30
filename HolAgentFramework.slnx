@@ -14,11 +14,11 @@
 
 
   <Folder Name="/demos/Module 4/">
-    <Project Path="demos/module-04/demo-01/demo-01.csproj" />
-    <Project Path="demos/module-04/demo-02/demo-02.csproj" />
-    <Project Path="demos/module-04/demo-03/demo-03.csproj" />
-    <Project Path="demos/module-04/demo-04/demo-04.csproj" />
-    <Project Path="demos/module-04/demo-05/demo-05.csproj" />
+    <Project Path="demos/module-04/demo01/demo-01.csproj" />
+    <Project Path="demos/module-04/demo02/demo-02.csproj" />
+    <Project Path="demos/module-04/demo03/demo-03.csproj" />
+    <Project Path="demos/module-04/demo04/demo-04.csproj" />
+    <Project Path="demos/module-04/demo05/demo-05.csproj" />
   </Folder>
 
   <Folder Name="/exercises/module2/final/">
