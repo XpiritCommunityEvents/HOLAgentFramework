@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.AI;
-using Microsoft.Agents.AI;
-using OpenAI;
 using System.ClientModel;
 using modulerag;
+using OpenAI;
 
 var builder = new ConfigurationBuilder();
 builder.SetBasePath(Directory.GetCurrentDirectory())
@@ -22,16 +21,6 @@ var openAIClient = new OpenAIClient(new ApiKeyCredential(token), new OpenAIClien
     Endpoint = new Uri(endpoint)
 });
 
-var chatCompletionClient = openAIClient.GetChatClient(model);
+var chatCompletionClient = openAIClient.GetChatClient(model).AsIChatClient();
 
-AIAgent agent = chatCompletionClient.AsAIAgent(
-    instructions: "You are good at telling jokes.",
-    name: "Joker");
-
-// var kernelBuilder = Kernel
-//     .CreateBuilder()
-//     .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
-
-// var kernel = kernelBuilder.Build();
-
-//await new ChatWithRag().RAG_with_single_prompt(kernel);
+await new ChatWithRag().RAG_with_single_prompt(chatCompletionClient);
