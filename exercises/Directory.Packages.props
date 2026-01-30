@@ -1,0 +1,80 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Application Insights packages -->
+    <PackageVersion Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
+    <!-- ASP.NET Core packages -->
+    <PackageVersion Include="AspNetCore.HealthChecks.ApplicationStatus" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+    <!-- Azure and AI packages -->
+    <PackageVersion Include="Azure.AI.Inference" Version="1.0.0-beta.5" />
+    <PackageVersion Include="Azure.AI.OpenAI" Version="2.8.0-beta.1" />
+    <!-- Coverlet packages -->
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <!-- Entity Framework packages -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.11" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.11" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11" />
+    <!-- LiquidTestReports packages -->
+    <PackageVersion Include="LiquidTestReports.Markdown" Version="1.0.9" />
+    <!-- Microsoft Agents packages -->
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.0.0-preview.260121.1" />
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-preview.260121.1" />
+    <!-- Data packages -->
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0-preview3.25342.7" />
+    <!-- Configuration packages -->
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.2" />
+    <!-- Dependency Injection packages -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
+    <!-- Logging packages -->
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.2" />
+    <!-- Kernel Memory packages -->
+    <PackageVersion Include="Microsoft.KernelMemory" Version="0.98.250508.3" />
+    <PackageVersion Include="Microsoft.KernelMemory.AI.OpenAI" Version="0.98.250508.3" />
+    <PackageVersion Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.98.250508.3" />
+    <!-- Testing packages -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.0.1" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.0.1" />
+    <!-- Semantic Kernel packages -->
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.70.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Abstractions" Version="1.70.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.AzureAI" Version="1.70.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Core" Version="1.70.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Magentic" Version="1.70.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Orchestration" Version="1.70.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Runtime.InProcess" Version="1.70.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Core" Version="1.70.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.70.0-alpha" />
+    <PackageVersion Include="Microsoft.SemanticKernel.PromptTemplates.Handlebars" Version="1.70.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Yaml" Version="1.70.0" />
+    <!-- Model Context Protocol -->
+    <PackageVersion Include="ModelContextProtocol" Version="0.7.0-preview.1" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="0.4.0-preview.3" />
+    <!-- Other packages -->
+    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+    <!-- OpenTelemetry packages -->
+    <PackageVersion Include="OpenTelemetry" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
+    <!-- Prometheus packages -->
+    <PackageVersion Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <PackageVersion Include="prometheus-net.AspNetCore.HealthChecks" Version="8.2.1" />
+    <PackageVersion Include="Prometheus.Client.AspNetCore" Version="6.0.0" />
+    <!-- Swashbuckle packages -->
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+    <!-- System packages -->
+    <PackageVersion Include="System.Data.OleDb" Version="10.0.2" />
+    <!-- Wolverine packages -->
+    <PackageVersion Include="WolverineFx" Version="5.2.0" />
+  </ItemGroup>
+</Project>

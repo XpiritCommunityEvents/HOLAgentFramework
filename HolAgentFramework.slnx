@@ -1,0 +1,58 @@
+<Solution>
+  <Folder Name="/demos/Module 1/">
+    <Project Path="demos/module-01/HolAgentFramework.csproj" />
+  </Folder>
+
+  <Folder Name="/demos/Module 2/">
+    <Project Path="demos/module-02/HolAgentFramework.csproj" />
+  </Folder>
+
+  <Folder Name="/demos/Module 3/">
+    <Project Path="demos/module-03/demo-01/demo-01.csproj" />
+    <Project Path="demos/module-03/demo-02/demo-02.csproj" />
+  </Folder>
+
+
+  <Folder Name="/demos/Module 4/">
+    <Project Path="demos/module-04/demo01/demo-01.csproj" />
+    <Project Path="demos/module-04/demo02/demo-02.csproj" />
+    <Project Path="demos/module-04/demo03/demo-03.csproj" />
+    <Project Path="demos/module-04/demo04/demo-04.csproj" />
+    <Project Path="demos/module-04/demo05/demo-05.csproj" />
+  </Folder>
+
+  <Folder Name="/exercises/module2/final/">
+    <Project Path="exercises/module2/final/HOLSemanticKernel.csproj" />
+  </Folder>
+
+  <Folder Name="/exercises/module3/start/">
+    <Project Path="exercises/module3/start/module-rag-start.csproj" />
+  </Folder>
+  <Folder Name="/exercises/module3/final/">
+    <Project Path="exercises/module3/final/module-rag-start.csproj" />
+  </Folder>
+
+  <Folder Name="/exercises/module4/start/">
+    <Project Path="exercises/module4/start/module-agent-start.csproj" />
+  </Folder>
+  <Folder Name="/exercises/module4/completed4.1/">
+    <Project Path="exercises/module4/completed4.1/module-agent-start.csproj" />
+  </Folder>
+  <Folder Name="/exercises/module4/completed4.2/">
+    <Project Path="exercises/module4/completed4.2/module-agent-start.csproj" />
+  </Folder>
+  <Folder Name="/exercises/module4/completed4.3/">
+    <Project Path="exercises/module4/completed4.3/module-agent-start.csproj" />
+  </Folder>
+  <Folder Name="/exercises/module4/completed4.4/">
+    <Project Path="exercises/module4/completed4.4/module-agent-start.csproj" />
+  </Folder>
+  <Folder Name="/exercises/module4/completed4.4itp/">
+    <Project Path="exercises/module4/completed4.4itp/module-agent-start.csproj" />
+  </Folder>
+
+  <Folder Name="/src/">
+    <Project Path="src/HolSemanticKernel/HolSemanticKernel.csproj" />
+  </Folder>
+
+</Solution>
