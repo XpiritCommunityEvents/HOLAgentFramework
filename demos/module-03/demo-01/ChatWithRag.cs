@@ -1,15 +1,14 @@
-﻿using System.Text.Json;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+﻿using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+using System.Text.Json;
 
 namespace modulerag;
 
 public class ChatWithRag
 {
-    public async Task RAG_with_single_prompt(Kernel kernel)
+    public async Task RAG_with_single_prompt(IChatClient chatClient)
     {
-        var question = 
+        var question =
         """
         I booked tickets for a concert tonight in venue AFAS Live!.
         I have this small black backpack, not big like for school, more like the mini
@@ -17,97 +16,116 @@ public class ChatWithRag
         Is this allowed?
         """;
 
-        var policyContext = "";
+        //var policyContext = "";
         //var policyContext = File.ReadAllText("../../../../datasets/venue-policies/AFAS_Live.md");
 
-        //var venue = await GetVenueFromQuestion(kernel, question);
-        //var policyContext = await GetVenuePolicyFileContents(kernel, venue);
+        var venue = await GetVenueFromQuestion(chatClient, question);
+        var policyContext = await GetVenuePolicyFileContents(chatClient, venue);
 
-        await GetResponseOnQuestionSimple(kernel, question, policyContext);
-        //await GetResponseOnQuestion(kernel, question, policyContext);
+        //await GetResponseOnQuestionSimple(chatClient, question, policyContext);
+        await GetResponseOnQuestion(chatClient, question, policyContext);
     }
 
-    private async Task<string> GetVenuePolicyFileContents(Kernel kernel, string venueName)
+    private async Task<string> GetVenuePolicyFileContents(IChatClient chatClient, string venueName)
     {
         //Get a list of files from the venue policy repository
         var directory = "../../../../datasets/venue-policies";
         var fileList = string.Join("\n", System.IO.Directory.GetFiles(directory, "*.md").Select(f => System.IO.Path.GetFileName(f)));
-        
+
         var systemPrompt = "You are an expert at finding the correct file based on a user question.";
         var fileListPrompt = $"The following is a list of files available:\n{fileList}";
         var fileQuestion = $"Which file contains the venue policy for the venue named '{venueName}'?";
-        
-        var chatHistory = new ChatHistory();
-        chatHistory.AddSystemMessage(systemPrompt);
-        chatHistory.AddUserMessage(fileListPrompt);
-        chatHistory.AddUserMessage(fileQuestion);
 
-        var executionSettings = new OpenAIPromptExecutionSettings
+        var messages = new List<ChatMessage>();
+
+        messages.Add(new ChatMessage(ChatRole.System, systemPrompt));
+        messages.Add(new ChatMessage(ChatRole.User, fileListPrompt));
+        messages.Add(new ChatMessage(ChatRole.User, fileQuestion));
+
+        JsonElement schema = AIJsonUtilities.CreateJsonSchema(typeof(SelectedFile));
+
+        var chatOptions = new ChatOptions()
         {
-            ResponseFormat = typeof(SelectedFile)
+            ResponseFormat = ChatResponseFormat.ForJsonSchema(
+                                schema: schema,
+                                schemaName: nameof(SelectedFile),
+                                schemaDescription: "An object containing the full file name of a file")
         };
 
-        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-        var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
+        AIAgent agent = chatClient.AsAIAgent(
+            new ChatClientAgentOptions() { ChatOptions = chatOptions });
+
+
+        var response = await agent.RunAsync(messages);
+        var fileResult = response.Deserialize<SelectedFile>(JsonSerializerOptions.Web);
         
-        var fileResult = JsonSerializer.Deserialize<SelectedFile>(result.ToString());
         var fullFileName = Path.Combine(directory, fileResult.File);
 
-        if (System.IO.File.Exists(fullFileName))
+        if (File.Exists(fullFileName))
         {
             using (var file = File.OpenText(fullFileName))
             {
                 return await file.ReadToEndAsync();
             }
         }
-        
+
         return "No Policy information found";
     }
 
-    private async Task<string> GetVenueFromQuestion(Kernel kernel, string question)
+    private async Task<string> GetVenueFromQuestion(IChatClient chatClient, string question)
     {
-        ChatHistory chatHistory = new();
+        var messages = new List<ChatMessage>();
 
-        chatHistory.AddSystemMessage("You are a helpful asistant that finds the name of a venue from a question.");
-        chatHistory.AddSystemMessage("Always get the information from the question. Never search the web or use internal knowledge!");
-        chatHistory.AddUserMessage(question);
-        var executionSettings = new OpenAIPromptExecutionSettings
+        messages.Add(new ChatMessage(ChatRole.System, "You are a helpful asistant that finds the name of a venue from a question."));
+        messages.Add(new ChatMessage(ChatRole.System, "Always get the information from the question. Never search the web or use internal knowledge!"));
+        messages.Add(new ChatMessage(ChatRole.User, question));
+
+        JsonElement schema = AIJsonUtilities.CreateJsonSchema(typeof(SelectedVenue));
+
+        var chatOptions = new ChatOptions()
         {
-            ResponseFormat = typeof(SelectedVenue)
+            ResponseFormat = ChatResponseFormat.ForJsonSchema(
+                                schema: schema,
+                                schemaName: nameof(SelectedVenue),
+                                schemaDescription: "An object containing the name of a venue")
         };
-        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-        var result = await chatCompletionService.GetChatMessageContentAsync(chatHistory, executionSettings, kernel);
-        var selectedVenue = JsonSerializer.Deserialize<SelectedVenue>(result.ToString());
+
+        AIAgent agent = chatClient.AsAIAgent(
+            new ChatClientAgentOptions() { ChatOptions = chatOptions });
+
+        var response = await agent.RunAsync(messages);
+        var selectedVenue = response.Deserialize<SelectedVenue>(JsonSerializerOptions.Web);
         return selectedVenue!.VenueName;
     }
 
-    private async Task GetResponseOnQuestion(Kernel kernel, string question, string policyContext)
+    private async Task GetResponseOnQuestion(IChatClient chatClient, string question, string policyContext)
     {
-        ChatHistory chatHistory = new();
-        chatHistory.AddSystemMessage("You are a helpful assistant that answers questions from people that go to a concert and have questions about the venue.");
-        chatHistory.AddSystemMessage("Always use the policy information provided in the prompt");
-        chatHistory.AddSystemMessage($"### Venue Policy\n {policyContext}");
+        AIAgent agent = chatClient.AsAIAgent();
 
-        chatHistory.AddUserMessage(question);
-        
-        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-        var questionResponse = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, kernel:kernel);
+        var messages = new List<ChatMessage>();
+        messages.Add(new ChatMessage(ChatRole.System, "You are a helpful assistant that answers questions from people that go to a concert and have questions about the venue.")); ;
+        messages.Add(new ChatMessage(ChatRole.System, "Always use the policy information provided in the prompt"));
+        messages.Add(new ChatMessage(ChatRole.System, $"### Venue Policy\n {policyContext}"));
+
+        messages.Add(new ChatMessage(ChatRole.User, question));
+
+        var questionResponse = agent.RunStreamingAsync(messages);
         await foreach (var response in questionResponse)
         {
-            Console.Write(response.Content);
+            Console.Write(response);
         }
     }
 
-    private async Task GetResponseOnQuestionSimple(Kernel kernel, string question, string policyContext)
+    private async Task GetResponseOnQuestionSimple(IChatClient chatClient, string question, string policyContext)
     {
-        ChatHistory chatHistory = new();
-        chatHistory.AddUserMessage(question);
-        
-        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
-        var questionResponse = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, kernel:kernel);
+        AIAgent agent = chatClient.AsAIAgent();
+
+        var userMessage = new ChatMessage(ChatRole.User, question);
+
+        var questionResponse = agent.RunStreamingAsync(userMessage);
         await foreach (var response in questionResponse)
         {
-            Console.Write(response.Content);
+            Console.Write(response);
         }
     }
 }

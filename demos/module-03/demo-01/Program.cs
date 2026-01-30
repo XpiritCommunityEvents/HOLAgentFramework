@@ -1,7 +1,8 @@
-﻿using System.ClientModel;
-using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.AI;
+using System.ClientModel;
 using modulerag;
+using OpenAI;
 
 var builder = new ConfigurationBuilder();
 builder.SetBasePath(Directory.GetCurrentDirectory())
@@ -14,10 +15,12 @@ var model = config["OpenAI:Model"];
 var endpoint = config["OpenAI:EndPoint"];
 var token = config["OpenAI:ApiKey"];
 
-var kernelBuilder = Kernel
-    .CreateBuilder()
-    .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
+// Create OpenAI client with custom endpoint
+var openAIClient = new OpenAIClient(new ApiKeyCredential(token), new OpenAIClientOptions
+{
+    Endpoint = new Uri(endpoint)
+});
 
-var kernel = kernelBuilder.Build();
+var chatCompletionClient = openAIClient.GetChatClient(model).AsIChatClient();
 
-await new ChatWithRag().RAG_with_single_prompt(kernel);
+await new ChatWithRag().RAG_with_single_prompt(chatCompletionClient);
