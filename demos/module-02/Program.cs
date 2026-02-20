@@ -16,8 +16,8 @@ var config = new ConfigurationBuilder()
     .Build();
 
 var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Missing API Key");
-var model = "openai/gpt-4o";
-var endpoint = "https://models.github.ai/orgs/XpiritCommunityEvents/inference";
+var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("Missing Model");
+var endpoint = config["OpenAI:Endpoint"] ?? throw new InvalidOperationException("Missing Endpoint");
 
 // Use Azure AI Foundry
 // var model = "gpt-4o";
@@ -38,7 +38,7 @@ IChatClient chatClient = openAIClient
     .AsIChatClient()
     .AsBuilder()
     .UseOpenTelemetry(
-        sourceName: TelemetryExtensions.SourceName, 
+        sourceName: TelemetryExtensions.SourceName,
         configure: cfg => cfg.EnableSensitiveData = false)  // Set to true to capture prompts/responses (dev only!)
     .Build();
 
@@ -70,19 +70,18 @@ var chatReducer = new SummarizingChatReducer(chatClient, targetCount: 2, thresho
 AIAgent baseAgent = chatClient.AsAIAgent(new ChatClientAgentOptions
 {
     Name = "GloboTicketAssistant",
-    ChatOptions = new ChatOptions 
-    { 
+    ChatOptions = new ChatOptions
+    {
         Instructions = instructions,
         Tools = tools  // Tools are passed via ChatOptions
     },
     // Configure the chat message store with the summarizing reducer
     // The reducer will automatically summarize older messages when the conversation exceeds the threshold
-    ChatMessageStoreFactory = (ctx, ct) => new ValueTask<ChatMessageStore>(
-        new InMemoryChatMessageStore(
-            chatReducer,
-            ctx.SerializedState,
-            ctx.JsonSerializerOptions,
-            InMemoryChatMessageStore.ChatReducerTriggerEvent.AfterMessageAdded))
+    // See https://learn.microsoft.com/en-us/agent-framework/agents/conversations/storage?pivots=programming-language-csharp#reducing-in-memory-history-size
+    ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions
+    {
+        ChatReducer = chatReducer
+    })
 });
 
 // Wrap the agent with function calling middleware for anonymous user filtering
@@ -103,8 +102,8 @@ var runOptions = new ChatClientAgentRunOptions(new ChatOptions
 
 Console.WriteLine("Hi! I am your AI assistant. Talk to me:");
 
-// Create a thread for the conversation
-var thread = await agent.GetNewThreadAsync();
+// Create a session for the conversation
+var session = await agent.CreateSessionAsync();
 
 while (true)
 {
@@ -114,11 +113,11 @@ while (true)
     if (string.IsNullOrEmpty(prompt)) continue;
 
     // Non-streaming call using Agent Framework
-    // var response = await agent.RunAsync(prompt, thread, runOptions);
+    // var response = await agent.RunAsync(prompt, session, runOptions);
     // Console.WriteLine(response.Text);  // or response.ToString()
 
     // Streaming call using Agent Framework
-    await foreach (var update in agent.RunStreamingAsync(prompt, thread, runOptions))
+    await foreach (var update in agent.RunStreamingAsync(prompt, session, runOptions))
     {
         Console.Write(update);
     }
