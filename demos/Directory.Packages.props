@@ -9,8 +9,6 @@
     <!-- Microsoft Agents packages -->
     <PackageVersion Include="Microsoft.Agents.AI" Version="1.0.0-rc1" />
     <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-rc1" />
-    <!-- Data packages -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0-preview3.25342.7" />
     <!-- Configuration packages -->
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.3.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.3" />
@@ -42,7 +40,5 @@
     <PackageVersion Include="OpenTelemetry" Version="1.15.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.0" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
-    <!-- System packages -->
-    <PackageVersion Include="System.Data.OleDb" Version="10.0.3" />
   </ItemGroup>
 </Project>

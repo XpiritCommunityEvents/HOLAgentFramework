@@ -25,8 +25,6 @@
     <!-- Microsoft Agents packages -->
     <PackageVersion Include="Microsoft.Agents.AI" Version="1.0.0-preview.260121.1" />
     <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-preview.260121.1" />
-    <!-- Data packages -->
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.0-preview3.25342.7" />
     <!-- Configuration packages -->
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2" />
@@ -72,8 +70,6 @@
     <PackageVersion Include="Prometheus.Client.AspNetCore" Version="6.0.0" />
     <!-- Swashbuckle packages -->
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.6" />
-    <!-- System packages -->
-    <PackageVersion Include="System.Data.OleDb" Version="10.0.2" />
     <!-- Wolverine packages -->
     <PackageVersion Include="WolverineFx" Version="5.2.0" />
   </ItemGroup>
