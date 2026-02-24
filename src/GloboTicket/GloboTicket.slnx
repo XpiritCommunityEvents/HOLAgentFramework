@@ -1,0 +1,6 @@
+﻿<Solution>
+  <Project Path="catalog\catalog.csproj" />
+  <Project Path="frontend\frontend.csproj" />
+  <Project Path="ordering\ordering.csproj" />
+  <Project Path="unittests\unittests.csproj" />
+</Solution>

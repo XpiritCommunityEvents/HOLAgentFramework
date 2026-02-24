@@ -51,8 +51,15 @@
     <Project Path="exercises/module4/completed4.4itp/module-agent-start.csproj" />
   </Folder>
 
-  <Folder Name="/src/">
+  <Folder Name="/src/HolAgentFramework/">
     <Project Path="src/HolAgentFramework/HolAgentFramework.csproj" />
+  </Folder>
+
+  <Folder Name="/src/GloboTicket/">
+    <Project Path="src/GloboTicket/catalog/catalog.csproj" />
+    <Project Path="src/GloboTicket/frontend/frontend.csproj" />
+    <Project Path="src/GloboTicket/ordering/ordering.csproj" />
+    <Project Path="src/GloboTicket/unittests/unittests.csproj" />
   </Folder>
 
 </Solution>
