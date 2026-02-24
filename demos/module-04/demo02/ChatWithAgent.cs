@@ -20,12 +20,8 @@ internal class ChatWithAgent(IChatClient chatClient)
         var session = await transportationAgent.CreateSessionAsync();
 
         Console.WriteLine("******** RESPONSE ***********");
-        await foreach (var update in transportationAgent.RunStreamingAsync(question, session))
-        {
-            Console.Write(update);
-        }
-
-        Console.WriteLine();
+        var agentResponse = await transportationAgent.RunAsync(question, session);
+        PrintResult(agentResponse);
     }
 
     private AIAgent CreateTransportationAgent()
@@ -44,5 +40,16 @@ internal class ChatWithAgent(IChatClient chatClient)
                 tools: [AIFunctionFactory.Create(RideInformationSystemService.GetAvailableRides),
                         AIFunctionFactory.Create(RideInformationSystemService.BookARide)]
             );
+    }
+
+    private static void PrintResult(AgentResponse agentResponse)
+    {
+        foreach (var message in agentResponse.Messages)
+        {
+            //Console.WriteLine($"Thread: {session.Id}");
+            //Console.WriteLine($"Thread data: {message.}");
+            Console.WriteLine($"Author: {message.AuthorName}");
+            Console.WriteLine($"Message:{message.Text}");
+        }
     }
 }
