@@ -1,4 +1,4 @@
-﻿using Microsoft.Agents.AI;
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
 namespace modulerag;
@@ -41,5 +41,5 @@ internal class ChatWithAgent(IChatClient chatClient)
                 description: "An agent that finds transportation options for the user from their hotel to the concert venue.",
                 instructions: instructions
             );
-    }    
+    }
 }
