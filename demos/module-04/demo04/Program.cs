@@ -1,13 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel;
-using modulerag;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
-var builder = new ConfigurationBuilder();
-builder.SetBasePath(Directory.GetCurrentDirectory())
+var builder = Host.CreateApplicationBuilder(args);
+
+builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddUserSecrets<Program>();
 
-IConfiguration config = builder.Build();
+builder.Services.AddHostedService<Worker>();
+builder.AddOpenAIClient("openai")
+       .AddChatClient("gpt-5-mini");
 
-//await new ChatWithAgent().LetAgentFindRide(config);
-await new ChatWithAgent().LetAgentFindRideAndHotel(config);
+var host = builder.Build();
+await host.RunAsync();

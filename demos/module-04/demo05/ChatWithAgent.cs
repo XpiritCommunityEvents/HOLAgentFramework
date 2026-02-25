@@ -1,20 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Agents.Orchestration.Handoff;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel.Agents.Orchestration;
-using Microsoft.SemanticKernel.Agents.Runtime.InProcess;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+﻿using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace modulerag;
 
-internal class ChatWithAgent
+internal class ChatWithAgent(IChatClient chatClient)
 {
-    public async Task LetAgentFindRideAndHotelWithOrchestrator(IConfiguration config)
+    public async Task LetAgentFindRideAndHotelWithOrchestrator()
     {
         var question =
         """
@@ -81,7 +72,7 @@ internal class ChatWithAgent
         await runtime.RunUntilIdleAsync();
     }
 
-    private ChatCompletionAgent CreateChatcompletionAgent(IConfiguration config)
+    private ChatCompletionAgent CreateChatcompletionAgent()
     {
         Kernel kernel = CreateKernel(config);
         var instructions = """
@@ -108,18 +99,6 @@ internal class ChatWithAgent
         };
 
         return agent;
-    }
-
-    private static Kernel CreateKernel(IConfiguration config)
-    {
-        var model = config["OpenAI:Model"];
-        var endpoint = config["OpenAI:EndPoint"];
-        var token = config["OpenAI:ApiKey"];
-        var kernelBuilder = Kernel
-            .CreateBuilder()
-            .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
-        var kernel = kernelBuilder.Build();
-        return kernel;
     }
 
     protected sealed class OrchestrationMonitor

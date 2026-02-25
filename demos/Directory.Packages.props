@@ -4,41 +4,44 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Azure and AI packages -->
+    <PackageVersion Include="Aspire.OpenAI" Version="13.3.0-preview.1.26256.5" />
     <PackageVersion Include="Azure.AI.Inference" Version="1.0.0-beta.5" />
-    <PackageVersion Include="Azure.AI.OpenAI" Version="2.8.0-beta.1" />
+    <PackageVersion Include="Azure.AI.OpenAI" Version="2.9.0-beta.1" />
     <!-- Microsoft Agents packages -->
-    <PackageVersion Include="Microsoft.Agents.AI" Version="1.0.0-rc1" />
-    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.0.0-rc1" />
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.5.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.5.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.5.0" />
     <!-- Configuration packages -->
-    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.3.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.5.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.7" />
     <!-- Dependency Injection packages -->
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
     <!-- Logging packages -->
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="10.0.7" />
     <!-- Kernel Memory packages -->
     <PackageVersion Include="Microsoft.KernelMemory" Version="0.98.250508.3" />
     <PackageVersion Include="Microsoft.KernelMemory.AI.OpenAI" Version="0.98.250508.3" />
     <PackageVersion Include="Microsoft.KernelMemory.SemanticKernelPlugin" Version="0.98.250508.3" />
     <!-- Semantic Kernel packages -->
-    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.70.0" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Abstractions" Version="1.70.0" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.AzureAI" Version="1.70.0-preview" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Core" Version="1.70.0" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Magentic" Version="1.70.0-preview" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Orchestration" Version="1.70.0-preview" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Runtime.InProcess" Version="1.70.0-preview" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.70.0-alpha" />
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.75.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Abstractions" Version="1.75.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.AzureAI" Version="1.75.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Core" Version="1.75.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Magentic" Version="1.75.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Orchestration" Version="1.75.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Agents.Runtime.InProcess" Version="1.75.0-preview" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Plugins.Web" Version="1.75.0-alpha" />
     <!-- Model Context Protocol -->
-    <PackageVersion Include="ModelContextProtocol" Version="0.9.0-preview.1" />
+    <PackageVersion Include="ModelContextProtocol" Version="1.3.0" />
     <!-- Other packages -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <!-- OpenTelemetry packages -->
-    <PackageVersion Include="OpenTelemetry" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
   </ItemGroup>
 </Project>
