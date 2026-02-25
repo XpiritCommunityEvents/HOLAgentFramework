@@ -3,11 +3,11 @@ using System.ComponentModel;
 
 namespace modulerag;
 
-public class HotelBookingFunctions
+public static partial class HotelBookingFunctions
 {
-    [KernelFunction, Description("Returns available rooms in a city for a date")]
+    [Description("Returns available rooms in a city for a date")]
     [return: Description("The available room information, containing Type, Price per night, name of the hotel, number of people per room, amenities and location")]
-    public AvailableRoom[] SelectRoomPreference(
+    public static AvailableRoom[] SelectRoomPreference(
         [Description("City where you need an hotel")]
         string city,
         [Description("Date the hotel night is required")]
@@ -21,9 +21,9 @@ public class HotelBookingFunctions
                 .ToArray();
     }
 
-    [KernelFunction, Description("Books a room previously selected from available rooms")]
+    [Description("Books a room previously selected from available rooms")]
     [return: Description("Indication if the booking was successful")]
-    public bool BookSelectedRoom(
+    public static bool BookSelectedRoom(
         [Description("id of the room to be booked")]
         int id)
     {
@@ -34,9 +34,9 @@ public class HotelBookingFunctions
         return selectedRoom != null;
     }
 
-    [KernelFunction, Description("Provides approval from the user for making a suggested booking based on the room id")]
+    [Description("Provides approval from the user for making a suggested booking based on the room id")]
     [return: Description("Indication if it is allowed to make the booking")]
-    public bool GetApprovalForBooking(
+    public static bool GetApprovalForBooking(
         [Description("id of the room to be booked")]
         int id)
     {
@@ -47,18 +47,7 @@ public class HotelBookingFunctions
         return consent.Equals("yes", StringComparison.OrdinalIgnoreCase);
     }
 
-    public class AvailableRoom
-    {
-        public int RoomId { get; set; }
-        public string RoomType { get; set; }
-        public decimal PricePerNight { get; set; }
-        public string HotelName { get; set; }
-        public int NumberOfAdultsAllowedInRoom { get; set; }
-        public string Amenities { get; set; }
-        public string City { get; set; }
-    }
-
-    private readonly AvailableRoom[] availableRooms =
+    private static readonly AvailableRoom[] availableRooms =
     [
         // --- 50 room options below ---
         new AvailableRoom { RoomId = 304, RoomType = "Standard", PricePerNight = 110.00m, HotelName = "Harbor View", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "San Francisco" },
