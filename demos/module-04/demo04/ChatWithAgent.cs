@@ -12,36 +12,40 @@ internal class ChatWithAgent(IChatClient chatClient)
         I am going to a concert that is held at the Seattle Kraken Stadium. The Concert starts at 7:30 pm and is November 20th this year. 
         """;
 
-        Console.WriteLine("******** Create the ride agent ***********");
-        var rideAgent = CreateTransportationAgent();
+        var userMessage = new ChatMessage(ChatRole.User, question);
 
         Console.WriteLine("******** Create the hotel agent ***********");
         var hotelAgent = HotelBookingAgent.CreateChatCompletionAgent(chatClient);
 
-        // create the chat history that starts the agent thread
-        var history = new ChatHistory();
-        history.AddMessage(AuthorRole.User, question);
+        Console.WriteLine("******** Create the ride agent ***********");
+        var rideAgent = CreateTransportationAgent();
 
-        // TODO how to deal with multiple agents? AgentSession is created for a specific agent.
-        // Sessions are agent/service-specific.
-        // Reusing a session with a different agent configuration or provider can lead to invalid context.
-        AgentSession thread = new ChatHistoryAgentThread(history);
+        var hotelSession = await hotelAgent.CreateSessionAsync();
+        await RunUntilGoalReached(hotelAgent, [userMessage], hotelSession);
 
-        await RunUntilGoalReached(hotelAgent, thread);
-        Console.WriteLine("******** hotel agent done ***********"); 
-        await RunUntilGoalReached(rideAgent, thread);
+        var provider = hotelAgent.GetService<InMemoryChatHistoryProvider>();
+        List<ChatMessage>? messages = provider?.GetMessages(hotelSession);
+
+        Console.WriteLine("******** hotel agent done ***********");
+        var rideSession = await rideAgent.CreateSessionAsync();
+
+        await RunUntilGoalReached(rideAgent, messages, rideSession);
 
         Console.WriteLine("******** Done ***********");
     }
 
-    private async Task RunUntilGoalReached(AIAgent agent, AgentSession session)
+    private async Task RunUntilGoalReached(AIAgent agent, IEnumerable<ChatMessage> messages, AgentSession session)
     {
-        var agentResponse = await agent.RunAsync("", session);
+        var agentResponse = await agent.RunAsync(messages, session);
 
         PrintResult(agentResponse);
         while (!IsGoalReached(agentResponse))
         {
             var input = Console.ReadLine();
+            if(string.IsNullOrEmpty(input))
+            {
+                continue;
+            }
 
             agentResponse = await agent.RunAsync(input, session);
 
@@ -92,7 +96,7 @@ internal class ChatWithAgent(IChatClient chatClient)
             You are not allowed to make a booking without user confirmation!
 
             After you successfully booked the ride you will respond with [** GOAL REACHED **] in your message.            
-            """; 
+            """;
 
         return chatClient.AsAIAgent(
                 name: "TransportationAgent",
