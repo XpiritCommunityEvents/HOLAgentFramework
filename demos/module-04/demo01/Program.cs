@@ -1,8 +1,8 @@
 ﻿using System.ClientModel;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
-using modulerag;
 using OpenAI;
+using modulerag;
 
 var builder = new ConfigurationBuilder();
 builder.SetBasePath(Directory.GetCurrentDirectory())

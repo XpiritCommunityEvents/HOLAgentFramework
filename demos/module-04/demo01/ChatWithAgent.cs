@@ -1,4 +1,4 @@
-﻿using Microsoft.Agents.AI;
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
 namespace modulerag;
@@ -19,12 +19,8 @@ internal class ChatWithAgent(IChatClient chatClient)
         var session = await transportationAgent.CreateSessionAsync();
 
         Console.WriteLine("******** RESPONSE ***********");
-        await foreach (var update in transportationAgent.RunStreamingAsync(question, session))
-        {
-            Console.Write(update);
-        }
-
-        Console.WriteLine();
+        var agentResponse = await transportationAgent.RunAsync(question, session);
+        PrintResult(agentResponse);
     }
 
     private AIAgent CreateTransportationAgent()
@@ -41,5 +37,16 @@ internal class ChatWithAgent(IChatClient chatClient)
                 description: "An agent that finds transportation options for the user from their hotel to the concert venue.",
                 instructions: instructions
             );
-    }    
+    }
+
+    private static void PrintResult(AgentResponse agentResponse)
+    {
+        foreach (var message in agentResponse.Messages)
+        {
+            //Console.WriteLine($"Thread: {session.Id}");
+            //Console.WriteLine($"Thread data: {message.}");
+            Console.WriteLine($"Author: {message.AuthorName}");
+            Console.WriteLine($"Message:{message.Text}");
+        }
+    }
 }
