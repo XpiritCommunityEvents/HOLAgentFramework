@@ -1,59 +1,45 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+﻿using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace modulerag;
 
-internal class ChatWithAgent
+internal class ChatWithAgent(IChatClient chatClient)
 {
-    public async Task LetAgentFindRide(IConfiguration config)
+    public async Task LetAgentFindRide()
     {
         var question =
         """
-        I stay at the WestIn Seattle and the venue is the Seattle Kraken stadium.
+        I stay at the Westin Seattle and the venue is the Seattle Kraken stadium.
         the Concert starts at 7:30 pm and is November 20th this year. 
         """;
 
         Console.WriteLine("******** Create the agent ***********");
-        var transportationAgent = CreateTransportationAgent(config);
-        transportationAgent.Kernel.ImportPluginFromType<RideInformationSystemService>();
-        Console.WriteLine("******** Start the agent ***********");
+        var transportationAgent = CreateTransportationAgent();
 
-        var thread = new ChatHistoryAgentThread();
-        var agentresult = transportationAgent.InvokeAsync(question, thread);
+        Console.WriteLine("******** Start the agent ***********");
+        var session = await transportationAgent.CreateSessionAsync();
+
+        var agentResponse = await transportationAgent.RunAsync(question, session);
 
         Console.WriteLine("******** RESPONSE 1 ***********");
-        await PrintResult(agentresult);
+        PrintResult(agentResponse);
 
-        while (!await IsGoalReached(agentresult))
+        while (!IsGoalReached(agentResponse))
         {
             var input = Console.ReadLine();
 
-            agentresult = transportationAgent.InvokeAsync(input, thread);
+            agentResponse = await transportationAgent.RunAsync(input, session);
 
             Console.WriteLine("******** RESPONSE ***********");
-            await PrintResult(agentresult);
+            PrintResult(agentResponse);
         }
         Console.WriteLine("******** Terminating, goal reached ***********");
     }
 
-    private async Task<bool> IsGoalReached(IAsyncEnumerable<AgentResponseItem<ChatMessageContent>> agentResponse)
-    {
-        await foreach(var item in agentResponse)
-        {
-            if(item.Message.Content.Contains("[** GOAL REACHED **]"))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
+    private bool IsGoalReached(AgentResponse agentResponse) => agentResponse.Text.Contains("[** GOAL REACHED **]");
 
-    private ChatCompletionAgent CreateTransportationAgent(IConfiguration config)
+    private AIAgent CreateTransportationAgent()
     {
-        var kernel = CreateKernel(config);
-
         var instructions = """
             You are an expert in finding transportation options from a given hotel location to the concert location.
             You will try to get the best options available for an affordable price. Make sure the customer will be there at least 30 minutes before the concert starts at the venue.
@@ -62,46 +48,25 @@ internal class ChatWithAgent
             You are not allowed to make a booking without user confirmation!
 
             After you successfully booked the ride you will respond with [** GOAL REACHED **] in your message.            
-            """; 
+            """;
 
-        ChatCompletionAgent agent = new()
-        {
-            Name = "TransportationAgent",
-            Instructions = instructions,
-            Description = "An agent that finds transportation options from hotel to concert location",
-            Kernel = kernel,
-            Arguments = new KernelArguments(new OpenAIPromptExecutionSettings()
-            {
-                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
-            }),
-        };
-
-        return agent;
+        return chatClient.AsAIAgent(
+                name: "TransportationAgent",
+                description: "An agent that finds transportation options for the user from their hotel to the concert venue.",
+                instructions: instructions,
+                tools: [AIFunctionFactory.Create(RideInformationSystemService.GetAvailableRides),
+                        AIFunctionFactory.Create(RideInformationSystemService.BookARide)]
+            );
     }
 
-    private static async Task PrintResult(IAsyncEnumerable<AgentResponseItem<ChatMessageContent>> agentResponse)
+    private static void PrintResult(AgentResponse agentResponse)
     {
-        await
-        foreach (var item in agentResponse)
+        foreach (var message in agentResponse.Messages)
         {
-            Console.WriteLine($"Thread: {item.Thread.Id}");
-            Console.WriteLine($"Thread data: {item.Thread}");
-            Console.WriteLine($"Author: {item.Message.AuthorName}");
-            Console.WriteLine($"Message:{item.Message}");
+            //Console.WriteLine($"Thread: {session.Id}");
+            //Console.WriteLine($"Thread data: {message.}");
+            Console.WriteLine($"Author: {message.AuthorName}");
+            Console.WriteLine($"Message:{message.Text}");
         }
-    }
-
-    private static Kernel CreateKernel(IConfiguration config)
-    {
-        var model = config["OpenAI:Model"];
-        var endpoint = config["OpenAI:EndPoint"];
-        var token = config["OpenAI:ApiKey"];
-
-        var kernelBuilder = Kernel
-            .CreateBuilder()
-            .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
-
-        var kernel = kernelBuilder.Build();
-        return kernel;
     }
 }
