@@ -50,7 +50,7 @@ internal class ChatWithAgent(IChatClient chatClient)
             .Build();
 
         Console.WriteLine("******** Create the hotel agent ***********");
-        var hotelAgent = HotelBookingAgent.CreateChatCompletionAgent(chatClient)
+        var hotelAgent = HotelBookingAgent.CreateAgent(chatClient)
             .AsBuilder()
             .UseOpenTelemetry(sourceName: SourceName, configure: (cfg) => cfg.EnableSensitiveData = true) // enable telemetry at the agent level
             .Build();
