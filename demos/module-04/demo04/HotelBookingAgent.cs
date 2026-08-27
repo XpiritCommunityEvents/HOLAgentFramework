@@ -5,7 +5,7 @@ namespace modulerag;
 
 internal class HotelBookingAgent
 {
-    public static AIAgent CreateChatCompletionAgent(IChatClient chatClient)
+    public static AIAgent CreateAgent(IChatClient chatClient)
     {
         return chatClient.AsAIAgent(
             name: "HotelReservationAgent",
