@@ -1,11 +1,11 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.3.0">
+<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
 
   <ItemGroup>
     <ProjectReference Include="..\demos\module-04\demo04\demo-04.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.OpenAI" Version="13.3.0" />
+    <PackageReference Include="Aspire.Hosting.OpenAI" Version="13.5.3" />
   </ItemGroup>
 
   <PropertyGroup>
