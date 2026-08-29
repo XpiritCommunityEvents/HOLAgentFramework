@@ -7,9 +7,14 @@ var config = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
     .Build();
 
-var model = config["OpenAI:Model"];
-var endpoint = config["OpenAI:EndPoint"];
+var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("Missing OpenAI:Model configuration.");
+var endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("Missing OpenAI:EndPoint configuration.");
 var token = config["OpenAI:ApiKey"];
+
+if (string.IsNullOrWhiteSpace(token) || token == "<set this in your user secrets>")
+{
+    throw new InvalidOperationException("Set OpenAI:ApiKey with dotnet user-secrets before running the app.");
+}
 
 Console.WriteLine($"Model: {model}");
 Console.WriteLine($"Endpoint: {endpoint}");
