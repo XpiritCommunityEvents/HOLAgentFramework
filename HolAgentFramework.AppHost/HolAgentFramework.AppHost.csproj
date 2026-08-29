@@ -5,7 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.OpenAI" Version="13.5.3" />
+    <PackageReference Include="Aspire.Hosting.OpenAI" />
   </ItemGroup>
 
   <PropertyGroup>
