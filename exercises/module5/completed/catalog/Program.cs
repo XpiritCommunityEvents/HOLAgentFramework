@@ -4,6 +4,9 @@ using GloboTicket.Catalog.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
+
+builder.Configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddHttpClient();
@@ -51,5 +54,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.MapMcp("/mcp");
+app.MapDefaultEndpoints();
 
 app.Run();

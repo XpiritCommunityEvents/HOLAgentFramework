@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://holagentframework.dev.localhost:17238;http://holagentframework.dev.localhost:15238",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://otlp.dev.localhost:21138",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://resources.dev.localhost:22012"
+      }
+    },
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "http://holagentframework.dev.localhost:15238",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://otlp.dev.localhost:19016",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "http://resources.dev.localhost:20090"
+      }
+    }
+  }
+}

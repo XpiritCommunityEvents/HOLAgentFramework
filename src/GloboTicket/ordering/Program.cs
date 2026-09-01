@@ -1,6 +1,7 @@
 using GloboTicket.Ordering.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddServiceDefaults();
 
 // Add services to the container.
 
@@ -25,5 +26,6 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapDefaultEndpoints();
 
 app.Run();

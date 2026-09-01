@@ -15,4 +15,7 @@
     <PackageReference Include="ModelContextProtocol" />
     <PackageReference Include="prometheus-net.AspNetCore" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
+  </ItemGroup>
 </Project>
