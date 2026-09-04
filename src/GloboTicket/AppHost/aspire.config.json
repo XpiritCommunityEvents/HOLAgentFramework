@@ -1,5 +1,5 @@
 {
   "appHost": {
-    "path": "HolAgentFramework.AppHost.csproj"
+    "path": "AppHost.csproj"
   }
 }
