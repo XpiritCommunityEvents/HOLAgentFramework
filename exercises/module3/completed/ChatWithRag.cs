@@ -189,7 +189,7 @@ namespace modulerag
             {
                 APIKey = key,
                 Endpoint = endpoint,
-                EmbeddingModel = "openai/text-embedding-3-small",
+                EmbeddingModel = "text-embedding-3-small",
             };
 
             // 5-8. Build comprehensive KernelMemory system
