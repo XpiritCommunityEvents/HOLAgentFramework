@@ -1,3 +1,4 @@
+using Microsoft.Extensions.VectorData;
 namespace modulerag;
 
 public class SelectedFile
