@@ -1,1 +1,1 @@
-﻿Console.WriteLine("Hello HOL Semantic Kernel!");
+﻿Console.WriteLine("Hello HOL Agent Framework!");
