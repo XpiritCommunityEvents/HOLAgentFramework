@@ -5,10 +5,13 @@ using GloboTicket.Frontend.Services;
 using GloboTicket.Frontend.Services.AI;
 using GloboTicket.Frontend.Services.Ordering;
 using Microsoft.Agents.AI;
+using Microsoft.Agents.AI.DevUI;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using OpenAI;
 using System.ClientModel;
+
+AppContext.SetSwitch("OpenAI.Experimental.OpenTelemetry", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,7 +61,14 @@ builder.Services.AddSingleton<IChatClient>(_ =>
     var openAIClient = new OpenAIClient(
         new ApiKeyCredential(apiKey),
         new OpenAIClientOptions { Endpoint = endpoint });
-    return openAIClient.GetChatClient(model).AsIChatClient();
+    var client = openAIClient.GetChatClient(model).AsIChatClient();
+
+    return new ChatClientBuilder(client)
+        .UseOpenTelemetry(sourceName: ChatAssistant.Name, configure: (cfg) => {
+            // Allows the DevUI debug panel to see actual prompt text and tool results
+            cfg.EnableSensitiveData = true;
+        })
+        .Build();
 });
 
 builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
@@ -66,23 +76,31 @@ builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
     tools));
 builder.Services.AddSingleton<ConversationStore>();
 
+builder.Services.AddOpenAIResponses();
+builder.Services.AddOpenAIConversations();
+builder.Services.AddDevUI();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    //app.UseHsts();
 }
 
-// Turning this off to simplify the running in Kubernetes demo
-// app.UseHttpsRedirection();
+app.MapOpenAIResponses();
+app.MapOpenAIConversations();
+if (app.Environment.IsDevelopment())
+{
+    app.MapDevUI();
+}
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthorization();
+
 
 app.MapHub<ChatHub>("/chatHub");
 

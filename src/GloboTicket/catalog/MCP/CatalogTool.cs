@@ -53,7 +53,7 @@ public sealed class CatalogTool(IEventRepository eventRepository)
 
     [McpServerTool(ReadOnly = true, Destructive = false), Description("Get full details for a catalog event by stable identifier.")]
     public async Task<ContentBlock> GetEventDetails(
-        [Description("Event identifier (required)")] Guid id,
+        [Description("Event identifier (uuid, required)")] Guid id,
         CancellationToken cancellationToken = default)
     {
         if (id == Guid.Empty) return Text("Validation error: event id must not be empty");

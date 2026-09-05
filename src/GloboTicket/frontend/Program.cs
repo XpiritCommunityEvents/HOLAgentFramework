@@ -4,8 +4,14 @@ using GloboTicket.Frontend.Models;
 using GloboTicket.Frontend.Services;
 using GloboTicket.Frontend.Services.AI;
 using GloboTicket.Frontend.Services.Ordering;
+using Microsoft.Agents.AI.DevUI;
+using Microsoft.Extensions.AI;
+
+AppContext.SetSwitch("OpenAI.Experimental.OpenTelemetry", true);
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddEnvironmentVariables();
 
 builder.AddServiceDefaults();
 
@@ -33,23 +39,31 @@ string catalogBaseAddress = builder.Configuration["ApiConfigs:EventCatalog:Uri"]
     ?? throw new InvalidOperationException("The event catalog URI is not configured.");
 builder.Services.AddSingleton<ConversationStore>();
 
+builder.Services.AddOpenAIResponses();
+builder.Services.AddOpenAIConversations();
+builder.Services.AddDevUI();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    //app.UseHsts();
 }
 
-// Turning this off to simplify the running in Kubernetes demo
-// app.UseHttpsRedirection();
+app.MapOpenAIResponses();
+app.MapOpenAIConversations();
+if (app.Environment.IsDevelopment())
+{
+    app.MapDevUI();
+}
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthorization();
+
 
 app.MapHub<ChatHub>("/chatHub");
 
