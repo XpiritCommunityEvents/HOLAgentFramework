@@ -2,20 +2,13 @@ using GloboTicket.Ordering.Model;
 
 namespace GloboTicket.Ordering.Services;
 
-public class EmailSender
+public class EmailSender(ILogger<EmailSender> logger)
 {
-    private readonly ILogger<EmailSender> logger;
-
-    public EmailSender(ILogger<EmailSender> logger)
+    public Task SendEmailForOrder(OrderForCreation order, CancellationToken cancellationToken)
     {
-        this.logger = logger;
-    }
-
-    public Task SendEmailForOrder(OrderForCreation order)
-    {
-        logger.LogInformation($"Received a new order for {order.CustomerDetails.Email}");
+        cancellationToken.ThrowIfCancellationRequested();
+        logger.LogInformation("Received a new order for {CustomerEmail}", order.CustomerDetails.Email);
         logger.LogWarning("Not using Dapr so no email sent");
         return Task.CompletedTask;
     }
 }
-

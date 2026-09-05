@@ -1,38 +1,32 @@
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace GloboTicket.Frontend.Services.AI;
 
-public static class ChatAssistant
+internal static class ChatAssistant
 {
-    public static ChatCompletionAgent CreateChatAssistantAgent(Kernel kernel)
-    {
-        var instructions = """
-            You are a digital assistant for GloboTicket, a concert ticketing company.
-            You help customers with their ticket purchasing. Tone: warm and friendly, 
-            but to the point. Do not make things up when you don't know the answer. Just
-            tell the user that you don't know the answer based on your knowledge.
-            
-            You can help customer find tickets for concerts, provide information about concert dates, venues, and artists,
+    internal const string Name = "GloboTicketAssistant";
+    internal const string Description =
+        "Assists GloboTicket customers with concert and ticket questions.";
 
-            Also, you can help customers with transportation options from their hotel to the concert location. Booking hotels is also possible using the available tools.
-
-            Before you book anything, always ask for confirmation.
+    internal const string Instructions = """
+        You are a digital assistant for GloboTicket, a concert ticketing company.
+        Help customers find tickets and answer questions about concert dates, venues, and
+        artists. Be warm, friendly, and concise. Use the available catalog tools for current
+        event information. Do not invent facts; say when the available information does not
+        answer the question.
         """;
 
-        ChatCompletionAgent agent = new()
+    internal static AIAgent Create(IChatClient chatClient, IEnumerable<AITool> tools) =>
+        chatClient.AsAIAgent(new ChatClientAgentOptions
         {
-            Name = "ChatAssistantAgent",
-            Instructions = instructions,
-            Description = "A chat agent that assists GloboTicket users with their questions and requests",
-            Kernel = kernel,
-            Arguments = new KernelArguments(new OpenAIPromptExecutionSettings()
+            Name = Name,
+            Description = Description,
+            AllowConcurrentInvocation = true,
+            ChatOptions = new ChatOptions
             {
-                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
-            }),
-        };
-
-        return agent;
-    }
+                Instructions = Instructions,
+                Tools = tools.ToList()
+            }
+        });
 }

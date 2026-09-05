@@ -1,13 +1,12 @@
+#nullable enable
+
 using GloboTicket.Frontend.Models;
 using GloboTicket.Frontend.Services;
 using GloboTicket.Frontend.Services.AI;
 using GloboTicket.Frontend.Services.Ordering;
-using HealthChecks.UI.Client;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
-using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
+
 builder.AddServiceDefaults();
 
 // Add services to the container.
@@ -16,25 +15,23 @@ builder.Services.AddControllersWithViews();
 // note: for this demo we're using the DAPR_HTTP_PORT environment variable to decide if we're using Dapr or not
 builder.Services.AddHttpClient<IEventCatalogService, EventCatalogService>((sp, c) =>
 {
-    c.BaseAddress = new Uri(sp.GetService<IConfiguration>()["ApiConfigs:EventCatalog:Uri"]);
+    c.BaseAddress = new Uri(sp.GetRequiredService<IConfiguration>()["ApiConfigs:EventCatalog:Uri"]!);
 });
 builder.Services.AddHttpClient<IOrderSubmissionService, HttpOrderSubmissionService>((sp, c) =>
 {
-    c.BaseAddress = new Uri(sp.GetService<IConfiguration>()["ApiConfigs:Ordering:Uri"]);
+    c.BaseAddress = new Uri(sp.GetRequiredService<IConfiguration>()["ApiConfigs:Ordering:Uri"]!);
 });
 
 builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketService>();
 builder.Services.AddSingleton<Settings>();
 
-builder.Services.AddHealthChecks()
-   .AddProcessAllocatedMemoryHealthCheck(maximumMegabytesAllocated: 500);
-
-builder.Services.AddHttpClient(Options.DefaultName)
-    .UseHttpClientMetrics();
-
-builder.Services.AddSingleton<Settings>();
-
 builder.Services.AddSignalR();
+
+// TODO: Connect the catalog MCP tools and OpenAI chat client, then register the
+// Agent Framework assistant. See the completed module after attempting the exercise.
+string catalogBaseAddress = builder.Configuration["ApiConfigs:EventCatalog:Uri"]
+    ?? throw new InvalidOperationException("The event catalog URI is not configured.");
+builder.Services.AddSingleton<ConversationStore>();
 
 var app = builder.Build();
 
@@ -60,25 +57,6 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=EventCatalog}/{action=Index}/{id?}");
 
-//map the livelyness and readyness probes
-app.MapHealthChecks("/health/ready",
-new HealthCheckOptions()
-{
-    Predicate = reg => reg.Tags.Contains("ready"),
-    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-});
-
-app.MapHealthChecks("/health/lively",
-new HealthCheckOptions()
-{
-    Predicate = reg => true,
-    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-});
-
-app.UseHttpMetrics();
-app.UseMetricServer();
-
-app.MapMetrics();
 app.MapDefaultEndpoints();
 
-app.Run();
+await app.RunAsync();

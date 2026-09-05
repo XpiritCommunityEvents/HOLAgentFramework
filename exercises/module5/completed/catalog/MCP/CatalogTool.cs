@@ -6,86 +6,82 @@ using ModelContextProtocol.Server;
 namespace GloboTicket.Catalog.MCP;
 
 [McpServerToolType]
-public class CatalogTool(IEventRepository eventRepository)
+public sealed class CatalogTool(IEventRepository eventRepository)
 {
-    [McpServerTool(Destructive = false), Description("Get all real-time information of all known concerts, events and performances in the catalog for a given artist")]
-    public async Task<IEnumerable<ContentBlock>> GetEventsByArtist([Description("Artist name")] string artist)
-    {
-        var events = await eventRepository.GetEvents();
+    private const int MaxResults = 20;
 
-        return events
-            .Where(e => e.Artist.Contains(artist, StringComparison.OrdinalIgnoreCase))
-            .Take(20)
-            .Select(MapEvent);
+    [McpServerTool(ReadOnly = true, Destructive = false), Description("Find up to 20 catalog events for an artist.")]
+    public async Task<IReadOnlyList<ContentBlock>> GetEventsByArtist(
+        [Description("Artist name (required)")] string artist,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(artist)) return Error("artist must not be empty");
+
+        var events = await eventRepository.GetEventsByArtist(artist.Trim(), MaxResults, cancellationToken);
+        return events.Select(MapEvent).ToList();
     }
 
-    [McpServerTool(Destructive = false), Description("Gets events, concerts, performances within a specified date range")]
-    public async Task<IEnumerable<ContentBlock>> GetEventsInDateRange([Description("Start date")] DateTime startDate, [Description("End date")]DateTime endDate)
+    [McpServerTool(ReadOnly = true, Destructive = false), Description("Find up to 20 catalog events in an inclusive date range.")]
+    public async Task<IReadOnlyList<ContentBlock>> GetEventsInDateRange(
+        [Description("Inclusive start date")] DateTime startDate,
+        [Description("Inclusive end date")] DateTime endDate,
+        CancellationToken cancellationToken = default)
     {
-        var events = await eventRepository.GetEvents();
-        return events
-            .Where(e => e.Date >= startDate && e.Date <= endDate)
-            .Take(20)
-            .Select(MapEvent);
+        if (startDate > endDate) return Error("startDate must be earlier than or equal to endDate");
+
+        var events = await eventRepository.GetEventsInDateRange(startDate, endDate, MaxResults, cancellationToken);
+        return events.Select(MapEvent).ToList();
     }
 
-    [McpServerTool(Destructive = false), Description("Gets events, concerts, performances in a specified location (city or state)")]
-    public async Task<IEnumerable<ContentBlock>> GetEventsInLocation([Description("Name of a city or state")] string location)
+    [McpServerTool(ReadOnly = true, Destructive = false), Description("Find up to 20 catalog events in a city or state.")]
+    public async Task<IReadOnlyList<ContentBlock>> GetEventsInLocation(
+        [Description("City or state (required)")] string location,
+        CancellationToken cancellationToken = default)
     {
-        var events = await eventRepository.GetEvents();
-        return events
-            .Where(e => e.Venue.City.Contains(location, StringComparison.OrdinalIgnoreCase) || e.Venue.State.Contains(location, StringComparison.OrdinalIgnoreCase))
-            .Take(20)
-            .Select(MapEvent);
+        if (string.IsNullOrWhiteSpace(location)) return Error("location must not be empty");
+
+        var events = await eventRepository.GetEventsInLocation(location.Trim(), MaxResults, cancellationToken);
+        return events.Select(MapEvent).ToList();
     }
 
-    [McpServerTool(Destructive = false), Description("Gets names of artists with known events")]
-    public async Task<IEnumerable<ContentBlock>> GetArtists()
+    [McpServerTool(ReadOnly = true, Destructive = false), Description("Get up to 20 distinct artist names in the catalog.")]
+    public async Task<IReadOnlyList<ContentBlock>> GetArtists(CancellationToken cancellationToken = default)
     {
-        var events = await eventRepository.GetEvents();
-        return events
-            .GroupBy(e => e.Artist)
-            .Take(20)
-            .Select(g => new TextContentBlock
-            {
-                Text = $"Artist: {g.Key}, Locations: {string.Join(", ", g.Select(e => e.Venue.City).Distinct())}",
-                Annotations = new()
-                {
-                    Audience = [Role.Assistant]
-                }
-            });
+        var artists = await eventRepository.GetArtists(MaxResults, cancellationToken);
+        return artists.Select(artist => Text($"Artist: {artist}")).ToList();
     }
 
-    [McpServerTool(Destructive = false), Description("Gets full details of a specific event by its unique identifier")]
-    public async Task<ContentBlock> GetEventDetails(Guid id)
+    [McpServerTool(ReadOnly = true, Destructive = false), Description("Get full details for a catalog event by stable identifier.")]
+    public async Task<ContentBlock> GetEventDetails(
+        [Description("Event identifier (required)")] Guid id,
+        CancellationToken cancellationToken = default)
     {
-        var @event = await eventRepository.GetEventById(id);
-        return new TextContentBlock
-        {
-            Text = $"""
-            {@event.Name}
-            Artist: {@event.Artist}
-            Date: {@event.Date:yyyy-MM-dd} at {@event.Venue.Name}, {@event.Venue.Address}, {@event.Venue.City}, {@event.Venue.State}, {@event.Venue.ZipCode}.
-            Seats available: {@event.Venue.SeatsAvailable}
-            
-            {@event.Description}
+        if (id == Guid.Empty) return Text("Validation error: event id must not be empty");
 
-            Price: {@event.Price}
-            """,
-            Annotations = new()
-            {
-                Audience = [Role.Assistant]
-            }
-        };
+        var @event = await eventRepository.GetEventById(id, cancellationToken);
+        if (@event is null) return Text($"Event not found: {id}");
+
+        return Text($$"""
+            ID: {{@event.EventId}}
+            Source: catalog/events/{{@event.EventId}}
+            {{@event.Name}}
+            Artist: {{@event.Artist}}
+            Date: {{@event.Date:yyyy-MM-dd}} at {{@event.Venue?.Name}}, {{@event.Venue?.Address}}, {{@event.Venue?.City}}, {{@event.Venue?.State}}, {{@event.Venue?.ZipCode}}.
+            Seats available: {{@event.Venue?.SeatsAvailable ?? 0}}
+
+            {{@event.Description}}
+
+            Price: {{@event.Price}}
+            """);
     }
 
-    private static ContentBlock MapEvent(Event @event) =>
-        new TextContentBlock
-        {
-            Text = $"ID: {@event.EventId}: {@event.Artist} - {@event.Date:yyyy-MM-dd} at {@event.Venue} in {@event.Venue.City}. Seats available: {@event.Venue.SeatsAvailable}",
-            Annotations = new()
-            {
-                Audience = [Role.Assistant]
-            }
-        };
+    private static ContentBlock MapEvent(Event @event) => Text($$"""
+        ID: {{@event.EventId}}
+        Source: catalog/events/{{@event.EventId}}
+        {{@event.Artist}} - {{@event.Date:yyyy-MM-dd}} at {{@event.Venue?.Name}} in {{@event.Venue?.City}}. Seats available: {{@event.Venue?.SeatsAvailable ?? 0}}
+        """);
+
+    private static IReadOnlyList<ContentBlock> Error(string message) => [Text($"Validation error: {message}")];
+
+    private static TextContentBlock Text(string value) => new() { Text = value, Annotations = new() { Audience = [Role.Assistant] } };
 }

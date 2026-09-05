@@ -1,27 +1,38 @@
-﻿using Microsoft.AspNetCore.SignalR;
+#nullable enable
+
+using Microsoft.AspNetCore.SignalR;
 
 namespace GloboTicket.Frontend.Services.AI;
 
 /// <summary>
-/// SignalR Hub for chat communication.
+/// Connects the browser chat to the workshop's assistant implementation.
 /// </summary>
-public class ChatHub : Hub
+public sealed class ChatHub : Hub
 {
-    /// <summary>
-    /// Method invoked by clients to send a message to the chat assistant.
-    /// </summary>
-    /// <param name="message">The user message/prompt</param>
-    public async Task SendMessage(string message)
+    internal const string AnonymousOwnerCookie = "GloboTicket.ChatOwner";
+
+    public async Task SendMessage(string conversationId, string message)
     {
-        await Clients
-            .Client(Context.ConnectionId).SendAsync("NewResponse");
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            throw new HubException("Enter a message before sending.");
+        }
 
-        // TODO: call the chat agent to handle the message
-        await Clients
-            .Client(Context.ConnectionId)
-            .SendAsync("ReceiveMessagePart", "Hi, I am a dummy assistant. There is no AI here yet ☹️");
+        if (!Guid.TryParse(conversationId, out Guid id) || id == Guid.Empty)
+        {
+            throw new HubException("The conversation identifier is invalid.");
+        }
 
-        await Clients
-            .Client(Context.ConnectionId).SendAsync("ResponseDone");
+        CancellationToken cancellationToken = Context.ConnectionAborted;
+        await Clients.Caller.SendAsync("NewResponse", cancellationToken);
+
+        // TODO: Create or retrieve the conversation, run the Agent Framework agent, and
+        // stream each response update to the caller instead of returning this placeholder.
+        await Clients.Caller.SendAsync(
+            "ReceiveMessagePart",
+            "Hi, I am a dummy assistant. There is no AI here yet ☹️",
+            cancellationToken);
+
+        await Clients.Caller.SendAsync("ResponseDone", cancellationToken);
     }
 }

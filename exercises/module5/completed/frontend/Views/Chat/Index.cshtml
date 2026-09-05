@@ -107,6 +107,14 @@
         animation: slideIn 0.3s ease-out;
     }
 
+    .chat-messages li.user-message {
+        border-left-color: #059669;
+    }
+
+    .chat-messages li.chat-error {
+        border-left-color: #dc2626;
+    }
+
     @@keyframes slideIn {
         from {
             opacity: 0;
@@ -176,47 +184,5 @@
     </div>
 </div>
 
-<script>
-// Auto-scroll function to scroll to bottom of messages
-function scrollToBottom() {
-    const messagesContainer = document.querySelector('.chat-messages');
-    if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-}
-
-// Call scrollToBottom whenever new messages are added
-// This will work with your existing SignalR chat functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const messagesList = document.getElementById('messagesList');
-    
-    // Use MutationObserver to detect when new messages are added
-    if (messagesList) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                    // Delay scroll to allow for DOM updates and animations
-                    setTimeout(scrollToBottom, 100);
-                }
-            });
-        });
-        
-        observer.observe(messagesList, { childList: true, subtree: true });
-    }
-
-    // Also scroll on page load
-    scrollToBottom();
-
-    // Allow Enter key to send message
-    const messageInput = document.getElementById('messageInput');
-    if (messageInput) {
-        messageInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                document.getElementById('sendButton').click();
-            }
-        });
-    }
-});
-</script>
 <script src="~/js/signalr/dist/browser/signalr.js"></script>
 <script src="~/js/chat.js"></script>

@@ -1,11 +1,28 @@
-﻿namespace GloboTicket.Ordering.Model;
+using System.ComponentModel.DataAnnotations;
+
+namespace GloboTicket.Ordering.Model;
 
 public class CustomerDetails
 {
-    public string Name { get; set; }
-    public string Email { get; set; }
-    public string Address { get; set; }
-    public string Town { get; set; }
-    public string PostalCode { get; set; }
-    public string CreditCardNumber { get; set; }
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    [Required]
+    public string Address { get; set; } = string.Empty;
+
+    [Required]
+    public string Town { get; set; } = string.Empty;
+
+    [Required]
+    public string PostalCode { get; set; } = string.Empty;
+
+    [Required]
+    public string CreditCardNumber { get; set; } = string.Empty;
+
+    [Required]
+    public string CreditCardExpiryDate { get; set; } = string.Empty;
 }

@@ -6,22 +6,15 @@ namespace GloboTicket.Ordering.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class OrderController : ControllerBase
+public class OrderController(
+    ILogger<OrderController> logger,
+    EmailSender emailSender) : ControllerBase
 {
-    private readonly ILogger<OrderController> logger;
-    private readonly EmailSender emailSender;
-
-    public OrderController(ILogger<OrderController> logger, EmailSender emailSender)
-    {
-        this.logger = logger;
-        this.emailSender = emailSender;
-    }
-
     [HttpPost("", Name = "SubmitOrder")]
-    public async Task<IActionResult> Submit(OrderForCreation order)
+    public async Task<IActionResult> Submit(OrderForCreation order, CancellationToken cancellationToken)
     {
-        logger.LogInformation($"Received a new order from {order.CustomerDetails.Name}");
-        await emailSender.SendEmailForOrder(order);
+        logger.LogInformation("Received a new order from {CustomerName}", order.CustomerDetails.Name);
+        await emailSender.SendEmailForOrder(order, cancellationToken);
         return Ok();
     }
 }

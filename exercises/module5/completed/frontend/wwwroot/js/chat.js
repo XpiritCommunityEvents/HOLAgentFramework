@@ -1,49 +1,89 @@
 "use strict";
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+const conversationStorageKey = "globoticket.chat.conversation";
+let conversationId = sessionStorage.getItem(conversationStorageKey);
+if (!conversationId) {
+    conversationId = crypto.randomUUID();
+    sessionStorage.setItem(conversationStorageKey, conversationId);
+}
 
-var li = null;
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/chatHub")
+    .build();
 
-//Disable the send button until connection is established.
-document.getElementById("sendButton").disabled = true;
+const sendButton = document.getElementById("sendButton");
+const messageInput = document.getElementById("messageInput");
+const messagesList = document.getElementById("messagesList");
+let assistantMessage = null;
+
+sendButton.disabled = true;
+messageInput.focus();
 
 function scrollToBottom() {
-    document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
+    const messages = document.querySelector(".chat-messages");
+    messages.scrollTop = messages.scrollHeight;
     window.scrollTo(0, document.body.scrollHeight);
 }
 
-connection.on("NewResponse", function () {
-    li = document.createElement("li");
-    document.getElementById("messagesList").appendChild(li);
-});
-
-connection.on("ResponseDone", function () {
-    li = null;
+function addMessage(text, className) {
+    const item = document.createElement("li");
+    item.className = className || "";
+    item.appendChild(document.createTextNode(text));
+    messagesList.appendChild(item);
     scrollToBottom();
+    return item;
+}
+
+function setReady() {
+    const connected = connection.state === signalR.HubConnectionState.Connected;
+    sendButton.disabled = !connected;
+    messageInput.disabled = !connected;
+}
+
+connection.on("NewResponse", function () {
+    assistantMessage = addMessage("", "assistant-message");
 });
 
 connection.on("ReceiveMessagePart", function (message) {
-    li.appendChild(document.createTextNode(message));
+    assistantMessage ||= addMessage("", "assistant-message");
+    assistantMessage.appendChild(document.createTextNode(message));
     scrollToBottom();
 });
 
-connection.start().then(function () {
-    document.getElementById("sendButton").disabled = false;
-}).catch(function (err) {
-    return console.error(err.toString());
+connection.on("ResponseDone", function () {
+    assistantMessage = null;
+    setReady();
+    scrollToBottom();
+    messageInput.focus();
 });
 
-document.getElementById("sendButton").addEventListener("click", function (event) {
-    var message = document.getElementById("messageInput").value;
-    var userMessage = document.createElement("li");
-    userMessage.innerText = "You: " + message;
-    document.getElementById("messagesList").appendChild(userMessage);
+connection.start()
+    .then(setReady)
+    .catch(error => addMessage(`Chat connection failed: ${error}`, "chat-error"));
 
-    scrollToBottom();
-
-    connection.invoke("SendMessage", message).catch(function (err) {
-        return console.error(err.toString());
-    });
-    document.getElementById("messageInput").value = "";
+sendButton.addEventListener("click", async function (event) {
     event.preventDefault();
+    const message = messageInput.value.trim();
+    if (!message || sendButton.disabled) {
+        return;
+    }
+
+    addMessage(`You: ${message}`, "user-message");
+    messageInput.value = "";
+    sendButton.disabled = true;
+    messageInput.disabled = true;
+
+    try {
+        await connection.invoke("SendMessage", conversationId, message);
+    } catch (error) {
+        addMessage(`Message could not be sent: ${error}`, "chat-error");
+        setReady();
+    }
+});
+
+messageInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        sendButton.click();
+    }
 });

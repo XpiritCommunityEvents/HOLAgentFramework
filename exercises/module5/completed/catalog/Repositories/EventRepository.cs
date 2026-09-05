@@ -58,7 +58,7 @@ public class EventRepository : IEventRepository
         });
     }
 
-    public Task<IEnumerable<Event>> GetEvents()
+    public Task<IReadOnlyList<Event>> GetEvents(CancellationToken cancellationToken = default)
     {
         // Sort events by promotion status (promotions first) and then by date
         var sortedEvents = events.ToList()
@@ -68,16 +68,21 @@ public class EventRepository : IEventRepository
             .ToList();
             
         // Return the sorted list
-        return Task.FromResult((IEnumerable<Event>)sortedEvents);
+        return Task.FromResult((IReadOnlyList<Event>)sortedEvents);
     }
 
 
-    public Task<Event> GetEventById(Guid eventId)
+    public Task<IReadOnlyList<Event>> GetEventsByArtist(string artist, int limit, CancellationToken cancellationToken = default) => Task.FromResult((IReadOnlyList<Event>)events.Where(e => e.Artist.Contains(artist, StringComparison.OrdinalIgnoreCase)).Take(Math.Clamp(limit, 1, 50)).ToList());
+    public Task<IReadOnlyList<Event>> GetEventsInDateRange(DateTime startDate, DateTime endDate, int limit, CancellationToken cancellationToken = default) => Task.FromResult((IReadOnlyList<Event>)events.Where(e => e.Date >= startDate && e.Date <= endDate).Take(Math.Clamp(limit, 1, 50)).ToList());
+    public Task<IReadOnlyList<Event>> GetEventsInLocation(string location, int limit, CancellationToken cancellationToken = default) => Task.FromResult((IReadOnlyList<Event>)events.Where(e => e.Venue != null && (e.Venue.City.Contains(location, StringComparison.OrdinalIgnoreCase) || e.Venue.State.Contains(location, StringComparison.OrdinalIgnoreCase))).Take(Math.Clamp(limit, 1, 50)).ToList());
+    public Task<IReadOnlyList<string>> GetArtists(int limit, CancellationToken cancellationToken = default) => Task.FromResult((IReadOnlyList<string>)events.Select(e => e.Artist).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(a => a).Take(Math.Clamp(limit, 1, 50)).ToList());
+
+    public Task<Event> GetEventById(Guid eventId, CancellationToken cancellationToken = default)
     {
         var @event = events.ToList().FirstOrDefault(e => e.EventId == eventId);
         if (@event == null)
         {
-            throw new InvalidOperationException("Event not found");
+            return Task.FromResult<Event>(null);
         }
         return Task.FromResult(@event);
     }

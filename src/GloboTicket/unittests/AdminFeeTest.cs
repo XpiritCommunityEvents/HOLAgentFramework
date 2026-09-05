@@ -149,7 +149,7 @@ namespace unittests
             {
                 EventId = eventId,
                 Name = "Test Event",
-                Date = DateTime.Now.AddDays(30),
+                Date = new DateTime(2027, 5, 4, 18, 30, 0, DateTimeKind.Utc),
                 VenueName = "Test Venue",
                 VenueCity = "Test City",
                 VenueState = "Test State",
