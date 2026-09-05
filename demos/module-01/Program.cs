@@ -2,26 +2,22 @@
 using Azure.AI.Inference;
 using Microsoft.Extensions.Configuration;
 
-var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
     .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
     .Build();
 
-var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("Missing OpenAI:Model configuration.");
-var endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("Missing OpenAI:EndPoint configuration.");
-var token = config["OpenAI:ApiKey"];
-
-if (string.IsNullOrWhiteSpace(token) || token == "<set this in your user secrets>")
-{
-    throw new InvalidOperationException("Set OpenAI:ApiKey with dotnet user-secrets before running the app.");
-}
+var model = configuration["OpenAI:Model"] ?? throw new InvalidOperationException("Set OpenAI:Model in appsettings.json or your environment.");
+var endpoint = configuration["OpenAI:Endpoint"] ?? throw new InvalidOperationException("Set OpenAI:Endpoint in appsettings.json or your environment.");
+var apiKey = configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Set OpenAI:ApiKey in appsettings.json or your environment.");
 
 Console.WriteLine($"Model: {model}");
 Console.WriteLine($"Endpoint: {endpoint}");
 
 var client = new ChatCompletionsClient(
     new Uri(endpoint),
-    new AzureKeyCredential(token),
+    new AzureKeyCredential(apiKey),
     new AzureAIInferenceClientOptions());
 
 var requestOptions = new ChatCompletionsOptions()
@@ -33,5 +29,5 @@ var requestOptions = new ChatCompletionsOptions()
     ]
 };
 
-var resp = await client.CompleteAsync(requestOptions);
-Console.WriteLine(resp.Value.Content);
+var response = await client.CompleteAsync(requestOptions);
+Console.WriteLine(response.Value.Content);
