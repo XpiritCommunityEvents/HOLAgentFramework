@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -67,6 +66,7 @@ public static class Extensions
                     .AddSource("Microsoft.Extensions.AI")
                     .AddSource("Microsoft.Agents.AI")
                     .AddSource("Microsoft.Agents.AI.Compaction")
+                    .AddSource("Experimental.Microsoft.Extensions.AI.*")
                     .AddAspNetCoreInstrumentation(tracing =>
                         // Exclude health check requests from tracing
                         tracing.Filter = context =>

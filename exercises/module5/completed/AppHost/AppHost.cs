@@ -22,7 +22,8 @@ var ordering = builder.AddProject<ordering>("ordering")
     .WithHttpHealthCheck("/health")
     .WithUrlForEndpoint("http", url => url.DisplayText = "Ordering API");
 
-builder.AddProject<frontend>("frontend")
+var frontend =builder.AddProject<frontend>("GloboTicketAssistant")
+    .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Development")
     .WithEnvironment("ApiConfigs__EventCatalog__Uri", catalog.GetEndpoint("http"))
     .WithEnvironment("ApiConfigs__Ordering__Uri", ordering.GetEndpoint("http"))
     .WithReference(chatModel)
@@ -35,5 +36,9 @@ builder.AddProject<frontend>("frontend")
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints()
     .WithUrlForEndpoint("http", url => url.DisplayText = "Web UI");
+
+var devui = builder.AddDevUI("devui")
+    .WithAgentService(frontend)
+    .WaitFor(frontend);
 
 builder.Build().Run();
