@@ -20,9 +20,9 @@ public class EventController : ControllerBase
     }
 
     [HttpGet(Name = "GetEvents")]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        var events = await _eventRepository.GetEvents();
+        var events = await _eventRepository.GetEvents(cancellationToken);
         var eventDtos = events.Select(e => new EventDto
         {
             EventId = e.EventId,
@@ -46,9 +46,10 @@ public class EventController : ControllerBase
     }
 
     [HttpGet("{id}", Name = "GetById")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var eventEntity = await _eventRepository.GetEventById(id);
+        var eventEntity = await _eventRepository.GetEventById(id, cancellationToken);
+        if (eventEntity is null) return NotFound();
         var eventDto = new EventDto
         {
             EventId = eventEntity.EventId,

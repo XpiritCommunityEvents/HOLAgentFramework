@@ -18,28 +18,30 @@ public class SqlEventRepository : IEventRepository
         _eventCatalogDbContext = eventCatalogDbContext;
     }
 
-    public async Task<IEnumerable<Event>> GetEvents()
+    private static int ClampLimit(int limit) => Math.Clamp(limit, 1, 50);
+
+    private IQueryable<Event> OrderedEvents() => _eventCatalogDbContext.Events
+        .AsNoTracking().Include(e => e.Venue)
+        .OrderByDescending(e => e.IsOnSpecialOffer).ThenBy(e => e.Date).ThenBy(e => e.Venue!.City);
+
+    public async Task<IReadOnlyList<Event>> GetEvents(CancellationToken cancellationToken = default)
     {
-        var sortedEvents = await _eventCatalogDbContext.Events
-            .Include(e => e.Venue)
-            .OrderByDescending(e => e.IsOnSpecialOffer)
-            .ThenBy(e => e.Date)
-            .ThenBy(e => e.Venue.City) 
-            .ToListAsync();
-            
-        return sortedEvents;
+        return await OrderedEvents().ToListAsync(cancellationToken);
     }
 
-    public async Task<Event> GetEventById(Guid eventId)
+    public async Task<IReadOnlyList<Event>> GetEventsByArtist(string artist, int limit, CancellationToken cancellationToken = default) => await OrderedEvents().Where(e => e.Artist != null && e.Artist.Contains(artist)).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Event>> GetEventsInDateRange(DateTime startDate, DateTime endDate, int limit, CancellationToken cancellationToken = default) => await OrderedEvents().Where(e => e.Date >= startDate && e.Date <= endDate).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Event>> GetEventsInLocation(string location, int limit, CancellationToken cancellationToken = default) => await OrderedEvents().Where(e => e.Venue != null && ((e.Venue.City != null && e.Venue.City.Contains(location)) || (e.Venue.State != null && e.Venue.State.Contains(location)))).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<string>> GetArtists(int limit, CancellationToken cancellationToken = default) => await _eventCatalogDbContext.Events.AsNoTracking().Where(e => e.Artist != null).Select(e => e.Artist!).Distinct().OrderBy(a => a).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
+
+    public async Task<Event> GetEventById(Guid eventId, CancellationToken cancellationToken = default)
     {
         var @event = await _eventCatalogDbContext.Events
-            .Include(e => e.Venue)
-            .FirstOrDefaultAsync(e => e.EventId == eventId);
-            
-        if (@event == null)
-        {
-            throw new InvalidOperationException("Event not found");
-        }
+            .AsNoTracking().Include(e => e.Venue)
+            .FirstOrDefaultAsync(e => e.EventId == eventId, cancellationToken);
         return @event;
     }
 
