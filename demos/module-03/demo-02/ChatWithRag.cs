@@ -1,18 +1,16 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.KernelMemory;
-using Microsoft.KernelMemory.DocumentStorage.DevTools;
-using Microsoft.KernelMemory.FileSystem.DevTools;
-using Microsoft.KernelMemory.MemoryStorage.DevTools;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
+﻿using MarkdownStructureChunker.Core;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.VectorData;
+
+using System.Text.Json;
 
 namespace modulerag;
 
 public class ChatWithRag
 {
-    public async Task RAG_with_memory(IConfiguration config)
+    public async Task RAG_with_memory(AIAgent agent, VectorStoreCollection<ulong, PolicyFilePart> collection, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator)
     {
-        var memoryConnector = GetLocalKernelMemory(config);
-
         var question =
             """
             I booked tickets for a concert tonight in venue AFAS Live!.
@@ -21,85 +19,112 @@ public class ChatWithRag
             Is this allowed? 
             """;
 
-        var response = await memoryConnector.AskAsync(question);
+        var questionEmbedding = await embeddingGenerator.GenerateAsync(question);
+
+        var searchResult = await collection.SearchAsync(questionEmbedding.Vector, top: 1).ToListAsync();
+
+        var response = await GetResponseOnQuestion(agent, question, searchResult.FirstOrDefault()?.Record?.Chunk ?? "No information found");
+
         Console.WriteLine("******** RESPONSE WITH MEMORY ***********");
-        Console.WriteLine(response.Result);
+        Console.WriteLine(response);
     }
 
-    public async Task AskVenueQuestion(IConfiguration config)
+    public async Task AskVenueQuestion(AIAgent agent, VectorStoreCollection<ulong, PolicyFilePart> collection, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator)
     {
-        var memoryConnector = GetLocalKernelMemory(config);
         var question =
             """
             Which venue allows a backpack?
             """;
-        var response = await memoryConnector.AskAsync(question);
+
+        var questionEmbedding = await embeddingGenerator.GenerateAsync(question);
+        var searchResult = await collection.SearchAsync(questionEmbedding.Vector, top: 50).ToListAsync();
+
+        var response = await GetResponseOnQuestion(agent, question, string.Join("\n\n", searchResult.Select(r => r.Record.Chunk)));
+
         Console.WriteLine("******** RESPONSE WITH MEMORY ***********");
-        Console.WriteLine(response.Result);
+        Console.WriteLine(response);
     }
 
-    public async Task IngestDocuments(IConfiguration config)
+    public async Task IngestDocuments(VectorStoreCollection<ulong, PolicyFilePart> collection, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator)
     {
+        var chunker = StructureChunker.CreateStructureFirst();
+
+        List<PolicyFilePart> files = [];
+
+        ulong key = 0;
         var directory = "../../../../datasets/venue-policies";
-
-        var memoryConnector = GetLocalKernelMemory(config);
-
         foreach (var file in GetFileListOfPolicyDocuments(directory))
         {
             var fullfilename = Path.Combine(directory, file);
-            var importResult = await memoryConnector.ImportDocumentAsync(filePath: fullfilename, documentId: file);
-            Console.WriteLine($"Imported file {file} with result: {importResult}");
+
+            // mimic a persistent storage using json serializations
+            // you would normally use a database for this
+            var jsonCacheFileName = Path.ChangeExtension(fullfilename, ".json");
+            if (File.Exists(jsonCacheFileName))
+            {
+                var cachedChunks = JsonSerializer.Deserialize<PolicyFilePart[]>(File.ReadAllBytes(jsonCacheFileName));
+                files.AddRange(cachedChunks!);
+                Console.WriteLine($"Loaded cached venue policy file from {jsonCacheFileName}");
+            }
+            else
+            {
+                List<PolicyFilePart> venueChunks = [];
+
+                // Chunk the MD file by its structure (headings, numbered lists, etc)
+                string fileContent = File.ReadAllText(fullfilename);
+                var chunks = await chunker.ChunkAsync(fileContent);
+
+                foreach (var chunk in chunks)
+                {
+                    var filePart = new PolicyFilePart
+                    {
+                        Key = key++,
+                        FileName = file,
+                        Chunk = $"# Venue: {file}\n{chunk.Content}",
+                    };
+
+                    var embedding = await embeddingGenerator.GenerateAsync(filePart.Chunk);
+                    filePart.EmbeddingVector = embedding.Vector;
+
+                    venueChunks.Add(filePart);
+                }
+
+                using var jsonFile = File.OpenWrite(jsonCacheFileName);
+                await JsonSerializer.SerializeAsync(jsonFile, venueChunks);
+
+                Console.WriteLine($"Imported file {file} with {chunks.Count()} chunks");
+
+                files.AddRange(venueChunks);
+            }
         }
+
+        await collection.UpsertAsync(files);
     }
+
+    private async Task<string> GetResponseOnQuestion(AIAgent agent, string question, string policyContext)
+    {
+        
+        var systemMessage = $"""
+        You are a helpful assistant that answers questions from people that go to a concert and have questions about the venue.
+        Always use the policy information provided in the prompt.
+        ### Venue Policy\n {policyContext}
+        """;
+
+        AgentSession session = await agent.CreateSessionAsync();
+        session.SetInMemoryChatHistory(
+        [
+            new ChatMessage(ChatRole.User, question),
+            new ChatMessage(ChatRole.System, systemMessage)
+        ]);
+
+        var result = await agent.RunAsync(session);
+       return result.Text;
+    }
+
+   
 
     private IEnumerable<string> GetFileListOfPolicyDocuments(string directory)
     {
-        return Directory.GetFiles(directory, "*.pdf").Select(f => Path.GetFileName(f));
-    }
-
-    private IKernelMemory GetLocalKernelMemory(IConfiguration config)
-    {
-        // 1. Configure text generation service
-        var textGenerationConfig = new OpenAIConfig
-        {
-            Endpoint = config["OpenAI:EndPoint"]!,
-            APIKey = config["OpenAI:ApiKey"]!,
-            TextModel = config["OpenAI:Model"]!,
-        };
-
-        // 2. Configure embedding generation service
-        var openAiEmbeddingsConfig = new OpenAIConfig
-        {
-            APIKey = config["OpenAI:ApiKey"]!,
-            Endpoint = config["OpenAI:EndPoint"]!,
-            EmbeddingModel = config["OpenAI:EmbeddingModel"]!,
-        };
-
-        // 3-6. Build comprehensive KernelMemory system
-        var kernelMemoryBuilder = new KernelMemoryBuilder()
-            // 3. Configure file storage backend
-            .WithSimpleFileStorage(new SimpleFileStorageConfig
-            {
-                Directory = "kernel-memory/km-file-storage",
-                StorageType = FileSystemTypes.Disk
-            })
-            // 4. Configure text database backend
-            .WithSimpleTextDb(new SimpleTextDbConfig
-            {
-                Directory = "kernel-memory/km-text-db",
-                StorageType = FileSystemTypes.Disk
-            })
-            // 5. Configure vector database backend
-            .WithSimpleVectorDb(new SimpleVectorDbConfig
-            {
-                Directory = "kernel-memory/km-vector-db",
-                StorageType = FileSystemTypes.Disk
-            })
-            // 6. Integrate AI services
-            .WithOpenAITextEmbeddingGeneration(openAiEmbeddingsConfig)
-            .WithOpenAITextGeneration(textGenerationConfig);
-
-        // 7. Build and return the memory instance
-        return kernelMemoryBuilder.Build();
+        return Directory.GetFiles(directory, "*.md").Select(f => Path.GetFileName(f));
     }
 }
