@@ -1,121 +1,98 @@
-﻿using HOLSemanticKernel;
-using Microsoft.SemanticKernel;
+using AgentFrameworkWorkshop.Module2.Completed;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.PromptTemplates.Handlebars;
-using ModelContextProtocol.Client;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.Extensions.Logging;
+using OpenAI;
+using System.ClientModel;
 
-// Make sure to add ApiKey to your dotnet user secrets...
-// dotnet user-secrets set "ApiKey"="<your API key>" -p .\module2.csproj
-// PLEASE DO NOT COMMIT YOUR API SECRET TO GIT!
-
-var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
     .AddUserSecrets<Program>()
     .AddEnvironmentVariables()
     .Build();
 
-var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Missing API Key");
-var endpoint = "https://[[foundryname]].openai.azure.com/openai/v1";
-var model = "gpt-4o";
+var model = configuration["OpenAI:Model"] ?? throw new InvalidOperationException("Set OpenAI:Model in appsettings.json or your environment.");
+var endpoint = configuration["OpenAI:Endpoint"] ?? throw new InvalidOperationException("Set OpenAI:Endpoint in appsettings.json or your environment.");
+var apiKey = configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Set OpenAI:ApiKey in user secrets or your environment.");
 
-var kernelBuilder = Kernel
-    .CreateBuilder()
-    .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
-
-// var mcpClient = await McpClient.CreateAsync(new HttpClientTransport(
-//     new HttpClientTransportOptions
-//     {
-//         Name = "GitHub",
-//         Endpoint = new Uri("https://api.githubcopilot.com/mcp/"),
-//         AdditionalHeaders = new Dictionary<string, string>
-//         {
-//             ["Authorization"] = $"Bearer {config["GitHubToken"]}"
-//         }
-//     }));
-kernelBuilder.Services.AddLogging(
-    s => s.AddConsole().SetMinimumLevel(LogLevel.Debug));
-
-var kernel = kernelBuilder.Build();
-
-// var tools = await mcpClient.ListToolsAsync();
-// kernel.ImportPluginFromFunctions("GitHub", tools.Select(x => x.AsKernelFunction()));
-kernel.ImportPluginFromType<Microsoft.SemanticKernel.Plugins.Core.TimePlugin>();
-kernel.ImportPluginFromType<DiscountPlugin>();
-
-var promptTemplate = File.ReadAllText(Path.Join(Directory.GetCurrentDirectory(), "music_recommender.yaml"));
-var musicRecommender = kernel.CreateFunctionFromPromptYaml(
-    promptTemplate,
-    new HandlebarsPromptTemplateFactory()
-    {
-        AllowDangerouslySetContent = true
-    });
-kernel.ImportPluginFromFunctions("music_recommender", [musicRecommender]);
-
-var executionSettings = new OpenAIPromptExecutionSettings
+var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
 {
-    MaxTokens = 500,
-    Temperature = 0.5,
-    TopP = 1.0,
-    FrequencyPenalty = 0.0,
-    PresencePenalty = 0.0,
-    FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
-//    ResponseFormat = typeof(ArtistSuggestions),
-};
+    Endpoint = new Uri(endpoint)
+});
 
-Console.WriteLine("Hi! I am your AI assistant. Talk to me:");
+using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
 
-var chatHistory = new ChatHistory();
-chatHistory.AddSystemMessage("You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing. Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that you don't know the answer based on your knowledge. You also have access to GitHub using the GitHub MCP.");
+var skillsPath = Path.Combine(AppContext.BaseDirectory, "skills");
+using var skillsProvider = new AgentSkillsProvider(
+    skillsPath,
+    options: new AgentSkillsProviderOptions
+    {
+        // These skills contain trusted instructions only, so loading them does not require user approval.
+        DisableLoadSkillApproval = true
+    });
 
-var chatCompletionService = kernel.Services.GetService<IChatCompletionService>();
+// Fake user context for demonstration purposes. Set Application:UserId in appsettings.json or your environment.
+var userContext = new UserSessionContext(configuration["Application:UserId"]?.Trim());
+var discountTools = new DiscountTools(userContext);
+var anonymousUserFilter = new AnonymousUserFilter(userContext);
 
-// var multiModalChat = new ChatHistory("Your job is to identify musical instruments from images.");
-// multiModalChat.AddUserMessage(
-// [
-//     new Microsoft.SemanticKernel.TextContent("Can you identify this instrument? Be specific about brand and type."),
-//     new Microsoft.SemanticKernel.ImageContent(File.ReadAllBytes("guitar.jpg"), "image/jpg")
-// ]);
+List<AITool> tools =
+[
+    AIFunctionFactory.Create(
+        discountTools.GetDiscountCode,
+        DiscountTools.ToolName,
+        "Generate a GloboTicket discount code for the signed-in user."),
+    AIFunctionFactory.Create(
+        GetCurrentUtcTime,
+        "get_current_utc_time",
+        "Get the current date and time in UTC.")
+];
 
-// var multiModalResponse = await chatCompletionService!.GetChatMessageContentsAsync(multiModalChat, executionSettings, kernel);
-// Console.WriteLine(multiModalResponse.Last().Content);
+AIAgent agent = chatClient
+    .AsAIAgent(new ChatClientAgentOptions
+    {
+        Name = "GloboTicketAssistant",
+        AIContextProviders = [skillsProvider],
+        ChatOptions = new ChatOptions
+        {
+            Instructions = """
+                You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing.
+                Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that
+                you don't know the answer based on your knowledge.
+                Load an available skill when its description matches the user's request.
+                """,
+            Tools = tools
+        }
+    })
+    .AsBuilder()
+    .Use(anonymousUserFilter.InvokeAsync)
+    .Build();
+
+// Reuse one session so each turn includes the conversation so far.
+AgentSession session = await agent.CreateSessionAsync();
+
+Console.WriteLine("GloboTicket assistant.");
+Console.WriteLine(userContext.IsAuthenticated
+    ? $"Signed in as {userContext.UserId}."
+    : "Not signed in; discount requests will be blocked.");
 
 while (true)
 {
-    Console.WriteLine();
-    Console.WriteLine("You:");
+    Console.Write("\n> ");
+    string? prompt = Console.ReadLine();
 
-    var prompt = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(prompt))
+    {
+        continue;
+    }
 
-    // direct plugin call
-    // if (prompt!.Contains("discount"))
-    // {
-    //     var arguments = new KernelArguments { ["userName"] = "guest" };
-    //     var discount = await kernel.InvokeAsync<string>(
-    //         nameof(DiscountPlugin),
-    //         "get_discount_code",
-    //         arguments);
-    //     
-    //     Console.WriteLine(discount);
-    //     continue;
-    // }
-
-    chatHistory.AddUserMessage(prompt!);
+    await foreach (var update in agent.RunStreamingAsync(prompt, session))
+    {
+        Console.Write(update);
+    }
 
     Console.WriteLine();
-    Console.WriteLine("GloboTicket assistant:");
-
-    // synchronous call
-    var response = await chatCompletionService!.GetChatMessageContentsAsync(chatHistory, executionSettings, kernel);
-    Console.WriteLine(response.Last().Content);
-
-    // streaming call
-    // var responseStream = chatCompletionService!.GetStreamingChatMessageContentsAsync(chatHistory, executionSettings, kernel);
-    // await foreach (var response in responseStream)
-    // {
-    //     Console.Write(response.Content);
-    // }
 }
+
+static string GetCurrentUtcTime() =>
+    DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss 'UTC'");

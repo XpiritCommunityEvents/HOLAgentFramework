@@ -1,22 +1,21 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
-namespace HOLSemanticKernel;
+namespace AgentFrameworkWorkshop.Module2.Completed;
 
-public class AnonymousUserFilter : IFunctionInvocationFilter
+public sealed class AnonymousUserFilter(UserSessionContext userContext)
 {
-    public async Task OnFunctionInvocationAsync(FunctionInvocationContext context, Func<FunctionInvocationContext, Task> next)
+    public async ValueTask<object?> InvokeAsync(
+        AIAgent _,
+        FunctionInvocationContext context,
+        Func<FunctionInvocationContext, CancellationToken, ValueTask<object?>> next,
+        CancellationToken cancellationToken)
     {
-        if (context.Function.Name == "get_discount_code")
+        if (context.Function.Name == DiscountTools.ToolName && !userContext.IsAuthenticated)
         {
-            if (context.Arguments["userName"]!.ToString() == "guest")
-            {
-                context.Result = new FunctionResult(context.Function, "No discounts for anonymous users allowed");
-                return;
-            }
+            return "Please sign in before requesting a discount code.";
         }
-            
-        await next(context);
 
-        // you can inspect the results here too to filter for unwanted data
+        return await next(context, cancellationToken);
     }
 }

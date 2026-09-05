@@ -22,6 +22,15 @@ var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClie
 
 using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
 
+var skillsPath = Path.Combine(AppContext.BaseDirectory, "skills");
+using var skillsProvider = new AgentSkillsProvider(
+    skillsPath,
+    options: new AgentSkillsProviderOptions
+    {
+        // These skills contain trusted instructions only, so loading them does not require user approval.
+        DisableLoadSkillApproval = true
+    });
+
 // Fake user context for demonstration purposes. Set the Application:UserId in appsettings.json or your environment.
 var userContext = new UserSessionContext(configuration["Application:UserId"]?.Trim());
 var discountTools = new DiscountTools(userContext);
@@ -43,12 +52,14 @@ AIAgent agent = chatClient
     .AsAIAgent(new ChatClientAgentOptions
     {
         Name = "GloboTicketAssistant",
+        AIContextProviders = [skillsProvider],
         ChatOptions = new ChatOptions
         {
             Instructions = """
                 You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing.
                 Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that 
                 you don't know the answer based on your knowledge.
+                Load an available skill when its description matches the user's request.
                 """,
             Tools = tools
         }
@@ -76,8 +87,14 @@ while (true)
     }
 
     // synchronous response:
-    // var response = await agent.RunAsync(prompt, session);
-    // Console.Write(response.Text);
+    var response = await agent.RunAsync(prompt, session);
+    Console.Write(response.Text);
+
+    // streaming response:
+    //await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(prompt, session))
+    //{
+    //    Console.Write(update);
+    //}
 
     // synchronous structured response:
     // var structuredResponse = await agent.RunAsync<ShowSummary>(prompt, session);
@@ -86,12 +103,6 @@ while (true)
     // Console.WriteLine($"Venue: {structuredResponse.Result.Venue}");
     // Console.WriteLine($"Description: {structuredResponse.Result.Description}");
     // Console.WriteLine($"Date: {structuredResponse.Result.Date}");
-
-    // streaming response:
-    // await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(prompt, session))
-    // {
-    //     Console.Write(update);
-    // }
 
     Console.WriteLine();
 }
