@@ -13,15 +13,12 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
         <PackageReference Include="Microsoft.Agents.AI" />
         <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
-        <PackageReference Include="OpenTelemetry" />
-        <PackageReference Include="OpenTelemetry.Exporter.Console" />
-        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
     </ItemGroup>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
 </Project>

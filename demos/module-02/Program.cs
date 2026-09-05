@@ -1,130 +1,103 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.AI;
+using AgentFramework101;
 using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using OpenAI;
 using System.ClientModel;
-using AgentFramework101;
 
-// Make sure to add ApiKey to your dotnet user secrets...
-// dotnet user-secrets set "ApiKey"="<your API key>" -p .\module2.csproj
-// PLEASE DO NOT COMMIT YOUR API SECRET TO GIT!
-
-var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
     .AddUserSecrets<Program>()
     .AddEnvironmentVariables()
     .Build();
 
-var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Missing API Key");
-var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("Missing Model");
-var endpoint = config["OpenAI:Endpoint"] ?? throw new InvalidOperationException("Missing Endpoint");
+var model = configuration["OpenAI:Model"] ?? throw new InvalidOperationException("Set OpenAI:Model in appsettings.json or your environment.");
+var endpoint = configuration["OpenAI:Endpoint"] ?? throw new InvalidOperationException("Set OpenAI:Endpoint in appsettings.json or your environment.");
+var apiKey = configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Set OpenAI:ApiKey in appsettings.json or your environment.");
 
-// Use Azure AI Foundry
-// var model = "gpt-4o";
-// var endpoint = "https://vries-mfc1t50l-swedencentral.cognitiveservices.azure.com";
-
-// Create OpenAI client with custom endpoint
-var openAIClient = new OpenAIClient(new ApiKeyCredential(token), new OpenAIClientOptions
+var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
 {
     Endpoint = new Uri(endpoint)
 });
 
-// Create IChatClient from OpenAI client with OpenTelemetry instrumentation
-// Set enableSensitiveData to true only in development environments
-// Note: Per the docs, enabling telemetry on both chat client and agent may cause duplication.
-//       We enable it on the chat client here for tracing inference calls.
-IChatClient chatClient = openAIClient
-    .GetChatClient(model)
-    .AsIChatClient()
-    .AsBuilder()
-    .UseOpenTelemetry(
-        sourceName: TelemetryExtensions.SourceName,
-        configure: cfg => cfg.EnableSensitiveData = false)  // Set to true to capture prompts/responses (dev only!)
-    .Build();
+using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
 
-// Create tools from the DiscountPlugin
-var discountTools = new DiscountTools();
-var tools = new List<AITool>
-{
-    AIFunctionFactory.Create(discountTools.GetDiscountCode),
-    AIFunctionFactory.Create(GetCurrentTime)
-};
+// Fake user context for demonstration purposes. Set the Application:UserId in appsettings.json or your environment.
+var userContext = new UserSessionContext(configuration["Application:UserId"]?.Trim());
+var discountTools = new DiscountTools(userContext);
+var anonymousUserFilter = new AnonymousUserFilter(userContext);
 
-// Create agent with tools
-var instructions = """
-    You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing.
-    Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that 
-    you don't know the answer based on your knowledge.
-    """;
+List<AITool> tools =
+[
+    AIFunctionFactory.Create(
+        discountTools.GetDiscountCode,
+        DiscountTools.ToolName,
+        "Generate a discount code for the signed-in user."),
+    AIFunctionFactory.Create(
+        GetCurrentUtcTime,
+        "get_current_utc_time",
+        "Get the current date and time in UTC.")
+];
 
-// Create a SummarizingChatReducer to manage chat history size
-// This replaces the Semantic Kernel ChatHistorySummarizationReducer
-// targetCount: target number of messages to keep after reduction
-// threshold: number of messages allowed beyond targetCount before summarization is triggered
-#pragma warning disable MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-var chatReducer = new SummarizingChatReducer(chatClient, targetCount: 2, threshold: 4);
-#pragma warning restore MEAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-
-// Create agent with ChatMessageStoreFactory to enable chat history reduction
-// Note: ChatClientAgentOptions uses ChatOptions.Instructions for system instructions
-AIAgent baseAgent = chatClient.AsAIAgent(new ChatClientAgentOptions
-{
-    Name = "GloboTicketAssistant",
-    ChatOptions = new ChatOptions
+AIAgent agent = chatClient
+    .AsAIAgent(new ChatClientAgentOptions
     {
-        Instructions = instructions,
-        Tools = tools  // Tools are passed via ChatOptions
-    },
-    // Configure the chat message store with the summarizing reducer
-    // The reducer will automatically summarize older messages when the conversation exceeds the threshold
-    // See https://learn.microsoft.com/en-us/agent-framework/agents/conversations/storage?pivots=programming-language-csharp#reducing-in-memory-history-size
-    ChatHistoryProvider = new InMemoryChatHistoryProvider(new InMemoryChatHistoryProviderOptions
-    {
-        ChatReducer = chatReducer
+        Name = "GloboTicketAssistant",
+        ChatOptions = new ChatOptions
+        {
+            Instructions = """
+                You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing.
+                Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that 
+                you don't know the answer based on your knowledge.
+                """,
+            Tools = tools
+        }
     })
-});
-
-// Wrap the agent with function calling middleware for anonymous user filtering
-AIAgent agent = baseAgent
     .AsBuilder()
-    .Use(AnonymousUserFilter.FilterAnonymousUsers)
+    .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
     .Build();
 
-// Agent options
-var runOptions = new ChatClientAgentRunOptions(new ChatOptions
-{
-    MaxOutputTokens = 500,
-    Temperature = 0.5f,
-    TopP = 1.0f,
-    FrequencyPenalty = 0.0f,
-    PresencePenalty = 0.0f
-});
+// Reuse one session so each turn includes the conversation so far.
+AgentSession session = await agent.CreateSessionAsync();
 
-Console.WriteLine("Hi! I am your AI assistant. Talk to me:");
-
-// Create a session for the conversation
-var session = await agent.CreateSessionAsync();
+Console.WriteLine("GloboTicket assistant.");
+Console.WriteLine(userContext.IsAuthenticated
+    ? $"Signed in as {userContext.UserId}."
+    : "Not signed in; discount requests will be blocked.");
 
 while (true)
 {
-    Console.WriteLine();
+    Console.Write("\n> ");
+    string? prompt = Console.ReadLine();
 
-    var prompt = Console.ReadLine();
-    if (string.IsNullOrEmpty(prompt)) continue;
-
-    // Non-streaming call using Agent Framework
-    // var response = await agent.RunAsync(prompt, session, runOptions);
-    // Console.WriteLine(response.Text);  // or response.ToString()
-
-    // Streaming call using Agent Framework
-    await foreach (var update in agent.RunStreamingAsync(prompt, session, runOptions))
+    if (string.IsNullOrWhiteSpace(prompt))
     {
-        Console.Write(update);
+        continue;
     }
+
+    // synchronous response:
+    // var response = await agent.RunAsync(prompt, session);
+    // Console.Write(response.Text);
+
+    // synchronous structured response:
+    // var structuredResponse = await agent.RunAsync<ShowSummary>(prompt, session);
+    // Console.WriteLine($"Artist: {structuredResponse.Result.Artist}");
+    // Console.WriteLine($"Title: {structuredResponse.Result.Title}");
+    // Console.WriteLine($"Venue: {structuredResponse.Result.Venue}");
+    // Console.WriteLine($"Description: {structuredResponse.Result.Description}");
+    // Console.WriteLine($"Date: {structuredResponse.Result.Date}");
+
+    // streaming response:
+    // await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(prompt, session))
+    // {
+    //     Console.Write(update);
+    // }
+
+    Console.WriteLine();
 }
 
-// Local function to replace TimePlugin functionality
-static string GetCurrentTime()
-{
-    return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-}
+static string GetCurrentUtcTime() =>
+    DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss 'UTC'");
+
+// TODO : compaction https://learn.microsoft.com/en-us/agent-framework/concepts/agents/conversations/compaction?pivots=programming-language-csharp
+// TODO : tool approval
