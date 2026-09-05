@@ -2,18 +2,17 @@ using System.ComponentModel;
 
 namespace AgentFramework101;
 
-/// <summary>
-/// Tools for generating discount codes for GloboTicket customers.
-/// In Agent Framework, methods can be used directly without [KernelFunction] attributes.
-/// Anonymous user filtering is handled by the AnonymousUserFilter middleware.
-/// </summary>
-public class DiscountTools()
+public sealed class DiscountTools(UserSessionContext userContext)
 {
-    [Description("Generate a simple GloboTicket discount code for a user.")]
-    public string GetDiscountCode([Description("The name of the user")] string userName = "guest")
+    public const string ToolName = "get_globoticket_discount_code";
+
+    [Description("Generate a GloboTicket discount code for the signed-in user.")]
+    public string GetDiscountCode()
     {
-        var prefix = userName.ToUpper().Substring(0, Math.Min(4, userName.Length));
+        // Anonymous calls never reach the tool because middleware blocks them.
+        var userName = userContext.UserId!;
+        var prefix = userName[..Math.Min(4, userName.Length)].ToUpperInvariant();
         var code = $"{prefix}{Random.Shared.Next(1000, 9999)}";
-        return $"Here’s your GloboTicket code: GLOBO-{code}";
+        return $"Here's your GloboTicket code: GLOBO-{code}";
     }
 }
