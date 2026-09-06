@@ -22,20 +22,20 @@ var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClie
 
 using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
 
-var skillsPath = Path.Combine(AppContext.BaseDirectory, "skills");
-using var skillsProvider = new AgentSkillsProvider(
-    skillsPath,
-    options: new AgentSkillsProviderOptions
-    {
-        DisableLoadSkillApproval = true,
-        DisableRunSkillScriptApproval = true,
-        DisableReadSkillResourceApproval = true,
-    });
+//var skillsPath = Path.Combine(AppContext.BaseDirectory, "skills");
+//using var skillsProvider = new AgentSkillsProvider(
+//    skillsPath,
+//    options: new AgentSkillsProviderOptions
+//    {
+//        DisableLoadSkillApproval = true,
+//        DisableRunSkillScriptApproval = true,
+//        DisableReadSkillResourceApproval = true,
+//    });
 
 // Fake user context for demonstration purposes. Set the Application:UserId in appsettings.json or your environment.
 var userContext = new UserSessionContext(configuration["Application:UserId"]?.Trim());
-var discountTools = new DiscountTools(userContext);
-var anonymousUserFilter = new AnonymousUserFilter(userContext);
+//var discountTools = new DiscountTools(userContext);
+//var anonymousUserFilter = new AnonymousUserFilter(userContext);
 
 List<AITool> tools = [];
 //[
@@ -69,6 +69,15 @@ AIAgent agent = chatClient
     .AsBuilder()
 //    .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
     .Build();
+
+//var runOptions = new ChatClientAgentRunOptions(new ChatOptions
+//{
+//    MaxOutputTokens = 500,
+//    Temperature = 0.5f,
+//    TopP = 1.0f,
+//    FrequencyPenalty = 0.0f,
+//    PresencePenalty = 0.0f
+//});
 
 // Reuse one session so each turn includes the conversation so far.
 AgentSession session = await agent.CreateSessionAsync();
