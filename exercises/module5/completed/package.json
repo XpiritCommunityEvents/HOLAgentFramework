@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "This application is intended to demonstrate the basics of using Dapr to build a microservices application. It is the demo project for the Pluralsight Dapr 1 Big Picture, by Marcel de Vries and Dapr 1 Fundamentals course, by Mark Heath.",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "build:comparison": "esbuild frontend/ClientApp/comparison.js --bundle --minify --target=es2022 --format=iife --outfile=frontend/wwwroot/js/comparison.js",
+    "build:signalr": "esbuild frontend/ClientApp/signalr-chat.js --bundle --minify --target=es2022 --format=iife --outfile=frontend/wwwroot/js/signalr-chat.js",
+    "build:ag-ui": "esbuild frontend/ClientApp/agui-chat.jsx --bundle --minify --target=es2022 --format=iife --define:process.env.NODE_ENV=\"'development'\" --loader:.ttf=file --loader:.woff=file --loader:.woff2=file --asset-names=agui-assets/[name]-[hash] --outfile=frontend/wwwroot/js/agui-chat.js",
+    "build:chat": "npm run build:comparison && npm run build:signalr && npm run build:ag-ui"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vriesmarcel/kcdc-2023.git"
@@ -16,6 +21,13 @@
   },
   "homepage": "https://github.com/vriesmarcel/kcdc-2023#readme",
   "devDependencies": {
-    "@playwright/test": "^1.35.1"
+    "@playwright/test": "^1.35.1",
+    "esbuild": "0.28.2"
+  },
+  "dependencies": {
+    "@ag-ui/client": "0.0.59",
+    "@copilotkit/react-core": "1.70.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   }
 }

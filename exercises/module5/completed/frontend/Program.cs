@@ -6,6 +6,7 @@ using GloboTicket.Frontend.Services.AI;
 using GloboTicket.Frontend.Services.Ordering;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.DevUI;
+using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using OpenAI;
@@ -36,6 +37,7 @@ builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketServ
 builder.Services.AddSingleton<Settings>();
 
 builder.Services.AddSignalR();
+builder.Services.AddAGUIServer();
 
 string catalogBaseAddress = builder.Configuration["ApiConfigs:EventCatalog:Uri"]
     ?? throw new InvalidOperationException("The event catalog URI is not configured.");
@@ -103,6 +105,7 @@ app.UseAuthorization();
 
 
 app.MapHub<ChatHub>("/chatHub");
+app.MapAGUIServer("/ag-ui", app.Services.GetRequiredService<AIAgent>());
 
 app.MapControllerRoute(
     name: "default",
