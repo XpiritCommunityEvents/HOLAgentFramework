@@ -1,29 +1,53 @@
-﻿using Microsoft.Extensions.Configuration;
+using CommunityToolkit.VectorData.InMemory;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.VectorData;
+using modulerag;
+using System.ClientModel;
 
-namespace modulerag
-{
-    internal class Program
+var config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddUserSecrets<Program>()
+    .AddEnvironmentVariables()
+    .Build();
+
+var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("OpenAI:Model is not configured.");
+var embeddingModel = config["OpenAI:EmbeddingModel"] ?? throw new InvalidOperationException("OpenAI:EmbeddingModel is not configured.");
+var endpoint = config["OpenAI:Endpoint"] ?? throw new InvalidOperationException("OpenAI:Endpoint is not configured.");
+var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
+
+AIAgent agent = new OpenAI.Chat.ChatClient(
+    model,
+    new ApiKeyCredential(token),
+    new OpenAI.OpenAIClientOptions
     {
-        static async Task Main(string[] args)
-        {
-            var builder = new ConfigurationBuilder();
-            builder.SetBasePath(Directory.GetCurrentDirectory())
-                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                   .AddUserSecrets<Program>();
+        Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
+    })
+    .AsIChatClient()
+    .AsAIAgent(
+        instructions: """
+            You are a digital assistant for GloboTicket, a concert ticketing company. You help customers with their ticket purchasing.
+            Tone: warm and friendly, but to the point. Do not make things up when you don't know the answer. Just tell the user that
+            you don't know the answer based on your knowledge.
+        """,
+        name: "Assistant");
 
-            IConfiguration config = builder.Build();
+var embeddingClient = new OpenAI.Embeddings.EmbeddingClient(
+    embeddingModel,
+    new ApiKeyCredential(token),
+    new OpenAI.OpenAIClientOptions
+    {
+        Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
+    });
 
-            var model = config["OpenAI:Model"];
-            var endpoint = config["OpenAI:EndPoint"];
-            var token = config["OpenAI:ApiKey"];
+VectorStore vectorStore = new InMemoryVectorStore();
+var collection = vectorStore.GetCollection<ulong, PolicyFilePart>("venue-policies");
+await collection.EnsureCollectionExistsAsync();
 
+var embeddingGenerator = embeddingClient.AsIEmbeddingGenerator(defaultModelDimensions: 1536);
+var chat = new ChatWithRag();
 
-        //    await new ChatWithRag().RAG_with_single_prompt(model, endpoint, token, config);
-
-            //await new ChatWithRag().IngestDocuments(model, endpoint, token, config);
-
-            // await new ChatWithRag().RaG_With_Memory(model, endpoint, token, config);
-            await new ChatWithRag().AskVenueQuestion(model, endpoint, token, config);
-        }
-    }
-}
+await chat.IngestDocuments(collection, embeddingGenerator);
+await chat.RAG_with_memory(agent, collection, embeddingGenerator);
+// await chat.AskVenueQuestion(agent, collection, embeddingGenerator);
