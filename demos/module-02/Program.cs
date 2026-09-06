@@ -27,8 +27,9 @@ using var skillsProvider = new AgentSkillsProvider(
     skillsPath,
     options: new AgentSkillsProviderOptions
     {
-        // These skills contain trusted instructions only, so loading them does not require user approval.
-        DisableLoadSkillApproval = true
+        DisableLoadSkillApproval = true,
+        DisableRunSkillScriptApproval = true,
+        DisableReadSkillResourceApproval = true,
     });
 
 // Fake user context for demonstration purposes. Set the Application:UserId in appsettings.json or your environment.
@@ -36,23 +37,24 @@ var userContext = new UserSessionContext(configuration["Application:UserId"]?.Tr
 var discountTools = new DiscountTools(userContext);
 var anonymousUserFilter = new AnonymousUserFilter(userContext);
 
-List<AITool> tools =
-[
-    AIFunctionFactory.Create(
-        discountTools.GetDiscountCode,
-        DiscountTools.ToolName,
-        "Generate a discount code for the signed-in user."),
-    AIFunctionFactory.Create(
-        GetCurrentUtcTime,
-        "get_current_utc_time",
-        "Get the current date and time in UTC.")
-];
+List<AITool> tools = [];
+//[
+//    AIFunctionFactory.Create(
+//        discountTools.GetDiscountCode,
+//        DiscountTools.ToolName,
+//        "Generate a discount code for the signed-in user."),
+//    new ApprovalRequiredAIFunction(
+//        AIFunctionFactory.Create(
+//            GetCurrentUtcTime,
+//            "get_current_utc_time",
+//            "Get the current date and time in UTC."))
+//];
 
 AIAgent agent = chatClient
     .AsAIAgent(new ChatClientAgentOptions
     {
         Name = "GloboTicketAssistant",
-        AIContextProviders = [skillsProvider],
+//        AIContextProviders = [skillsProvider],
         ChatOptions = new ChatOptions
         {
             Instructions = """
@@ -65,7 +67,7 @@ AIAgent agent = chatClient
         }
     })
     .AsBuilder()
-    .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
+//    .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
     .Build();
 
 // Reuse one session so each turn includes the conversation so far.
@@ -104,6 +106,37 @@ while (true)
     // Console.WriteLine($"Description: {structuredResponse.Result.Description}");
     // Console.WriteLine($"Date: {structuredResponse.Result.Date}");
 
+    //ChatMessage message = new(ChatRole.User, prompt);
+
+    //while (true)
+    //{
+    //    List<ToolApprovalRequestContent> approvalRequests = [];
+
+    //    await foreach (var update in agent.RunStreamingAsync(message, session))
+    //    {
+    //        approvalRequests.AddRange(update.Contents.OfType<ToolApprovalRequestContent>());
+    //        Console.Write(update);
+    //    }
+
+    //    Console.WriteLine();
+
+    //    if (approvalRequests.Count == 0)
+    //    {
+    //        break;
+    //    }
+
+    //    List<AIContent> responses = [];
+    //    foreach (var approvalRequest in approvalRequests)
+    //    {
+    //        Console.Write($"Approve tool call {approvalRequest.ToolCall.CallId}? [y/N] ");
+    //        var approved = string.Equals(Console.ReadLine(), "y", StringComparison.OrdinalIgnoreCase);
+    //        responses.Add(approvalRequest.CreateResponse(approved, null));
+    //    }
+
+    //    message = new ChatMessage(ChatRole.User, responses);
+    //}
+
+
     Console.WriteLine();
 }
 
@@ -111,4 +144,3 @@ static string GetCurrentUtcTime() =>
     DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss 'UTC'");
 
 // TODO : compaction https://learn.microsoft.com/en-us/agent-framework/concepts/agents/conversations/compaction?pivots=programming-language-csharp
-// TODO : tool approval

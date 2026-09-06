@@ -27,8 +27,9 @@ using var skillsProvider = new AgentSkillsProvider(
     skillsPath,
     options: new AgentSkillsProviderOptions
     {
-        // These skills contain trusted instructions only, so loading them does not require user approval.
-        DisableLoadSkillApproval = true
+        DisableLoadSkillApproval = true,
+        DisableRunSkillScriptApproval = true,
+        DisableReadSkillResourceApproval = true,
     });
 
 // Fake user context for demonstration purposes. Set Application:UserId in appsettings.json or your environment.
@@ -42,10 +43,11 @@ List<AITool> tools =
         discountTools.GetDiscountCode,
         DiscountTools.ToolName,
         "Generate a GloboTicket discount code for the signed-in user."),
-    AIFunctionFactory.Create(
-        GetCurrentUtcTime,
-        "get_current_utc_time",
-        "Get the current date and time in UTC.")
+    new ApprovalRequiredAIFunction(
+        AIFunctionFactory.Create(
+            GetCurrentUtcTime,
+            "get_current_utc_time",
+            "Get the current date and time in UTC."))
 ];
 
 AIAgent agent = chatClient
@@ -86,12 +88,35 @@ while (true)
         continue;
     }
 
-    await foreach (var update in agent.RunStreamingAsync(prompt, session))
-    {
-        Console.Write(update);
-    }
+    ChatMessage message = new(ChatRole.User, prompt);
 
-    Console.WriteLine();
+    while (true)
+    {
+        List<ToolApprovalRequestContent> approvalRequests = [];
+
+        await foreach (var update in agent.RunStreamingAsync(message, session))
+        {
+            approvalRequests.AddRange(update.Contents.OfType<ToolApprovalRequestContent>());
+            Console.Write(update);
+        }
+
+        Console.WriteLine();
+
+        if (approvalRequests.Count == 0)
+        {
+            break;
+        }
+
+        List<AIContent> responses = [];
+        foreach (var approvalRequest in approvalRequests)
+        {
+            Console.Write($"Approve tool call {approvalRequest.ToolCall.CallId}? [y/N] ");
+            var approved = string.Equals(Console.ReadLine(), "y", StringComparison.OrdinalIgnoreCase);
+            responses.Add(approvalRequest.CreateResponse(approved, null));
+        }
+
+        message = new ChatMessage(ChatRole.User, responses);
+    }
 }
 
 static string GetCurrentUtcTime() =>
