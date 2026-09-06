@@ -4,6 +4,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OpenAI;
 using System.ClientModel;
+using ModelContextProtocol.Client;
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
@@ -49,6 +50,23 @@ List<AITool> tools = [];
 //            "get_current_utc_time",
 //            "Get the current date and time in UTC."))
 //];
+
+//var githubToken = configuration["GitHubToken"]
+//    ?? throw new InvalidOperationException("Set GitHubToken in user secrets.");
+
+//await using McpClient mcpClient = await McpClient.CreateAsync(
+//    new HttpClientTransport(new HttpClientTransportOptions
+//    {
+//        Name = "GitHub",
+//        Endpoint = new Uri("https://api.githubcopilot.com/mcp/"),
+//        AdditionalHeaders = new Dictionary<string, string>
+//        {
+//            ["Authorization"] = $"Bearer {githubToken}"
+//        }
+//    }));
+
+//IList<McpClientTool> githubTools = await mcpClient.ListToolsAsync();
+//tools.AddRange(githubTools);
 
 AIAgent agent = chatClient
     .AsAIAgent(new ChatClientAgentOptions
