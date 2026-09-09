@@ -1,16 +1,30 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
+using System.ClientModel;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
+using OpenAI;
+using modulerag;
 
-var builder = Host.CreateApplicationBuilder(args);
+IConfiguration configuration = new ConfigurationBuilder()
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false)
+    .AddUserSecrets<Program>()
+    .Build();
 
-builder.Configuration.SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddUserSecrets<Program>();
+string model = configuration["OpenAI:Model"]
+    ?? throw new InvalidOperationException("Missing OpenAI:Model setting.");
+string endpoint = configuration["OpenAI:Endpoint"] ?? configuration["OpenAI:Endpoint"]
+    ?? throw new InvalidOperationException("Missing OpenAI:Endpoint setting.");
+string apiKey = configuration["OpenAI:ApiKey"]
+    ?? throw new InvalidOperationException("Missing OpenAI:ApiKey setting.");
 
-builder.Services.AddHostedService<Worker>();
-builder.AddOpenAIClient("openai")
-       .AddChatClient("gpt-5-mini");
+if (!Uri.TryCreate(endpoint, UriKind.Absolute, out Uri? endpointUri))
+{
+    throw new InvalidOperationException("OpenAI:Endpoint must be an absolute URI.");
+}
 
-var host = builder.Build();
-await host.RunAsync();
+var openAIClient = new OpenAIClient(
+    new ApiKeyCredential(apiKey),
+    new OpenAIClientOptions { Endpoint = endpointUri });
+
+using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
+await new ChatWithAgent(chatClient).RunAsync();

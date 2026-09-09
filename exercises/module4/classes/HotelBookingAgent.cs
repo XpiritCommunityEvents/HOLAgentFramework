@@ -1,55 +1,31 @@
-﻿using Elastic.Transport;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 
 namespace modulerag;
 
-internal class HotelBookingAgent
+internal static class HotelBookingAgent
 {
-    public static ChatCompletionAgent CreateChatCompletionAgent(IConfiguration config)
+    public static AIAgent Create(
+        IChatClient chatClient,
+        HotelBookingFunctions bookingFunctions)
     {
-        Kernel kernel = CreateKernel(config);
-        ChatCompletionAgent hotelReservationAgent =
-        new()
-        {
-            Name = "HotelReservationAgent",
-            Instructions = """
-                You are an expert in finding hotel rooms close to music concert locations.
-                You provide some options what you have found and ask for approval before you 
-                make the booking. You always suggest 3 options with different price ranges.
-                You will ask for approval before you make the booking. 
-                You are not allowed to make a booking without user confirmation!
+        AIFunction findRooms = AIFunctionFactory.Create(
+            bookingFunctions.FindAvailableRooms,
+            "find_available_rooms",
+            "Find available hotel rooms in a city for a date.");
 
-                After you succesfully booked the ride you will respond with [** GOAL REACHED **] in your message.            
+        AIFunction bookRoom = new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
+            bookingFunctions.BookRoom,
+            "book_room",
+            "Book a selected hotel room."));
+
+        return chatClient.AsAIAgent(
+            name: "HotelReservationAgent",
+            description: "Finds hotel rooms near a concert and books an approved selection.",
+            instructions: """
+                Suggest up to three suitable rooms at different prices. Explain your recommendation,
+                then call book_room. Never claim a booking succeeded before the tool returns success.
                 """,
-            Description = "An agent that finds and books a hotel room close to the concert location",
-            Kernel = kernel,
-            Arguments = new KernelArguments(new OpenAIPromptExecutionSettings()
-            {
-                FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
-            })
-        };
-        return hotelReservationAgent;
-    }
-
-    private static Kernel CreateKernel(IConfiguration config)
-    {
-        var model = config["OpenAI:Model"];
-        var endpoint = config["OpenAI:EndPoint"];
-        var token = config["OpenAI:ApiKey"];
-        var kernelBuilder = Kernel
-            .CreateBuilder()
-            .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
-        var kernel = kernelBuilder.Build();
-        return kernel;
+            tools: [findRooms, bookRoom]);
     }
 }
-

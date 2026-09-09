@@ -5,7 +5,7 @@ using Microsoft.Extensions.AI;
 
 namespace modulerag;
 
-internal static class ChatWithAgent
+internal static class HandoffDemo
 {
     private const string Done = "ITINERARY COMPLETE";
 
@@ -16,9 +16,9 @@ internal static class ChatWithAgent
             description: "Coordinates the hotel and ride specialists.",
             instructions: $$"""
                 First hand off to HotelAgent. When it returns a hotel, hand off to RideAgent.
-                When both specialists have returned, explain the complete itinerary and call
-                book_itinerary once. After the user approves or rejects it, summarize the outcome
-                and end with exactly {{Done}}.
+                When both specialists have returned, explain the complete itinerary and call book_itinerary once.
+                The application will ask the user to approve that booking. Whether it is approved or rejected,
+                summarize the outcome and end with exactly {{Done}}.
                 """,
             tools:
             [
@@ -38,9 +38,9 @@ internal static class ChatWithAgent
             name: "RideAgent",
             description: "Recommends a ride from the hotel to the concert venue.",
             instructions: "Use find_rides, recommend one ride, then hand back to Concierge.",
-            tools: [AIFunctionFactory.Create(FindRides, "find_rides", "Find rides from a hotel.")]);
+            tools: [AIFunctionFactory.Create(FindRides, "find_rides", "Find rides from a hotel to the concert venue.")]);
 
-#pragma warning disable MAAIW001 // Handoff workflows are the subject of this checkpoint.
+#pragma warning disable MAAIW001 // Handoff workflows are the subject of this demo.
         Workflow workflow = AgentWorkflowBuilder
             .CreateHandoffBuilderWith(concierge)
             .WithHandoff(concierge, hotelAgent, "Choose the hotel first")
@@ -77,8 +77,7 @@ internal static class ChatWithAgent
                     : "the proposed itinerary";
 
                 Console.Write($"\nApprove {arguments}? [y/N] ");
-                bool approved = Console.ReadLine()?.Trim()
-                    .StartsWith("y", StringComparison.OrdinalIgnoreCase) is true;
+                bool approved = Console.ReadLine()?.Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase) is true;
 
                 await run.SendResponseAsync(requestEvent.Request.CreateResponse(
                     approval.CreateResponse(approved, approved ? "Approved." : "Rejected.")));
@@ -92,11 +91,11 @@ internal static class ChatWithAgent
 
     private static string[] FindHotels([Description("The destination city.")] string city) =>
         city.Equals("Seattle", StringComparison.OrdinalIgnoreCase)
-            ? ["Harbor Hotel - $160/night", "Market Inn - $210/night", "Lakeview Hotel - $260/night"]
-            : [$"Central Hotel {city} - $180/night"];
+            ? ["Harbor Hotel — $160/night", "Market Inn — $210/night", "Lakeview Hotel — $260/night"]
+            : [$"Central Hotel {city} — $180/night"];
 
     private static string[] FindRides([Description("The selected hotel.")] string hotel) =>
-        [$"City Cab from {hotel} - $24", $"Metro Rides from {hotel} - $18"];
+        [$"City Cab from {hotel} — $24", $"Metro Rides from {hotel} — $18"];
 
     private static string BookItinerary(
         [Description("The selected hotel.")] string hotel,

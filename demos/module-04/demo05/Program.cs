@@ -11,17 +11,21 @@ builder.SetBasePath(Directory.GetCurrentDirectory())
 
 IConfiguration config = builder.Build();
 
-var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("Missing OpenAI model setting.");
-var endpoint = config["OpenAI:Endpoint"] ?? config["OpenAI:EndPoint"] ??
-        throw new InvalidOperationException("Missing OpenAI endpoint setting.");
-var apiKey = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Missing OpenAI API key.");
+string? model = config["OpenAI:Model"];
+string? endpoint = config["OpenAI:Endpoint"];
+string? apiKey = config["OpenAI:ApiKey"];
 
-// Create OpenAI client with custom endpoint
+if (string.IsNullOrWhiteSpace(model) ||
+    string.IsNullOrWhiteSpace(endpoint) ||
+    string.IsNullOrWhiteSpace(apiKey))
+{
+    throw new InvalidOperationException("Set OpenAI:Model, OpenAI:Endpoint, and OpenAI:ApiKey.");
+}
+
 var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
 {
     Endpoint = new Uri(endpoint)
 });
 
 var chatClient = openAIClient.GetChatClient(model).AsIChatClient();
-
-await new ChatWithAgent(chatClient).LetAgentFindRideAndHotelWithOrchestrator();
+await HandoffDemo.RunAsync(chatClient);

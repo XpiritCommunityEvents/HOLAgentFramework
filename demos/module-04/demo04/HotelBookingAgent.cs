@@ -3,25 +3,24 @@ using Microsoft.Extensions.AI;
 
 namespace modulerag;
 
-internal class HotelBookingAgent
+internal static class HotelBookingAgent
 {
-    public static AIAgent CreateAgent(IChatClient chatClient)
+    public static AIAgent Create(IChatClient chatClient)
     {
+        AIFunction findRooms = AIFunctionFactory.Create(
+            HotelBookingFunctions.GetAvailableRooms,
+            "get_available_rooms");
+        AIFunction bookRoom = new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
+            HotelBookingFunctions.BookRoom,
+            "book_room"));
+
         return chatClient.AsAIAgent(
             name: "HotelReservationAgent",
+            description: "Finds and books a hotel room near the concert.",
             instructions: """
-                You are an expert in finding hotel rooms close to music concert locations.
-                You provide some options what you have found and ask for approval before you 
-                make the booking. You always suggest 3 options with different price ranges.
-                You will ask for approval before you make the booking. 
-                You are not allowed to make a booking without user confirmation!
-
-                After you successfully booked the room you will respond with [** GOAL REACHED **] in your message.            
+                Find available rooms in Seattle, choose a suitable option, and call book_room.
+                Finish with the selected hotel's name so the next workflow stage can arrange a ride.
                 """,
-            description: "An agent that finds and books a hotel room close to the concert location",
-            tools: [AIFunctionFactory.Create(HotelBookingFunctions.SelectRoomPreference),
-                    AIFunctionFactory.Create(HotelBookingFunctions.BookSelectedRoom),
-                    AIFunctionFactory.Create(HotelBookingFunctions.GetApprovalForBooking)]
-            );
+            tools: [findRooms, bookRoom]);
     }
 }

@@ -1,11 +1,33 @@
-﻿using Microsoft.Extensions.Configuration;
+using System.ClientModel;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
+using OpenAI;
 using modulerag;
 
-var builder = new ConfigurationBuilder();
-builder.SetBasePath(Directory.GetCurrentDirectory())
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddUserSecrets<Program>();
+IConfiguration config = new ConfigurationBuilder()
+    .SetBasePath(AppContext.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+    .AddUserSecrets<Program>()
+    .Build();
 
-IConfiguration config = builder.Build();
+string? model = config["OpenAI:Model"];
+string? endpoint = config["OpenAI:Endpoint"];
+string? apiKey = config["OpenAI:ApiKey"];
 
-await new ChatWithAgent().LetAgentFindRideAndHotelWithOrchestrator(config);
+if (string.IsNullOrWhiteSpace(model) ||
+    string.IsNullOrWhiteSpace(endpoint) ||
+    string.IsNullOrWhiteSpace(apiKey) ||
+    endpoint.Contains("[[", StringComparison.Ordinal) ||
+    apiKey.StartsWith('<'))
+{
+    throw new InvalidOperationException(
+        "Set OpenAI:Model, OpenAI:Endpoint, and OpenAI:ApiKey in user secrets or appsettings.json.");
+}
+
+var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
+{
+    Endpoint = new Uri(endpoint)
+});
+
+using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
+await ChatWithAgent.RunAsync(chatClient);

@@ -1,47 +1,28 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace modulerag;
 
 internal static class RideInformationSystemService
 {
-    [Description("Get available rides in a city for a given date")]
-    public static Ride[] GetAvailableRides(
-        [Description("City where you need the ride")] string city,
-        [Description("Date the ride is required")] DateTime bookingDate)
-    {
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine($"Searching for Rides for City: {city} and Date: {bookingDate}");
-        Console.ResetColor();
-        return availableRides
-            .Where(r => r.City.Equals(city, StringComparison.OrdinalIgnoreCase))
-            .ToArray();
-    }
-
-    [Description("makes it possible to book a selected ride")]
-    [return: Description("returns true if the booking was successfull")]
-    public static bool BookARide(int rideID)
-    {
-        Console.ForegroundColor = ConsoleColor.Cyan;
-        Console.WriteLine($"Booked the ride with id: {rideID}");
-        Console.ResetColor();
-        return true;
-    }
-
-    private static readonly Ride[] availableRides =
+    private static readonly Ride[] Rides =
     [
-        new Ride(RideId: 1, RideType: "Taxi", Price: 25.00m, ServiceName: "City Cabs", City: "New York"),
-        new Ride(RideId: 2, RideType: "Ride Share", Price: 20.00m, ServiceName: "Uber", City: "New York"),
-        new Ride(RideId: 3, RideType: "Limousine", Price: 100.00m, ServiceName: "Luxury Rides", City: "Los Angeles"),
-        new Ride(RideId: 4, RideType: "Taxi", Price: 30.00m, ServiceName: "LA Cabs", City: "Los Angeles"),
-        new Ride(RideId: 5, RideType: "Ride Share", Price: 22.00m, ServiceName: "Lyft", City: "Chicago"),
-        new Ride(RideId: 6, RideType: "Taxi", Price: 28.00m, ServiceName: "Chicago Taxis", City: "Chicago"),
-        new Ride(RideId: 7, RideType: "Shuttle", Price: 15.00m, ServiceName: "City Shuttle", City: "Miami"),
-        new Ride(RideId: 8, RideType: "Ride Share", Price: 18.00m, ServiceName: "Uber", City: "Miami"),
-        new Ride(RideId: 9, RideType: "Taxi", Price: 27.00m, ServiceName: "Miami Cabs", City: "Miami"),
-        new Ride(RideId: 10, RideType: "Limousine", Price: 120.00m, ServiceName: "Elite Rides", City: "New York"),
-        new Ride(RideId: 11, RideType: "Taxi", Price: 26.00m, ServiceName: "Downtown Taxis", City: "San Francisco"),
-        new Ride(RideId: 12, RideType: "Ride Share", Price: 21.00m, ServiceName: "Lyft", City: "San Francisco"),
-        new Ride(RideId: 13, RideType: "Shuttle", Price: 16.00m, ServiceName: "Airport Shuttle", City: "San Francisco"),
-        new Ride(RideId: 14, RideType: "Taxi", Price: 29.00m, ServiceName: "City Cabs", City: "Seattle"),
+        new(14, "Taxi", 29, "City Cabs", "Seattle"),
+        new(15, "Ride Share", 22, "Contoso Rides", "Seattle"),
+        new(16, "Shuttle", 16, "Concert Shuttle", "Seattle")
     ];
+
+    [Description("Gets available rides in a city")]
+    public static Ride[] GetAvailableRides(
+        [Description("City where the guest needs a ride")] string city) =>
+        Rides.Where(ride => ride.City.Equals(city, StringComparison.OrdinalIgnoreCase)).ToArray();
+
+    [Description("Books the selected ride")]
+    public static string BookRide(
+        [Description("ID of the selected ride")] int rideId)
+    {
+        Ride? ride = Rides.FirstOrDefault(ride => ride.RideId == rideId);
+        return ride is null
+            ? $"Ride {rideId} was not found."
+            : $"Booked ride {rideId} with {ride.ServiceName}.";
+    }
 }

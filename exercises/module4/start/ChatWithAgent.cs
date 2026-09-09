@@ -1,42 +1,24 @@
-﻿using System.ClientModel;
-using System.Text.Json;
-using Azure.AI.OpenAI;
-using Azure;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.KernelMemory;
-using Microsoft.KernelMemory.DocumentStorage.DevTools;
-using Microsoft.KernelMemory.FileSystem.DevTools;
-using Microsoft.KernelMemory.MemoryStorage.DevTools;
-using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Agents;
-using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using OpenAI;
+using Microsoft.Extensions.AI;
 
 namespace modulerag;
 
-internal class ChatWithAgent
+internal sealed class ChatWithAgent(IChatClient chatClient)
 {
-    public async Task LetAgentFindRide(IConfiguration config)
+    public Task LetAgentFindRideAsync(
+        CancellationToken cancellationToken = default,
+        TextWriter? output = null)
     {
-        Console.WriteLine("******** Create the agent ***********");
-        Console.WriteLine("******** Start the agent ***********");
-        Console.WriteLine("******** RESPONSE ***********"); 
-    }
+        _ = chatClient; // Used when TODO 1 is completed.
 
-    private static Kernel CreateKernel(IConfiguration config)
-    {
-        var model = config["OpenAI:Model"];
-        var endpoint = config["OpenAI:EndPoint"];
-        var token = config["OpenAI:ApiKey"];
+        // TODO 1: Adapt chatClient with AsAIAgent(...). Give the transportation
+        // agent a name, description, and clear instructions for helping a concert visitor.
 
-        var kernelBuilder = Kernel
-            .CreateBuilder()
-            .AddOpenAIChatCompletion(model, new Uri(endpoint), token);
+        // TODO 2: Send the request below with RunAsync(...), preserve the supplied
+        // cancellation token, and write the returned AgentResponse to output.
+        //
+        // I am staying at the Westin Seattle, and the venue is Climate Pledge Arena.
+        // The concert starts at 7:30 PM on November 20 this year.
 
-        var kernel = kernelBuilder.Build();
-        return kernel;
+        throw new NotImplementedException("Complete TODO 1 and TODO 2 in ChatWithAgent.cs.");
     }
 }
