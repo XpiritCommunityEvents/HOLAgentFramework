@@ -5,15 +5,14 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OpenAI;
 
-IConfiguration configuration = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional: false)
+var configuration = new ConfigurationBuilder()
+    .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
     .AddUserSecrets<Program>()
     .Build();
 
-string model = RequiredSetting("OpenAI:Model");
-string endpoint = RequiredSetting("OpenAI:Endpoint");
-string apiKey = RequiredSetting("OpenAI:ApiKey");
+var model = configuration["OpenAI:Model"] ?? throw new InvalidOperationException("Set OpenAI:Model in appsettings.json or your environment.");
+var endpoint = configuration["OpenAI:Endpoint"] ?? throw new InvalidOperationException("Set OpenAI:Endpoint in appsettings.json or your environment.");
+var apiKey = configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationException("Set OpenAI:ApiKey in appsettings.json or your environment.");
 
 var openAIClient = new OpenAIClient(
     new ApiKeyCredential(apiKey),
@@ -28,6 +27,7 @@ AIFunction bookRide = new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
 AIAgent agent = chatClient.AsHarnessAgent(new HarnessAgentOptions
 {
     Name = "TransportationHarnessAgent",
+    DisableWebSearch = true,
     Description = "Plans transportation and books a ride after approval.",
     HarnessInstructions = "Use a short todo list for multi-step requests. Plan in plan mode and act only in execute mode.",
     ChatOptions = new ChatOptions
@@ -142,13 +142,7 @@ async Task ShowHarnessStateAsync()
     }
 }
 
-string RequiredSetting(string key)
-{
-    string? value = configuration[key];
-    return string.IsNullOrWhiteSpace(value)
-        ? throw new InvalidOperationException($"Missing configuration setting '{key}'.")
-        : value;
-}
+// Tools:
 
 static string Describe(ToolCallContent toolCall) => toolCall is FunctionCallContent call
     ? $"{call.Name}({string.Join(", ", call.Arguments?.Select(argument => $"{argument.Key}={argument.Value}") ?? [])})"

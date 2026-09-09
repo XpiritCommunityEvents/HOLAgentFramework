@@ -6,7 +6,7 @@
     <RootNamespace>Module04.Demo03.Harness</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>hol-agent-framework-module-04-demo-03-harness</UserSecretsId>
+	<UserSecretsId>dabd1f7a-1cf0-48a8-a5f6-2acc292c8729</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
