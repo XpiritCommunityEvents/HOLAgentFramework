@@ -38,6 +38,7 @@ var userContext = new UserSessionContext(configuration["Application:UserId"]?.Tr
 //var discountTools = new DiscountTools(userContext);
 //var anonymousUserFilter = new AnonymousUserFilter(userContext);
 
+
 List<AITool> tools = [];
 //[
 //    AIFunctionFactory.Create(

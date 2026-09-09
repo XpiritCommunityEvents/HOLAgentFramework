@@ -5,7 +5,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 var openAiApiKey = builder.AddParameter("openai-api-key", secret: true);
 var openai = builder.AddOpenAI("openai")
     .WithApiKey(openAiApiKey)
-    .WithEndpoint("https://[[foundryname]].services.ai.azure.com/openai/v1");
+    .WithEndpoint("https://semantic-kernel-vslive.services.ai.azure.com/openai/v1");
 var chatModel = openai.AddModel("chat", "gpt-4o")
     .WithHealthCheck();
 
