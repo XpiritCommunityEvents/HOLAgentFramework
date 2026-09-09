@@ -86,6 +86,10 @@ internal static class HandoffDemo
             {
                 Console.WriteLine($"\n\n{output.Data}");
             }
+            else
+            {
+                Console.WriteLine($"\n\n{evt} {evt.Data}");
+            }
         }
     }
 

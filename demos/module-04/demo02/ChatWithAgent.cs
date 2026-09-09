@@ -16,9 +16,7 @@ internal sealed class ChatWithAgent(IChatClient chatClient)
         AIAgent hotelAgent = HotelBookingAgent.Create(chatClient);
         AIAgent rideAgent = CreateTransportationAgent();
 
-#pragma warning disable MAAIW001 // This demo intentionally teaches workflow orchestration.
         Workflow workflow = AgentWorkflowBuilder.BuildSequential(hotelAgent, rideAgent);
-#pragma warning restore MAAIW001
 
         Console.WriteLine("Workflow: HotelReservationAgent -> TransportationAgent\n");
 
@@ -32,6 +30,15 @@ internal sealed class ChatWithAgent(IChatClient chatClient)
         {
             switch (workflowEvent)
             {
+                case WorkflowStartedEvent workflowStartedEvent:
+                    Console.WriteLine($"Workflow started: {workflowStartedEvent.Data}");
+                    break;
+                case SuperStepEvent superStepEvent:
+                    Console.WriteLine($"Super step event: {superStepEvent.StepNumber} {superStepEvent.Data}");
+                    break;
+                case ExecutorEvent executorEvent:
+                    Console.WriteLine($"Executor event: {executorEvent.ExecutorId} {executorEvent.Data}");
+                    break;
                 case AgentResponseUpdateEvent update when !string.IsNullOrEmpty(update.Update.Text):
                     if (update.Update.AuthorName != currentAgent)
                     {
