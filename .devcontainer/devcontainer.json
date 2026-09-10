@@ -2,7 +2,7 @@
   "name": "AgentFrameworkWorkshop",
   "image": "mcr.microsoft.com/devcontainers/dotnet:dev-10.0-noble",
   "onCreateCommand": "curl -sSL https://aspire.dev/install.sh | bash",
-  "postStartCommand": "dotnet dev-certs https --trust",
+  "postStartCommand": "dotnet dev-certs https --trust || true; grep -q 'SSL_CERT_DIR' \"$HOME/.bashrc\" || echo 'export SSL_CERT_DIR=\"$HOME/.aspnet/dev-certs/trust:/usr/lib/ssl/certs\"' >> \"$HOME/.bashrc\"",
   "customizations": {
     "vscode": {
       "extensions": [
