@@ -12,8 +12,8 @@
   <ItemGroup>
     <PackageReference Include="MarkdownStructureChunker" />
     <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
-	<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
-	<PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
     <PackageReference Include="CommunityToolkit.VectorData.InMemory" />
   </ItemGroup>
