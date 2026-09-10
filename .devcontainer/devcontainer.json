@@ -13,7 +13,6 @@
       ]
     }
   },
-  "postStartCommand": "bash ./.devcontainer/post-start.sh",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "moby": true,
