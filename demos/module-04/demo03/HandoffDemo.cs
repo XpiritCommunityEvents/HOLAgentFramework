@@ -40,7 +40,6 @@ internal static class HandoffDemo
             instructions: "Use find_rides, recommend one ride, then hand back to Concierge.",
             tools: [AIFunctionFactory.Create(FindRides, "find_rides", "Find rides from a hotel to the concert venue.")]);
 
-#pragma warning disable MAAIW001 // Handoff workflows are the subject of this demo.
         Workflow workflow = AgentWorkflowBuilder
             .CreateHandoffBuilderWith(concierge)
             .WithHandoff(concierge, hotelAgent, "Choose the hotel first")
@@ -51,7 +50,6 @@ internal static class HandoffDemo
             .WithTerminationCondition(messages =>
                 messages.Any(message => message.Text?.Contains(Done, StringComparison.Ordinal) is true))
             .Build();
-#pragma warning restore MAAIW001
 
         const string request = """
             I am attending a concert at Seattle Kraken Stadium at 7:30 PM on November 20.
@@ -60,6 +58,8 @@ internal static class HandoffDemo
 
         await using StreamingRun run = await InProcessExecution.OpenStreamingAsync(workflow);
         await run.TrySendMessageAsync(request);
+
+        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
 
         await foreach (WorkflowEvent evt in run.WatchStreamAsync())
         {
@@ -81,14 +81,6 @@ internal static class HandoffDemo
 
                 await run.SendResponseAsync(requestEvent.Request.CreateResponse(
                     approval.CreateResponse(approved, approved ? "Approved." : "Rejected.")));
-            }
-            else if (evt is WorkflowOutputEvent output)
-            {
-                Console.WriteLine($"\n\n{output.Data}");
-            }
-            else
-            {
-                Console.WriteLine($"\n\n{evt} {evt.Data}");
             }
         }
     }
