@@ -2,9 +2,9 @@ using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 
-namespace modulerag;
+namespace ModuleWorkflow;
 
-internal sealed class ChatWithAgent(IChatClient chatClient)
+internal sealed class ChatWithAgent(AIAgent hotelAgent, AIAgent rideAgent)
 {
     private const string TravelRequest = """
         I am going to a concert at Seattle Kraken Stadium at 7:30 PM on November 20.
@@ -13,77 +13,55 @@ internal sealed class ChatWithAgent(IChatClient chatClient)
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        AIAgent hotelAgent = HotelBookingAgent.Create(chatClient);
-        AIAgent rideAgent = CreateTransportationAgent();
+        // chainOnlyAgentResponses only stops the *incoming* conversation from being forwarded;
+        // it does NOT strip tool content. An agent's function calls/results are private plumbing,
+        // so WithTextOnlyOutput() removes them from the hotel agent's output before it is chained
+        // into the transportation agent (otherwise the next agent receives orphaned 'tool' messages).
+        var workflow = AgentWorkflowBuilder.BuildSequential(
+            chainOnlyAgentResponses: true,
+            [hotelAgent.WithTextOnlyOutput(), rideAgent]);
 
-        Workflow workflow = AgentWorkflowBuilder.BuildSequential(hotelAgent, rideAgent);
-
-        Console.WriteLine("Workflow: HotelReservationAgent -> TransportationAgent\n");
+        Console.WriteLine("Sequential Workflow: HotelReservationAgent -> TransportationAgent\n");
 
         await using StreamingRun run = await InProcessExecution
-            .OpenStreamingAsync(workflow, cancellationToken: cancellationToken);
+            .RunStreamingAsync(workflow, new ChatMessage(ChatRole.User, TravelRequest), cancellationToken: cancellationToken);
 
-        await run.TrySendMessageAsync(TravelRequest);
+        // Must send the turn token to trigger the agents.
+        // The agents are wrapped as executors. When they receive messages,
+        // they will cache the messages and only start processing when they receive a TurnToken.
+        await run.TrySendMessageAsync(new TurnToken(emitEvents: true));
 
         string? currentAgent = null;
-        await foreach (WorkflowEvent workflowEvent in run.WatchStreamAsync(cancellationToken))
+        await foreach (var workflowEvent in run.WatchStreamAsync(blockOnPendingRequest: true, cancellationToken: cancellationToken))
         {
             switch (workflowEvent)
             {
-                case WorkflowStartedEvent workflowStartedEvent:
-                    Console.WriteLine($"Workflow started: {workflowStartedEvent.Data}");
-                    break;
-                case SuperStepEvent superStepEvent:
-                    Console.WriteLine($"Super step event: {superStepEvent.StepNumber} {superStepEvent.Data}");
-                    break;
-                case ExecutorEvent executorEvent:
-                    Console.WriteLine($"Executor event: {executorEvent.ExecutorId} {executorEvent.Data}");
-                    break;
+                // An agent has something to say
                 case AgentResponseUpdateEvent update when !string.IsNullOrEmpty(update.Update.Text):
                     if (update.Update.AuthorName != currentAgent)
                     {
                         currentAgent = update.Update.AuthorName;
+                        Console.WriteLine();
+                        Console.WriteLine();
                         Console.Write($"\n{currentAgent}: ");
                     }
-
                     Console.Write(update.Update.Text);
                     break;
 
+                // An agent needs input (tool approval)
                 case RequestInfoEvent request
-                    when request.Request.TryGetDataAs<ToolApprovalRequestContent>(out var approval)
-                         && approval is not null:
+                when request.Request.TryGetDataAs<ToolApprovalRequestContent>(out var approval) && approval is not null:
                     bool approved = AskForApproval(approval);
-                    await run.SendResponseAsync(request.Request.CreateResponse(
-                        approval.CreateResponse(approved, approved ? "Approved." : "Rejected.")));
+                    var response = request.Request.CreateResponse(approval.CreateResponse(approved, reason: approved ? "Approved." : "Rejected."));
+                    await run.SendResponseAsync(response);
                     break;
 
-                case WorkflowOutputEvent:
-                    Console.WriteLine("\n\nWorkflow complete.");
-                    return;
-
+                // Something went wrong
                 case WorkflowErrorEvent error:
-                    throw new InvalidOperationException("The travel workflow failed.", error.Exception);
+                    Console.WriteLine(error.Exception);
+                    break;
             }
         }
-    }
-
-    private AIAgent CreateTransportationAgent()
-    {
-        AIFunction findRides = AIFunctionFactory.Create(
-            RideInformationSystemService.GetAvailableRides,
-            "get_available_rides");
-        AIFunction bookRide = new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
-            RideInformationSystemService.BookRide,
-            "book_ride"));
-
-        return chatClient.AsAIAgent(
-            name: "TransportationAgent",
-            description: "Finds transportation from the selected hotel to the concert.",
-            instructions: """
-                Use the hotel selected by the previous agent. Find available rides in Seattle,
-                choose an affordable option, and call book_ride. Summarize the complete itinerary.
-                """,
-            tools: [findRides, bookRide]);
     }
 
     private static bool AskForApproval(ToolApprovalRequestContent approval)

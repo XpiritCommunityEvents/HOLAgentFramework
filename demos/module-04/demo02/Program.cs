@@ -1,8 +1,9 @@
-using System.ClientModel;
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using ModuleWorkflow;
 using OpenAI;
-using modulerag;
+using System.ClientModel;
 
 IConfiguration configuration = new ConfigurationBuilder()
     .SetBasePath(AppContext.BaseDirectory)
@@ -26,5 +27,10 @@ var openAIClient = new OpenAIClient(
     new ApiKeyCredential(apiKey),
     new OpenAIClientOptions { Endpoint = endpointUri });
 
-using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
-await new ChatWithAgent(chatClient).RunAsync();
+using IChatClient hotelChatClient = openAIClient.GetChatClient(model).AsIChatClient();
+using IChatClient rideChatClient = openAIClient.GetChatClient(model).AsIChatClient();
+
+AIAgent hotelAgent = HotelBookingAgent.Create(hotelChatClient);
+AIAgent rideAgent = TransportationAgent.Create(rideChatClient);
+
+await new ChatWithAgent(hotelAgent, rideAgent).RunAsync();

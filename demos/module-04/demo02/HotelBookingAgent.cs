@@ -1,7 +1,7 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
-namespace modulerag;
+namespace ModuleWorkflow;
 
 internal static class HotelBookingAgent
 {
@@ -19,7 +19,7 @@ internal static class HotelBookingAgent
             description: "Finds and books a hotel room near the concert.",
             instructions: """
                 Find available rooms in Seattle, choose a suitable option, and call book_room.
-                Finish with the selected hotel's name so the next workflow stage can arrange a ride.
+                Mention the the selected hotel's name and city in your response so the next workflow stage can arrange a ride.
                 """,
             tools: [findRooms, bookRoom]);
     }

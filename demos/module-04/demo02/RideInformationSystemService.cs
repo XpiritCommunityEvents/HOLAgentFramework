@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace modulerag;
+namespace ModuleWorkflow;
 
 internal static class RideInformationSystemService
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace modulerag;
+namespace ModuleWorkflow;
 
 public static class HotelBookingFunctions
 {
@@ -23,6 +23,6 @@ public static class HotelBookingFunctions
         AvailableRoom? room = Rooms.FirstOrDefault(room => room.RoomId == roomId);
         return room is null
             ? $"Room {roomId} was not found."
-            : $"Booked room {roomId} at {room.HotelName}.";
+            : $"Booked room {roomId} at {room.HotelName} in {room.City}.";
     }
 }

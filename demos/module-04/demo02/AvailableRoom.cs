@@ -1,4 +1,4 @@
-namespace modulerag;
+namespace ModuleWorkflow;
 
 public sealed record AvailableRoom(
     int RoomId,
