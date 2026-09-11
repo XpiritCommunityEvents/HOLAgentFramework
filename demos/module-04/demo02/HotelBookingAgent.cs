@@ -10,9 +10,9 @@ internal static class HotelBookingAgent
         AIFunction findRooms = AIFunctionFactory.Create(
             HotelBookingFunctions.GetAvailableRooms,
             "get_available_rooms");
-        AIFunction bookRoom = new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
+        AIFunction bookRoom = AIFunctionFactory.Create(
             HotelBookingFunctions.BookRoom,
-            "book_room"));
+            "book_room");
 
         return chatClient.AsAIAgent(
             name: "HotelReservationAgent",

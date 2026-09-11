@@ -13,13 +13,7 @@ internal sealed class ChatWithAgent(AIAgent hotelAgent, AIAgent rideAgent)
 
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        // chainOnlyAgentResponses only stops the *incoming* conversation from being forwarded;
-        // it does NOT strip tool content. An agent's function calls/results are private plumbing,
-        // so WithTextOnlyOutput() removes them from the hotel agent's output before it is chained
-        // into the transportation agent (otherwise the next agent receives orphaned 'tool' messages).
-        var workflow = AgentWorkflowBuilder.BuildSequential(
-            chainOnlyAgentResponses: true,
-            [hotelAgent.WithTextOnlyOutput(), rideAgent]);
+        var workflow = AgentWorkflowBuilder.BuildSequential(hotelAgent, rideAgent);
 
         Console.WriteLine("Sequential Workflow: HotelReservationAgent -> TransportationAgent\n");
 

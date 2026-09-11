@@ -10,9 +10,9 @@ internal static class TransportationAgent
         AIFunction findRides = AIFunctionFactory.Create(
             RideInformationSystemService.GetAvailableRides,
             "get_available_rides");
-        AIFunction bookRide = new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
+        AIFunction bookRide = AIFunctionFactory.Create(
             RideInformationSystemService.BookRide,
-            "book_ride"));
+            "book_ride");
 
         return chatClient.AsAIAgent(
             name: "TransportationAgent",
