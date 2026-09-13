@@ -1,6 +1,7 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace AgentFramework101;
 
@@ -90,13 +91,17 @@ internal static class Scenario_02
                 Console.Write(update);
             }
 
+            //var serialized = await agent.SerializeSessionAsync(session);
+            //var sessionJson = JsonSerializer.Serialize(serialized, new JsonSerializerOptions { WriteIndented = true });
+            //Console.WriteLine(sessionJson);
+
             #region Approval loop
             //ChatMessage message = new(ChatRole.User, prompt);
             //while (true)
             //{
             //    List<ToolApprovalRequestContent> approvalRequests = [];
 
-            //    await foreach (var update in agent.RunStreamingAsync(message, session))
+            //    await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(message, session))
             //    {
             //        approvalRequests.AddRange(update.Contents.OfType<ToolApprovalRequestContent>());
             //        Console.Write(update);
