@@ -76,14 +76,14 @@ internal class ChatWithAgent
 
         //now give it an agent loop with an evaluator to see if a 
         //booking has taken place
-        AIAgent loopAgent = new LoopAgent(
-            innerAgent: agent,
-            evaluator: new BookingEvaluator(config),
-            options: new LoopAgentOptions()
-            {
+        // AIAgent loopAgent = new LoopAgent(
+        //     innerAgent: agent,
+        //     evaluator: new BookingEvaluator(config),
+        //     options: new LoopAgentOptions()
+        //     {
                 
-            }
-        );
+        //     }
+        // );
         return agent;
     }
 
