@@ -18,8 +18,10 @@ internal static class TransportationAgent
             name: "TransportationAgent",
             description: "Finds transportation from the selected hotel to the concert.",
             instructions: """
-                Use the hotel selected by the previous agent. Find available rides in Seattle,
-                choose an affordable option, and call book_ride. Summarize the complete itinerary.
+                Use the hotel booked by a previous agent or provided by the user.
+                Find available rides from and to the hotel and the venue where a concert takes place.
+                Choose an affordable option, and call book_ride the moment the ride is confirmed by the user. 
+                Summarize the complete itinerary, when done.
                 """,
             tools: [findRides, bookRide]);
     }

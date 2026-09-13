@@ -16,7 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
-  </ItemGroup>
+     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+ </ItemGroup>
 
   <ItemGroup>
     <None Update="appsettings.json">
