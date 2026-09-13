@@ -1,12 +1,9 @@
 ﻿using System.ClientModel;
-using System.ClientModel.Primitives;
 using System.ComponentModel;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using modulerag;
-using OpenAI.Chat;
+
 #pragma warning disable MAAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
 
@@ -26,35 +23,14 @@ internal class ChatWithAgent
 
         Console.WriteLine("******** Start the agent ***********");
         var session = await transportationAgent.CreateSessionAsync();
-        
-        var agentresult =  transportationAgent.RunStreamingAsync(question, session);
-        await foreach (var item in agentresult)
-        {
-           await PrintResult(item);
-        }
-        Console.WriteLine("******** Done ***********");
-        
-    }
+    
+        List<ChatMessage> input = [new ChatMessage(ChatRole.User, question)];
 
-    private static async Task PrintResult(AgentResponseUpdate agentResponse)
-    {
+        var response =  await transportationAgent.RunAsync(input, session);
+
         
-        foreach (var item in agentResponse.Contents)
-        {
-            //print information about every AIContent item
-            if(item is TextContent textContent)
-                Console.WriteLine($"{textContent.RawRepresentation}");
-            if(item is DataContent dataContent)     
-                Console.WriteLine($"{dataContent.MediaType}");
-            if(item is UriContent uriContent)
-                Console.WriteLine($"{uriContent.Uri}");
-            if(item is ToolApprovalRequestContent toolApprovalRequestContent)
-                Console.WriteLine($"{toolApprovalRequestContent.RawRepresentation}");
-            if(item is FunctionCallContent functionCallContent)
-                Console.WriteLine($"{functionCallContent.RawRepresentation}");
-            if(item is FunctionResultContent functionResultContent)
-                Console.WriteLine($"{functionResultContent.RawRepresentation}");
-        }
+        AgentResponsePrinter.PrintResponse(response);
+        Console.WriteLine("******** Done ***********");
     }
 
     private AIAgent CreateTransportationAgent(IConfiguration config)
@@ -63,10 +39,16 @@ internal class ChatWithAgent
 
         var instructions = """
             You are an expert in finding transportation options from a given hotel location to the concert location.
-            You will try to get the best options available for an afordable price.Make sure the customer will be there at least 30 minutes
-            before the concert starts at the venue. You always suggest 3 options with different price ranges.
-            When you need input from the user, ask for input using the available functions. 
-            You will ask for approval before you make the booking
+            You will try to get the best options available for an afordable price.
+            Make sure the customer will be there at least 30 minutes before the concert starts at the venue.
+            You always suggest 3 options with different price ranges.
+            
+            Never ask the user a question as plain text: nobody reads it. Whenever you need information from
+            the user, call the AskForUserInput function and wait for its result. Booking functions request
+            approval on their own, so call them directly instead of asking for permission in text first.
+
+            ##Exit condition: 
+            The agent should exit once a ride has been successfully booked or the user cancels the process.
             """;
 
         var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("OpenAI:Model is not configured.");
@@ -93,7 +75,7 @@ internal class ChatWithAgent
             name: "TransportationAgent");
 
         //now give it an agent loop with an evaluator to see if a 
-        // booking has taken place
+        //booking has taken place
         AIAgent loopAgent = new LoopAgent(
             innerAgent: agent,
             evaluator: new BookingEvaluator(config),
@@ -102,7 +84,7 @@ internal class ChatWithAgent
                 
             }
         );
-        return loopAgent;
+        return agent;
     }
 
     [Description("Asks the user for input based on the provided question.")]

@@ -76,7 +76,9 @@ public class BookingEvaluator : LoopEvaluator
         var endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("OpenAI:EndPoint is not configured.");
         var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
         _instructions = DefaultInstructions;
+        
         _feedbackMessageTemplate = DefaultFeedbackMessageTemplate;
+
         _EvaluatorClient = new OpenAI.Chat.ChatClient(
         model,
         new ApiKeyCredential(token),

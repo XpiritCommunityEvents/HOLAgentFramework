@@ -24,46 +24,11 @@ internal class ChatWithAgent
         var agentresult = await transportationAgent.RunAsync(question);
 
         Console.WriteLine("******** RESPONSE ***********");
-        PrintResult(agentresult);
-    }
-
-    private static void PrintResult(AgentResponse agentResponse)
-    {
-        foreach (var item in agentResponse.Messages)
-        {
-            Console.WriteLine("----------------------------------------");
-            Console.WriteLine($"Message id: {item.MessageId}");
-            Console.WriteLine($"Author: {item.AuthorName}");
-
-            foreach (var content in item.Contents)
-            {
-                switch (content)
-                {
-                    case TextContent textContent:
-                        Console.WriteLine($"Text: {textContent.Text}");
-                        break;
-                    case FunctionCallContent functionCallContent:
-                        Console.WriteLine($"Function call: {functionCallContent.RawRepresentation}");
-                        break;
-                    case FunctionResultContent functionResultContent:
-                        Console.WriteLine($"Function result: {functionResultContent.RawRepresentation}");
-                        break;
-                    case ToolApprovalRequestContent toolApprovalRequestContent:
-                        Console.WriteLine($"Tool approval request: {toolApprovalRequestContent.RawRepresentation}");
-                        break;
-                    default:
-                        Console.WriteLine($"{content.GetType().Name}: {content.RawRepresentation}");
-                        break;
-                }
-            }
-        }
-
-        Console.WriteLine("----------------------------------------");
+        AgentResponsePrinter.PrintResponse(agentresult);
     }
 
     private AIAgent CreateTransportationAgent(IConfiguration config)
     {
-      
         var instructions = """
             You are an expert in finding transportation options from a given hotel location to the concert location.
             You will try to get the best options available for an afordable price.

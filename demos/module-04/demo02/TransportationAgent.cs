@@ -1,7 +1,7 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
-namespace ModuleWorkflow;
+namespace ModuleAgent;
 
 internal static class TransportationAgent
 {
@@ -11,7 +11,7 @@ internal static class TransportationAgent
             RideInformationSystemService.GetAvailableRides,
             "get_available_rides");
         AIFunction bookRide = AIFunctionFactory.Create(
-            RideInformationSystemService.BookRide,
+            RideInformationSystemService.BookARide,
             "book_ride");
 
         return chatClient.AsAIAgent(
