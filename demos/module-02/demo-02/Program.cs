@@ -1,4 +1,5 @@
 using AgentFramework101;
+using AgentFramework101.Scenarios;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OpenAI;
@@ -25,6 +26,10 @@ Console.WriteLine("GloboTicket assistant.");
 
 await Scenario_01.Run(chatClient);
 
-//await Scenario_02.Run(chatClient, configuration);
+//await Scenario_02.Run(chatClient);
 
 //await Scenario_03.Run(chatClient, configuration);
+
+//await Scenario_04.Run(chatClient, configuration);
+
+//await Scenario_05.Run(chatClient, configuration);

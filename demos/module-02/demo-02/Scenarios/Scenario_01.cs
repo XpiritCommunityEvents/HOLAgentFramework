@@ -1,16 +1,16 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
-namespace AgentFramework101;
+namespace AgentFramework101.Scenarios;
 
 /// <summary>
-/// Scenario 01: synchronous and streaming agent interaction with session.
+/// Scenario 01: synchronous agent, structured responses and sessions.
 /// </summary>
 internal static class Scenario_01
 {
     public static async Task Run(IChatClient chatClient)
     {
-        Console.WriteLine("SCENARIO 01 --- synchronous, structured and streaming responses and sessions");
+        Console.WriteLine("SCENARIO 01 --- synchronous, structured responses and sessions");
 
         AIAgent agent = chatClient
             .AsAIAgent(new ChatClientAgentOptions
@@ -52,6 +52,10 @@ internal static class Scenario_01
             var response = await agent.RunAsync(prompt);
             Console.Write(response.Text);
 
+            //var serialized = await agent.SerializeSessionAsync(session);
+            //var sessionJson = JsonSerializer.Serialize(serialized, new JsonSerializerOptions { WriteIndented = true });
+            //Console.WriteLine(sessionJson);
+
             #region Structured responses
             // synchronous structured response:
             //var structuredResponse = await agent.RunAsync<TicketSummary>(prompt, session);
@@ -61,14 +65,6 @@ internal static class Scenario_01
             //Console.WriteLine($"Venue: {structuredResponse.Result.Venue}");
             //Console.WriteLine($"Description: {structuredResponse.Result.Description}");
             //Console.WriteLine($"Date: {structuredResponse.Result.Date}");
-            #endregion
-
-            #region Streaming responses
-            // streaming response:
-            //await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(prompt, session))
-            //{
-            //    Console.Write(update);
-            //}
             #endregion
 
             Console.WriteLine();

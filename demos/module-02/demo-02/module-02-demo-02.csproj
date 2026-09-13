@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <UserSecretsId>dabd1f7a-1cf0-48a8-a5f6-2acc292c8729</UserSecretsId>
+		<RootNamespace>AgentFramework101</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
