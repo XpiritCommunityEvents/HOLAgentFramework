@@ -29,11 +29,11 @@ internal static class Scenario_01
 
         //var runOptions = new ChatClientAgentRunOptions(new ChatOptions
         //{
-        //    MaxOutputTokens = 500,
-        //    Temperature = 0.5f,
-        //    TopP = 1.0f,
-        //    FrequencyPenalty = 0.0f,
-        //    PresencePenalty = 0.0f
+        //    TopP = 0.5f,
+        //    TopK = 40,
+        //    Temperature = 0f,
+        //    FrequencyPenalty = 0.5f,
+        //    MaxOutputTokens = 500
         //});
 
         //AgentSession session = await agent.CreateSessionAsync();
@@ -54,12 +54,13 @@ internal static class Scenario_01
 
             #region Structured responses
             // synchronous structured response:
-            // var structuredResponse = await agent.RunAsync<ShowSummary>(prompt, session);
-            // Console.WriteLine($"Artist: {structuredResponse.Result.Artist}");
-            // Console.WriteLine($"Title: {structuredResponse.Result.Title}");
-            // Console.WriteLine($"Venue: {structuredResponse.Result.Venue}");
-            // Console.WriteLine($"Description: {structuredResponse.Result.Description}");
-            // Console.WriteLine($"Date: {structuredResponse.Result.Date}");
+            //var structuredResponse = await agent.RunAsync<TicketSummary>(prompt, session);
+            //Console.WriteLine($"Ticket number: {structuredResponse.Result.TicketNumber}");
+            //Console.WriteLine($"Artist: {structuredResponse.Result.Artist}");
+            //Console.WriteLine($"Title: {structuredResponse.Result.Title}");
+            //Console.WriteLine($"Venue: {structuredResponse.Result.Venue}");
+            //Console.WriteLine($"Description: {structuredResponse.Result.Description}");
+            //Console.WriteLine($"Date: {structuredResponse.Result.Date}");
             #endregion
 
             #region Streaming responses
