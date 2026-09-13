@@ -1,5 +1,5 @@
-﻿
-
+﻿using System.Net.Http.Headers;
+using System.Text.Json;
 using System.ClientModel;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -51,3 +51,48 @@ var message = new ChatMessage(ChatRole.User,
 
 var result = await agent.RunAsync(message);
 Console.WriteLine(result);
+//-- No Add the Image Edit. No support yet so Http REST call is used instead.
+
+// Call MAI Image 2.6 Edits REST API
+Console.WriteLine("\nSending image and concert info to MAI Image 2.6 model...");
+
+using var httpClient = new HttpClient();
+httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
+
+var maiUrl = $"{endpoint.TrimEnd('/')}/mai/v1/images/edits";
+
+
+//Adding new instructions combined with text from previous demo
+using var form = new MultipartFormDataContent();
+form.Add(new StringContent(imageModel), "model");
+form.Add(new StringContent($"Add clear green location pins and labels on this map for the following concert venues and locations:\n{result}"), "prompt");
+
+var imageContent = new ByteArrayContent(imageBytes);
+imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+form.Add(imageContent, "image", "SanDiego-Area.png");
+
+using var response = await httpClient.PostAsync(maiUrl, form);
+var responseJson = await response.Content.ReadAsStringAsync();
+
+if (!response.IsSuccessStatusCode)
+{
+    Console.WriteLine($"Error ({response.StatusCode}): {responseJson}");
+    response.EnsureSuccessStatusCode();
+}
+
+using var doc = JsonDocument.Parse(responseJson);
+var base64Image = doc.RootElement
+    .GetProperty("data")[0]
+    .GetProperty("b64_json")
+    .GetString();
+
+
+//Write Image
+if (!string.IsNullOrEmpty(base64Image))
+{
+    byte[] outputBytes = Convert.FromBase64String(base64Image);
+    string outputPath = Path.Combine(AppContext.BaseDirectory, "SanDiego-Area-Output.png");
+    await File.WriteAllBytesAsync(outputPath, outputBytes);
+    Console.WriteLine($"\nOutput image successfully saved to: {outputPath}");
+}
+
