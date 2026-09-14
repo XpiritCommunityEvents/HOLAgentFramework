@@ -44,7 +44,7 @@ internal static class Scenario_02
             // streaming response:
             await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(prompt, session))
             {
-                Console.WriteLine(update);
+                Console.Write(update);
 
                 //AgentResponseHelper.HandleResponseUpdate(update);
             }
