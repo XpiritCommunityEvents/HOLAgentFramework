@@ -42,15 +42,20 @@ internal class ChatWithAgent
             You will try to get the best options available for an afordable price.
             Make sure the customer will be there at least 30 minutes before the concert starts at the venue.
             You always suggest 3 options with different price ranges.
-            
-            Never ask the user a question as plain text: nobody reads it. Whenever you need information from
-            the user, call the AskForUserInput function and wait for its result. Booking functions request
-            approval on their own, so call them directly instead of asking for permission in text first.
-
-            ##Exit condition: 
-            The agent should exit once a ride has been successfully booked or the user cancels the process.
             """;
+        // var instructions = """
+        //     You are an expert in finding transportation options from a given hotel location to the concert location.
+        //     You will try to get the best options available for an afordable price.
+        //     Make sure the customer will be there at least 30 minutes before the concert starts at the venue.
+        //     You always suggest 3 options with different price ranges.
+            
+        //     Never ask the user a question as plain text: nobody reads it. Whenever you need information from
+        //     the user, call the AskForUserInput function and wait for its result. Booking functions request
+        //     approval on their own, so call them directly instead of asking for permission in text first.
 
+        //     ##Exit condition: 
+        //     The agent should exit once a ride has been successfully booked or the user cancels the process.
+        //     """;
         var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("OpenAI:Model is not configured.");
         var endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("OpenAI:EndPoint is not configured.");
         var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
@@ -66,8 +71,8 @@ internal class ChatWithAgent
         .AsIChatClient()
         .AsAIAgent( 
             tools: [
-             AIFunctionFactory.Create(AskForUserInput),
-             AIFunctionFactory.Create(ShowMessage),
+ //            AIFunctionFactory.Create(AskForUserInput),
+ //            AIFunctionFactory.Create(ShowMessage),
              AIFunctionFactory.Create(RideInformationSystemService.GetAvailableRides),
              AIFunctionFactory.Create(RideInformationSystemService.BookARide)
             ],

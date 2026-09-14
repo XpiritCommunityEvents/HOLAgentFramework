@@ -5,4 +5,5 @@ This is a demonstration of text prediction using a large language model (LLM). S
 Start typing some text and observe how the LLM predicts the next words.
 
 ```text
-In San Diego, the weather is usually quite pleasant, with sunny skies and mild temperatures throughout the year. etc..
+In San Diego, the weather is usually quite pleasant, with sunny skies and mild temperatures throughout the year.  
+and the best place to eat italian food is Little Italy.
