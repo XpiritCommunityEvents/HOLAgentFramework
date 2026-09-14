@@ -51,7 +51,7 @@ await using McpClient mcpClient = await McpClient.CreateAsync(
 
 IList<McpClientTool> tools = await mcpClient.ListToolsAsync();
 
-builder.Services.AddSingleton<IChatClient>(_ =>
+builder.Services.AddSingleton<IChatClient>(sp =>
 {
     string apiKey = builder.Configuration["OpenAI:ApiKey"]
         ?? throw new InvalidOperationException("The OpenAI API key is not configured.");
@@ -66,16 +66,21 @@ builder.Services.AddSingleton<IChatClient>(_ =>
     var client = openAIClient.GetChatClient(model).AsIChatClient();
 
     return new ChatClientBuilder(client)
-        .UseOpenTelemetry(sourceName: ChatAssistant.Name, configure: (cfg) => {
-            // Allows the DevUI debug panel to see actual prompt text and tool results
-            cfg.EnableSensitiveData = true;
+        .UseLogging()
+        .UseOpenTelemetry(sourceName: builder.Environment.ApplicationName, configure: (cfg) => {
+            // Allows the DevUI debug panel to see actual prompt text and tool results.
+            // Only enabled in Development to avoid exporting user content in production.
+            cfg.EnableSensitiveData = builder.Environment.IsDevelopment();
         })
-        .Build();
+        .Build(sp);
 });
 
 builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
     services.GetRequiredService<IChatClient>(),
-    tools));
+    tools,
+    services,
+    enableSensitiveData: builder.Environment.IsDevelopment(),
+    builder.Environment.ApplicationName));
 builder.Services.AddSingleton<ConversationStore>();
 
 builder.Services.AddOpenAIResponses();

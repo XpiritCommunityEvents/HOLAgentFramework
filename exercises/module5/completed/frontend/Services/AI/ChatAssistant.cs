@@ -17,7 +17,7 @@ internal static class ChatAssistant
         answer the question.
         """;
 
-    internal static AIAgent Create(IChatClient chatClient, IEnumerable<AITool> tools) =>
+    internal static AIAgent Create(IChatClient chatClient, IEnumerable<AITool> tools, IServiceProvider serviceProvider, bool enableSensitiveData = false, string? applicationName = Name) =>
         chatClient.AsAIAgent(new ChatClientAgentOptions
         {
             Name = Name,
@@ -26,10 +26,11 @@ internal static class ChatAssistant
             ChatOptions = new ChatOptions
             {
                 Instructions = Instructions,
-                Tools = tools.ToList()
+                Tools = [.. tools]
             }
         })
         .AsBuilder()
-        .UseOpenTelemetry("GloboTicketAssistant", otel => otel.EnableSensitiveData = true)
-        .Build();
+        .UseLogging()
+        .UseOpenTelemetry(applicationName, otel => otel.EnableSensitiveData = enableSensitiveData)
+        .Build(serviceProvider);
 }

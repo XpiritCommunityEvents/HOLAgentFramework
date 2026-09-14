@@ -20,6 +20,7 @@ public static class Extensions
 
     public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.Services.AddLogging();
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -46,6 +47,11 @@ public static class Extensions
 
     public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.Logging.SetMinimumLevel(LogLevel.Trace);
+        builder.Logging.AddFilter("Microsoft.Extensions.AI", LogLevel.Trace);
+        builder.Logging.AddFilter("Microsoft.Agents.AI", LogLevel.Trace);
+        builder.Logging.AddFilter("OpenAI", LogLevel.Trace);
+
         builder.Logging.AddOpenTelemetry(logging =>
         {
             logging.IncludeFormattedMessage = true;
@@ -58,24 +64,33 @@ public static class Extensions
             {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddRuntimeInstrumentation();
+                    .AddRuntimeInstrumentation()
+                    .AddSqlClientInstrumentation()
+                    .AddMeter("Microsoft.Extensions.AI")
+                    .AddMeter("Microsoft.Agents.AI");
             })
             .WithTracing(tracing =>
             {
                 tracing.AddSource(builder.Environment.ApplicationName)
-                    .AddSource("Microsoft.Extensions.AI")
-                    .AddSource("Microsoft.Agents.AI")
-                    .AddSource("Microsoft.Agents.AI.Compaction")
-                    .AddSource("Experimental.Microsoft.Extensions.AI.*")
+                    // Microsoft.Extensions.AI and Agent Framework, including nested sources
+                    .AddSource("Microsoft.Extensions.AI*")
+                    .AddSource("Microsoft.Agents.AI*")
+                    .AddSource("Experimental.Microsoft.Extensions.AI*")
+                    // Custom source name passed to UseOpenTelemetry on the chat client and agent
+                    // MCP client/server spans (EventCatalog tools)
+                    .AddSource("ModelContextProtocol*")
+                    // Underlying model SDK spans
+                    .AddSource("OpenAI*")
+                    .AddSource("Azure.AI.OpenAI*")
                     .AddAspNetCoreInstrumentation(tracing =>
                         // Exclude health check requests from tracing
                         tracing.Filter = context =>
                             !context.Request.Path.StartsWithSegments(HealthEndpointPath)
                             && !context.Request.Path.StartsWithSegments(AlivenessEndpointPath)
                     )
-                    // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
-                    //.AddGrpcClientInstrumentation()
-                    .AddHttpClientInstrumentation();
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddSqlClientInstrumentation();
             });
 
         // Use the standard OTLP exporter when a collector endpoint is configured.
