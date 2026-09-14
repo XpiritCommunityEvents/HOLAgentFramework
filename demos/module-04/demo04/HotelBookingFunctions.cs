@@ -4,109 +4,91 @@ namespace ModuleAgent;
 
 public static class HotelBookingFunctions
 {
-    [Description("Returns available rooms in a city for a date")]
-    [return: Description("The available room information, containing Type, Price per night, name of the hotel, number of people per room, amenities and location")]
-    public static AvailableRoom[] SelectRoomPreference(
-        [Description("City where you need an hotel")]
-        string city,
-        [Description("Date the hotel night is required")]
-    DateTime dateOfBooking)
+    [Description("Gets available hotel rooms in a city")]
+    public static AvailableRoom[] GetAvailableRooms(
+        [Description("City where the guest needs a room")] string city) =>
+        Rooms.Where(room => room.City.Equals(city, StringComparison.OrdinalIgnoreCase)).ToArray();
+
+    [Description("Books the selected hotel room")]
+    public static string BookRoom(
+        [Description("ID of the selected room")] int roomId)
     {
-        Console.ForegroundColor = ConsoleColor.Magenta;
-        Console.WriteLine($"Searching for available rooms in {city} for date {dateOfBooking.ToShortDateString()}");
-        Console.ResetColor();
-        return availableRooms
-                .Where(r => r.City.Equals(city, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
+        AvailableRoom? room = Rooms.FirstOrDefault(room => room.RoomId == roomId);
+        return room is null
+            ? $"Room {roomId} was not found."
+            : $"Booked room {roomId} at {room.HotelName} in {room.City}.";
     }
 
-    [ Description("Books a room previously selected from available rooms")]
-    [return: Description("Indication if the booking was successful")]
-    public static bool BookSelectedRoom(
-        [Description("id of the room to be booked")]
-        int id)
-    {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"Booking room with id {id}");
-        Console.ResetColor();
-        var selectedRoom = availableRooms.FirstOrDefault(r => r.RoomId == id);
-        return selectedRoom != null;
-    }
 
-    [Description("Provides approval from the user for making a suggested booking based on the room id")]
-    [return: Description("Indication if it is allowed to make the booking")]
-    public static bool GetApprovalForBooking(
-        [Description("id of the room to be booked")]
-        int id)
-    {
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine($"Is it allowed to make the booking for room with id: {id}");
-        Console.ResetColor();
-        var consent = Console.ReadLine();
-        return consent.Equals("yes", StringComparison.OrdinalIgnoreCase);
-    }
+        private static readonly AvailableRoom[] Rooms =
+    [
+        // Seattle
+        new(301, "Standard", 180, "The Edgewater Hotel", "WiFi, ocean view", "Seattle"),
+        new(302, "Deluxe", 260, "Fairmont Olympic Hotel", "WiFi, spa, room service", "Seattle"),
+        new(303, "Suite", 410, "Four Seasons Hotel Seattle", "WiFi, infinity pool, spa", "Seattle"),
+        new(304, "Standard", 160, "Hotel Theodore", "WiFi, coffee bar", "Seattle"),
+        new(305, "Deluxe", 220, "W Seattle", "WiFi, fitness center, pet friendly", "Seattle"),
 
-    public class AvailableRoom
-    {
-        public int RoomId { get; set; }
-        public string RoomType { get; set; }
-        public decimal PricePerNight { get; set; }
-        public string HotelName { get; set; }
-        public int NumberOfAdultsAllowedInRoom { get; set; }
-        public string Amenities { get; set; }
-        public string City { get; set; }
-    }
+        // Las Vegas
+        new(401, "Standard", 150, "Bellagio Hotel & Casino", "WiFi, casino, fountain view", "Las Vegas"),
+        new(402, "Deluxe", 230, "The Venetian Resort", "WiFi, casino, gondola rides", "Las Vegas"),
+        new(403, "Suite", 450, "Wynn Las Vegas", "WiFi, spa, golf course", "Las Vegas"),
+        new(404, "Standard", 120, "Caesars Palace", "WiFi, casino, pools", "Las Vegas"),
+        new(405, "Suite", 520, "ARIAL Resort & Casino", "WiFi, modern tech, dining", "Las Vegas"),
+        new(406, "Deluxe", 290, "The Cosmopolitan of Las Vegas", "WiFi, balcony, nightlife", "Las Vegas"),
+        new(407, "Standard", 110, "MGM Grand", "WiFi, lazy river, casino", "Las Vegas"),
+        new(408, "Suite", 380, "Mandalay Bay", "WiFi, beach pool, aquarium", "Las Vegas"),
 
-    private static readonly AvailableRoom[] availableRooms =
-    {
-        // --- 50 room options below ---
-        new AvailableRoom { RoomId = 304, RoomType = "Standard", PricePerNight = 110.00m, HotelName = "Harbor View", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "San Francisco" },
-        new AvailableRoom { RoomId = 305, RoomType = "Deluxe", PricePerNight = 210.00m, HotelName = "Harbor View", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar", City = "San Francisco" },
-        new AvailableRoom { RoomId = 306, RoomType = "Suite", PricePerNight = 400.00m, HotelName = "Harbor View", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Ocean View", City = "San Francisco" },
-        new AvailableRoom { RoomId = 307, RoomType = "Standard", PricePerNight = 95.00m, HotelName = "Budget Stay", NumberOfAdultsAllowedInRoom = 2, Amenities = "TV, Air Conditioning", City = "Berlin" },
-        new AvailableRoom { RoomId = 308, RoomType = "Deluxe", PricePerNight = 180.00m, HotelName = "Budget Stay", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Air Conditioning", City = "Berlin" },
-        new AvailableRoom { RoomId = 309, RoomType = "Suite", PricePerNight = 320.00m, HotelName = "Budget Stay", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Air Conditioning, Kitchenette", City = "Seattle" },
-        new AvailableRoom { RoomId = 310, RoomType = "Standard", PricePerNight = 130.00m, HotelName = "Skyline Hotel", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, City View", City = "London" },
-        new AvailableRoom { RoomId = 311, RoomType = "Deluxe", PricePerNight = 220.00m, HotelName = "Skyline Hotel", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, City View", City = "London" },
-        new AvailableRoom { RoomId = 312, RoomType = "Suite", PricePerNight = 370.00m, HotelName = "Skyline Hotel", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, City View", City = "London" },
-        new AvailableRoom { RoomId = 313, RoomType = "Standard", PricePerNight = 125.00m, HotelName = "Sunset Resort", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, Balcony", City = "Miami" },
-        new AvailableRoom { RoomId = 314, RoomType = "Deluxe", PricePerNight = 210.00m, HotelName = "Sunset Resort", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Balcony", City = "Miami" },
-        new AvailableRoom { RoomId = 315, RoomType = "Suite", PricePerNight = 390.00m, HotelName = "Sunset Resort", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Balcony", City = "Miami" },
-        new AvailableRoom { RoomId = 316, RoomType = "Standard", PricePerNight = 140.00m, HotelName = "Mountain Lodge", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, Fireplace", City = "Denver" },
-        new AvailableRoom { RoomId = 317, RoomType = "Deluxe", PricePerNight = 230.00m, HotelName = "Mountain Lodge", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Fireplace", City = "Denver" },
-        new AvailableRoom { RoomId = 318, RoomType = "Suite", PricePerNight = 410.00m, HotelName = "Mountain Lodge", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Fireplace", City = "Seattle" },
-        new AvailableRoom { RoomId = 319, RoomType = "Standard", PricePerNight = 115.00m, HotelName = "Urban Stay", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "Tokyo" },
-        new AvailableRoom { RoomId = 320, RoomType = "Deluxe", PricePerNight = 205.00m, HotelName = "Urban Stay", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar", City = "Tokyo" },
-        new AvailableRoom { RoomId = 321, RoomType = "Suite", PricePerNight = 360.00m, HotelName = "Urban Stay", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette", City = "Tokyo" },
-        new AvailableRoom { RoomId = 322, RoomType = "Standard", PricePerNight = 100.00m, HotelName = "Seaside Inn", NumberOfAdultsAllowedInRoom = 2, Amenities = "TV, Air Conditioning", City = "Barcelona" },
-        new AvailableRoom { RoomId = 323, RoomType = "Deluxe", PricePerNight = 190.00m, HotelName = "Seaside Inn", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Air Conditioning, Sea View", City = "Barcelona" },
-        new AvailableRoom { RoomId = 324, RoomType = "Suite", PricePerNight = 340.00m, HotelName = "Seaside Inn", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Air Conditioning, Kitchenette, Sea View", City = "Barcelona" },
-        new AvailableRoom { RoomId = 325, RoomType = "Standard", PricePerNight = 135.00m, HotelName = "Royal Palace", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, Air Conditioning", City = "Rome" },
-        new AvailableRoom { RoomId = 326, RoomType = "Deluxe", PricePerNight = 225.00m, HotelName = "Royal Palace", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Air Conditioning", City = "Rome" },
-        new AvailableRoom { RoomId = 327, RoomType = "Suite", PricePerNight = 380.00m, HotelName = "Royal Palace", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Air Conditioning", City = "Rome" },
-        new AvailableRoom { RoomId = 328, RoomType = "Standard", PricePerNight = 105.00m, HotelName = "Airport Hotel", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "Frankfurt" },
-        new AvailableRoom { RoomId = 329, RoomType = "Deluxe", PricePerNight = 195.00m, HotelName = "Airport Hotel", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar", City = "Frankfurt" },
-        new AvailableRoom { RoomId = 330, RoomType = "Suite", PricePerNight = 345.00m, HotelName = "Airport Hotel", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette", City = "Frankfurt" },
-        new AvailableRoom { RoomId = 331, RoomType = "Standard", PricePerNight = 125.00m, HotelName = "Central Park Hotel", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, Park View", City = "New York" },
-        new AvailableRoom { RoomId = 332, RoomType = "Deluxe", PricePerNight = 215.00m, HotelName = "Central Park Hotel", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Park View", City = "New York" },
-        new AvailableRoom { RoomId = 333, RoomType = "Suite", PricePerNight = 375.00m, HotelName = "Central Park Hotel", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Park View", City = "New York" },
-        new AvailableRoom { RoomId = 334, RoomType = "Standard", PricePerNight = 120.00m, HotelName = "Canal House", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "Amsterdam" },
-        new AvailableRoom { RoomId = 335, RoomType = "Deluxe", PricePerNight = 210.00m, HotelName = "Canal House", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Canal View", City = "Amsterdam" },
-        new AvailableRoom { RoomId = 336, RoomType = "Suite", PricePerNight = 360.00m, HotelName = "Canal House", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Canal View", City = "Amsterdam" },
-        new AvailableRoom { RoomId = 337, RoomType = "Standard", PricePerNight = 115.00m, HotelName = "Opera Hotel", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "Vienna" },
-        new AvailableRoom { RoomId = 338, RoomType = "Deluxe", PricePerNight = 205.00m, HotelName = "Opera Hotel", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar", City = "Vienna" },
-        new AvailableRoom { RoomId = 339, RoomType = "Suite", PricePerNight = 355.00m, HotelName = "Opera Hotel", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette", City = "Seattle" },
-        new AvailableRoom { RoomId = 340, RoomType = "Standard", PricePerNight = 110.00m, HotelName = "Garden Inn", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, Garden View", City = "Prague" },
-        new AvailableRoom { RoomId = 341, RoomType = "Deluxe", PricePerNight = 200.00m, HotelName = "Garden Inn", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Garden View", City = "Prague" },
-        new AvailableRoom { RoomId = 342, RoomType = "Suite", PricePerNight = 350.00m, HotelName = "Garden Inn", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Garden View", City = "Prague" },
-        new AvailableRoom { RoomId = 343, RoomType = "Standard", PricePerNight = 108.00m, HotelName = "City Lights", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "Seoul" },
-        new AvailableRoom { RoomId = 344, RoomType = "Deluxe", PricePerNight = 198.00m, HotelName = "City Lights", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar", City = "Seoul" },
-        new AvailableRoom { RoomId = 345, RoomType = "Suite", PricePerNight = 348.00m, HotelName = "City Lights", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette", City = "Seoul" },
-        new AvailableRoom { RoomId = 346, RoomType = "Standard", PricePerNight = 112.00m, HotelName = "Lakeview Hotel", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV, Lake View", City = "Zurich" },
-        new AvailableRoom { RoomId = 347, RoomType = "Deluxe", PricePerNight = 202.00m, HotelName = "Lakeview Hotel", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar, Lake View", City = "Zurich" },
-        new AvailableRoom { RoomId = 348, RoomType = "Suite", PricePerNight = 352.00m, HotelName = "Lakeview Hotel", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette, Lake View", City = "Zurich" },
-        new AvailableRoom { RoomId = 349, RoomType = "Standard", PricePerNight = 118.00m, HotelName = "Metro Hotel", NumberOfAdultsAllowedInRoom = 2, Amenities = "Free WiFi, TV", City = "Toronto" },
-        new AvailableRoom { RoomId = 350, RoomType = "Deluxe", PricePerNight = 208.00m, HotelName = "Metro Hotel", NumberOfAdultsAllowedInRoom = 3, Amenities = "Free WiFi, TV, Mini Bar", City = "Toronto" },
-        new AvailableRoom { RoomId = 351, RoomType = "Suite", PricePerNight = 358.00m, HotelName = "Metro Hotel", NumberOfAdultsAllowedInRoom = 4, Amenities = "Free WiFi, TV, Mini Bar, Kitchenette", City = "Toronto" },
-    };
+        // Ibiza
+        new(501, "Deluxe", 340, "Ushuaïa Ibiza Beach Hotel", "WiFi, pool parties, stage view", "Ibiza"),
+        new(502, "Suite", 620, "Ibiza Gran Hotel", "WiFi, spa, luxury casino", "Ibiza"),
+        new(503, "Standard", 210, "Hard Rock Hotel Ibiza", "WiFi, beach access, live music", "Ibiza"),
+        new(504, "Deluxe", 450, "Nobu Hotel Ibiza Bay", "WiFi, oceanfront, fine dining", "Ibiza"),
+        new(505, "Standard", 190, "Pikes Ibiza", "WiFi, cocktail bar, boutique vibe", "Ibiza"),
+        new(506, "Suite", 580, "Six Senses Ibiza", "WiFi, infinity pool, wellness center", "Ibiza"),
+        new(507, "Deluxe", 310, "Destino Pacha Ibiza Resort", "WiFi, sunset view, DJ events", "Ibiza"),
+
+        // Amsterdam
+        new(601, "Standard", 195, "The Dylan Amsterdam", "WiFi, canal view, courtyard garden", "Amsterdam"),
+        new(602, "Deluxe", 360, "Waldorf Astoria Amsterdam", "WiFi, historic canal palace, spa", "Amsterdam"),
+        new(603, "Suite", 490, "Conservatorium Hotel", "WiFi, indoor pool, spa, museum district", "Amsterdam"),
+        new(604, "Standard", 175, "Pulitzer Amsterdam", "WiFi, canal boat tour, terrace", "Amsterdam"),
+        new(605, "Deluxe", 280, "W Amsterdam", "WiFi, rooftop pool, lounge", "Amsterdam"),
+        new(606, "Standard", 150, "Hotel Okura Amsterdam", "WiFi, Michelin dining, spa", "Amsterdam"),
+        new(607, "Deluxe", 310, "Sofitel Legend The Grand Amsterdam", "WiFi, spa, historic building", "Amsterdam"),
+
+        // Paris
+        new(701, "Suite", 750, "The Ritz Paris", "WiFi, spa, historic bar", "Paris"),
+        new(702, "Deluxe", 580, "Le Meurice", "WiFi, Tuileries garden view, dining", "Paris"),
+        new(703, "Standard", 290, "Hôtel Plaza Athénée", "WiFi, Eiffel tower view, spa", "Paris"),
+        new(704, "Suite", 820, "Four Seasons Hotel George V", "WiFi, courtyard, 3 Michelin stars", "Paris"),
+        new(705, "Standard", 220, "Mama Shelter Paris East", "WiFi, rooftop bar, modern design", "Paris"),
+
+        // New York
+        new(801, "Deluxe", 420, "The Plaza Hotel", "WiFi, Central Park view, champagne bar", "New York"),
+        new(802, "Suite", 650, "The Carlyle, A Rosewood Hotel", "WiFi, live jazz, historic charm", "New York"),
+        new(803, "Standard", 260, "The Standard, High Line", "WiFi, rooftop lounge, river view", "New York"),
+        new(804, "Deluxe", 390, "1 Hotel Central Park", "WiFi, eco-friendly, fitness center", "New York"),
+        new(805, "Suite", 540, "The NoMad Hotel", "WiFi, library bar, classic decor", "New York"),
+
+        // Tokyo
+        new(901, "Deluxe", 460, "Aman Tokyo", "WiFi, city panorama, traditional onsen", "Tokyo"),
+        new(902, "Suite", 510, "Park Hyatt Tokyo", "WiFi, Shinjuku view, indoor pool", "Tokyo"),
+        new(903, "Standard", 210, "Hotel Gracery Shinjuku", "WiFi, Godzilla view, central location", "Tokyo"),
+        new(904, "Deluxe", 370, "The Ritz-Carlton Tokyo", "WiFi, Roppongi views, club lounge", "Tokyo"),
+        new(905, "Standard", 185, "Hoshinoya Tokyo", "WiFi, hot spring, Japanese breakfast", "Tokyo"),
+
+        // London
+        new(1001, "Suite", 680, "The Savoy", "WiFi, Thames view, butler service", "London"),
+        new(1002, "Deluxe", 520, "Claridge's", "WiFi, afternoon tea, art deco style", "London"),
+        new(1003, "Standard", 240, "The Hoxton, Shoreditch", "WiFi, restaurant, vibrant lounge", "London"),
+        new(1004, "Deluxe", 410, "The Langham London", "WiFi, spa, cocktail bar", "London"),
+        new(1005, "Suite", 600, "The Shard Shangri-La", "WiFi, skyline infinity pool, skyline view", "London"),
+
+        // Rome
+        new(1101, "Deluxe", 360, "Hotel de Russie", "WiFi, terraced gardens, spa", "Rome"),
+        new(1102, "Suite", 490, "Hassler Roma", "WiFi, Spanish Steps view, terrace", "Rome"),
+        new(1103, "Standard", 210, "Hotel Eden", "WiFi, panoramic rooftop, central", "Rome"),
+        new(1104, "Deluxe", 330, "The St. Regis Rome", "WiFi, historic ballroom, butler service", "Rome")
+    ];
 }

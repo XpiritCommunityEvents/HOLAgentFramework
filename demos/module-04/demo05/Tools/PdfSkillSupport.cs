@@ -4,7 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Agents.AI;
 
-namespace ModuleAgent;
+namespace Module04.Demo05.Tools;
 
 /// <summary>Download + Python execution plumbing that the file-based "pdf" agent skill needs to actually run.</summary>
 internal static class PdfSkillSupport

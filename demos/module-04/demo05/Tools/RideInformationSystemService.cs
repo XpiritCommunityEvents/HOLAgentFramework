@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace ModuleAgent;
+namespace Module04.Demo05.Tools;
 
 public static class RideInformationSystemService
 {
@@ -31,9 +31,9 @@ public static class RideInformationSystemService
         new Ride { RideId = 2, RideType = "Ride Share", Price = 20.00m, ServiceName = "Uber", City = "New York" },
         new Ride { RideId = 3, RideType = "Limousine", Price = 100.00m, ServiceName = "Luxury Rides", City = "Los Angeles" },
         new Ride { RideId = 4, RideType = "Taxi", Price = 30.00m, ServiceName = "LA Cabs", City = "Los Angeles" },
-        new Ride { RideId = 5, RideType = "Ride Share", Price = 22.00m, ServiceName = "Lyft", City = "Chicago" },
-        new Ride { RideId = 6, RideType = "Taxi", Price = 28.00m, ServiceName = "Chicago Taxis", City = "Chicago" },
-        new Ride { RideId = 7, RideType = "Shuttle", Price = 15.00m, ServiceName = "City Shuttle", City = "Miami" },
+        new Ride { RideId = 5, RideType = "Ride Share", Price = 22.00m, ServiceName = "Lyft", City = "Ibiza" },
+        new Ride { RideId = 6, RideType = "Taxi", Price = 28.00m, ServiceName = "Ibiza Taxis", City = "Ibiza" },
+        new Ride { RideId = 7, RideType = "Shuttle", Price = 15.00m, ServiceName = "City Shuttle", City = "Ibiza" },
         new Ride { RideId = 8, RideType = "Ride Share", Price = 18.00m, ServiceName = "Uber", City = "Miami" },
         new Ride { RideId = 9, RideType = "Taxi", Price = 27.00m, ServiceName = "Miami Cabs", City = "Miami" },
         new Ride { RideId = 10, RideType = "Limousine", Price = 120.00m, ServiceName = "Elite Rides", City = "New York" },
@@ -47,8 +47,8 @@ public static class RideInformationSystemService
 public class Ride
 {
     public int RideId { get; set; }
-    public string RideType { get; set; }
+    public required string RideType { get; set; }
     public decimal Price { get; set; }
-    public string ServiceName { get; set; }
-    public string City { get; set; }
+    public required string ServiceName { get; set; }
+    public required string City { get; set; }
 }
