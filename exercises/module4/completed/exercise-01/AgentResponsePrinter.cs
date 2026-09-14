@@ -98,7 +98,7 @@ internal static class AgentResponsePrinter
     private static string FormatArguments(IDictionary<string, object?>? arguments) =>
         arguments is null ? string.Empty : string.Join(", ", arguments.Select(a => $"{a.Key}={a.Value}"));
 
- internal static void PrintResponse(AgentResponse response)
+     internal static void PrintResponse(AgentResponse response)
     {
         //implement the printing of the agent response
         // using the same option as in PrintResponseUpdate

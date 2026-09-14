@@ -1,24 +1,62 @@
+﻿using System.ClientModel;
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
-namespace modulerag;
 
-internal sealed class ChatWithAgent(IChatClient chatClient)
+
+namespace ModuleAgent;
+
+internal class ChatWithAgent
 {
-    public Task LetAgentFindRideAsync(
-        CancellationToken cancellationToken = default,
-        TextWriter? output = null)
+    public async Task LetAgentFindRide(IConfiguration config)
     {
-        _ = chatClient; // Used when TODO 1 is completed.
+        var question = """
+        I stay at the WestIn Seattle and the venue is the Seattle Kraken stadium.
+        the Concert starts at 7:30 pm and is November 20th this year. 
+        """;
 
-        // TODO 1: Adapt chatClient with AsAIAgent(...). Give the transportation
-        // agent a name, description, and clear instructions for helping a concert visitor.
+        Console.WriteLine("******** Create the agent ***********");
+        var transportationAgent = CreateTransportationAgent(config);
 
-        // TODO 2: Send the request below with RunAsync(...), preserve the supplied
-        // cancellation token, and write the returned AgentResponse to output.
-        //
-        // I am staying at the Westin Seattle, and the venue is Climate Pledge Arena.
-        // The concert starts at 7:30 PM on November 20 this year.
+        Console.WriteLine("******** Start the agent ***********");
+        var agentresult = await transportationAgent.RunAsync(question);
 
-        throw new NotImplementedException("Complete TODO 1 and TODO 2 in ChatWithAgent.cs.");
+        Console.WriteLine("******** RESPONSE ***********");
+        AgentResponsePrinter.PrintResponse(agentresult);
+    }
+
+    private AIAgent CreateTransportationAgent(IConfiguration config)
+    {
+        var instructions = """
+            You are an expert in finding transportation options from a given hotel location to the concert location.
+            You will try to get the best options available for an afordable price.
+            Make sure the customer will be there at least 30 minutes before the concert starts at the venue.
+            You always suggest 3 options with different price ranges.
+            You will ask for approval before you make the booking
+            """;
+
+        var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("OpenAI:Model is not configured.");
+        var endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("OpenAI:EndPoint is not configured.");
+        var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
+
+        AIAgent agent = new OpenAI.Chat.ChatClient(
+        model,
+        new ApiKeyCredential(token),
+        new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
+        })
+        .AsIChatClient()
+        .AsAIAgent( 
+             tools:[
+                AIFunctionFactory.Create(RideInformationSystemService.GetAvailableRides),
+                AIFunctionFactory.Create(RideInformationSystemService.BookARide)
+            ],
+            instructions: instructions,
+            name: "TransportationAgent");
+
+        return agent;
     }
 }
