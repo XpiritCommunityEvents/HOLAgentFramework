@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <UserSecretsId>dabd1f7a-1cf0-48a8-a5f6-2acc292c8729</UserSecretsId>
+		<RootNamespace>AgentFramework101</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,12 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
         <PackageReference Include="Microsoft.Agents.AI" />
         <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
-        <PackageReference Include="ModelContextProtocol.Core" />
+        <PackageReference Include="Microsoft.Extensions.Logging" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" />
+        <PackageReference Include="OpenTelemetry" />
+        <PackageReference Include="OpenTelemetry.Exporter.Console" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+        <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
     </ItemGroup>
 
     <ItemGroup>

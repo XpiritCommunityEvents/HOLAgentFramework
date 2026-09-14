@@ -1,7 +1,7 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
-namespace AgentFrameworkWorkshop.Module2.Completed;
+namespace AgentFramework101;
 
 public sealed class AnonymousUserFilter(UserSessionContext userContext)
 {

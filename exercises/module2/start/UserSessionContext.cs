@@ -1,4 +1,4 @@
-namespace AgentFrameworkWorkshop.Module2.Completed;
+namespace AgentFramework101;
 
 public sealed record UserSessionContext(string? UserId)
 {

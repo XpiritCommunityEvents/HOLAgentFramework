@@ -1,7 +1,8 @@
-namespace AgentFrameworkWorkshop.Module2.Completed;
+namespace AgentFramework101;
 
-public sealed class ShowSummary
+public class TicketSummary
 {
+    public int TicketNumber { get; set; }
     public string Artist { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Venue { get; set; } = string.Empty;
