@@ -28,5 +28,8 @@ internal static class ChatAssistant
                 Instructions = Instructions,
                 Tools = tools.ToList()
             }
-        });
+        })
+        .AsBuilder()
+        .UseOpenTelemetry("GloboTicketAssistant", otel => otel.EnableSensitiveData = true)
+        .Build();
 }
