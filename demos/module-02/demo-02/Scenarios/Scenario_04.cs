@@ -59,7 +59,7 @@ internal static class Scenario_04
 
             if (string.IsNullOrWhiteSpace(prompt))
             {
-                continue;
+                prompt = question;
             }
 
             ChatMessage message = new(ChatRole.User, prompt);
