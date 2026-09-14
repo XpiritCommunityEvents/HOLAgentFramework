@@ -1,4 +1,3 @@
-using AgentFramework101;
 using AgentFramework101.Scenarios;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;

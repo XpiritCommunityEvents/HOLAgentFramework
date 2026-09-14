@@ -52,9 +52,11 @@ internal static class Scenario_01
             var response = await agent.RunAsync(prompt);
             Console.Write(response.Text);
 
+            #region Session contents
             //var serialized = await agent.SerializeSessionAsync(session);
             //var sessionJson = JsonSerializer.Serialize(serialized, new JsonSerializerOptions { WriteIndented = true });
             //Console.WriteLine(sessionJson);
+            #endregion
 
             #region Structured responses
             // synchronous structured response:
