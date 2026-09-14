@@ -35,10 +35,10 @@ internal static class Scenario_03
                 discountTools.GetDiscountCode,
                 DiscountTools.ToolName,
                 "Generate a discount code for the signed-in user."),
-                AIFunctionFactory.Create(
+                new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
                     GetCurrentUtcTime,
                     "get_current_utc_time",
-                    "Get the current date and time in UTC.")
+                    "Get the current date and time in UTC."))
         ];
 
         AIAgent agent = chatClient
