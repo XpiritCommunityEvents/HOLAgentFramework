@@ -15,13 +15,13 @@ foreach ($codespace in $repos) {
     #Write-Host "owner: $($codespace.owner)"
     #Write-Host "repository: $($codespace.repository)"
     #Write-Host "state: $($codespace.state)"
-    Write-Host "gh codespace delete --c $($codespace.name) --org XpiritCommunityEvents -f"
+    Write-Host "gh codespace delete -c $($codespace.name) --org XpiritCommunityEvents --user $($codespace.owner) -f"
 }
 
-Write-Host "-----------------------------------"
-Write-Host "Starting cleanup of repositories..."
-$repositories = gh repo list xpiritcommunityevents --limit 1000 --json name,owner | ConvertFrom-Json
+# Write-Host "-----------------------------------"
+# Write-Host "Starting cleanup of repositories..."
+# $repositories = gh repo list xpiritcommunityevents --limit 1000 --json name,owner | ConvertFrom-Json
 
-foreach ($repository in $repositories | Where-Object { $_.name -like 'attendee-workshopAF-*' }) {
-    Write-Host "gh repo delete $($repository.owner.login)/$($repository.name) --yes"
-}
+# foreach ($repository in $repositories | Where-Object { $_.name -like 'attendee-workshopAF-*' }) {
+#     Write-Host "gh repo delete $($repository.owner.login)/$($repository.name) --yes"
+# }
