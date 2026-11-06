@@ -437,3 +437,5 @@ FodyWeavers.xsd
 *.msp
 
 exercises/module4/start/kernel-memory/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
