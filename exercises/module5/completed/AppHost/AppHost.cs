@@ -6,7 +6,7 @@ var openAiApiKey = builder.AddParameter("openai-api-key", secret: true);
 var openai = builder.AddOpenAI("openai")
     .WithApiKey(openAiApiKey)
     .WithEndpoint("https://semantic-kernel-vslive.services.ai.azure.com/openai/v1");
-var chatModel = openai.AddModel("chat", "gpt-4o")
+var chatModel = openai.AddModel("chat", "gpt-6-luna")
     .WithHealthCheck();
 
 var sql = builder.AddSqlServer("sql");
