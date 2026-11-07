@@ -22,52 +22,76 @@ jobs:
     - name: Get issue creator
       id: github_handle
       uses: actions/github-script@v8
-      
+      env:
+        GITHUB_HANDLE: ${{ github.event.inputs.githubhandle }}
       with:
+        result-encoding: string
         script: |
-          if ("${{ github.event_name }}" == "issues") {
+          let handle;
+          if (context.eventName === "issues") {
             const subject = context.payload.issue;
-            if (subject.labels.find(l => l.name == "signup")) {
-              creator = subject.user.login;
-              console.log(`Issue creator: ${creator}`);
-              return creator;
+            if (subject.labels.some(label => label.name === "signup")) {
+              handle = subject.user.login;
+            } else {
+              throw new Error("Issue did not have a signup label");
             }
-            throw new Error("Issue did not have a signup label");
+          } else {
+            handle = process.env.GITHUB_HANDLE;
           }
-          return "${{ github.event.inputs.githubhandle }}";
+          if (!/^[A-Za-z0-9-]{1,39}$/.test(handle ?? "")) {
+            throw new Error("A valid GitHub handle is required");
+          }
+          return handle;
         
+    - name: Invite Member to Organization
+      env:
+        GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
+        GITHUB_HANDLE: ${{ steps.github_handle.outputs.result }}
+        ORG: XpiritCommunityEvents
+      run: |
+        if ! user_id=$(gh api "users/$GITHUB_HANDLE" --jq '.id' 2>&1); then
+          echo "ERROR: Could not find GitHub user '$GITHUB_HANDLE':" >&2
+          echo "$user_id" >&2
+          exit 1
+        fi
+
+        if ! invitation=$(gh api --method POST "/orgs/$ORG/invitations" \
+          -F "invitee_id=$user_id" \
+          -F role=direct_member 2>&1); then
+          echo "ERROR: Could not invite '$GITHUB_HANDLE' to $ORG. Check the token's organization-owner access and Members: write permission:" >&2
+          echo "$invitation" >&2
+          exit 1
+        fi
+        echo "Invited '$GITHUB_HANDLE' to $ORG."
+
+    - name: Create Repository
+      env:
+        GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
+        GITHUB_HANDLE: ${{ steps.github_handle.outputs.result }}
+        ORG: XpiritCommunityEvents
+        TEMPLATE_REPOSITORY: ${{ github.repository }}
+      run: |
+        repo_name="$ORG/attendee-workshopAF-$GITHUB_HANDLE"
+        if gh repo view "$repo_name" &>/dev/null; then
+          echo "Repository $repo_name already exists."
+        else
+          echo "Repository $repo_name does not exist."
+          gh repo create "$repo_name" \
+            --public \
+            --template "$TEMPLATE_REPOSITORY"
+        fi
+
     - name: Install GH Collab
       run: |
         gh extension install mislav/gh-repo-collab
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
 
-    - name: Create Repository
-      env:
-        GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
-      run: |
-        # Create clone of this repo for user
-        repo_name="XpiritCommunityEvents/attendee-workshopAF-${{ steps.github_handle.outputs.result }}"
-        if gh repo view $repo_name &>/dev/null; then
-            echo "Repository $repo_name already exists."
-        else
-          echo "Repository $REPO_NAME does not exist."
-          gh repo create $repo_name \
-            --public \
-            --template ${{ github.repository }}
-        fi
-          
-    - name: Invite Member to Organization
-      env:
-        GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
-      run: |
-        id=$(gh api users/${{ steps.github_handle.outputs.result }} --jq '.id')
-        gh api --method POST -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /orgs/XpiritCommunityEvents/invitations -F invitee_id=$id -f role='direct_member'
-
     - name: Set Rights to Repo
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
+        GITHUB_HANDLE: ${{ steps.github_handle.outputs.result }}
+        ORG: XpiritCommunityEvents
       run: |
-        # Add user to newly cloned repo
-        gh repo-collab add XpiritCommunityEvents/attendee-workshopAF-${{ steps.github_handle.outputs.result }} ${{ steps.github_handle.outputs.result }} --permission admin | cat
+        gh repo-collab add "$ORG/attendee-workshopAF-$GITHUB_HANDLE" "$GITHUB_HANDLE" --permission admin
     
