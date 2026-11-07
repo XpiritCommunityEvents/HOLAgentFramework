@@ -43,7 +43,19 @@ jobs:
           }
           return handle;
         
+    - name: Verify attendee property schema
+      env:
+        GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
+      run: |
+        schema_valid=$(gh api /orgs/XpiritCommunityEvents/properties/schema/holagentframework_attendee_user_id \
+          --jq '.value_type == "string" and .values_editable_by == "org_actors"')
+        if [[ "$schema_valid" != "true" ]]; then
+          echo "ERROR: The attendee user ID property must be a string editable only by organization actors." >&2
+          exit 1
+        fi
+
     - name: Invite Member to Organization
+      id: participant
       env:
         GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
         GITHUB_HANDLE: ${{ steps.github_handle.outputs.result }}
@@ -55,6 +67,11 @@ jobs:
           exit 1
         fi
 
+        if [[ ! "$user_id" =~ ^[1-9][0-9]*$ ]]; then
+          echo "ERROR: GitHub returned an invalid user ID." >&2
+          exit 1
+        fi
+
         if ! invitation=$(gh api --method POST "/orgs/$ORG/invitations" \
           -F "invitee_id=$user_id" \
           -F role=direct_member 2>&1); then
@@ -63,6 +80,7 @@ jobs:
           exit 1
         fi
         echo "Invited '$GITHUB_HANDLE' to $ORG."
+        echo "user_id=$user_id" >> "$GITHUB_OUTPUT"
 
     - name: Create Repository
       env:
@@ -70,6 +88,7 @@ jobs:
         GITHUB_HANDLE: ${{ steps.github_handle.outputs.result }}
         ORG: XpiritCommunityEvents
         TEMPLATE_REPOSITORY: ${{ github.repository }}
+        ATTENDEE_USER_ID: ${{ steps.participant.outputs.user_id }}
       run: |
         repo_name="$ORG/attendee-workshopAF-$GITHUB_HANDLE"
         if gh repo view "$repo_name" &>/dev/null; then
@@ -79,6 +98,27 @@ jobs:
           gh repo create "$repo_name" \
             --public \
             --template "$TEMPLATE_REPOSITORY"
+        fi
+
+        template_repository=$(gh api "repos/$repo_name" --jq '.template_repository.full_name // ""')
+        if [[ "${template_repository,,}" != "${TEMPLATE_REPOSITORY,,}" ]]; then
+          echo "ERROR: $repo_name is not a copy of $TEMPLATE_REPOSITORY; refusing to assign an attendee." >&2
+          exit 1
+        fi
+
+        stored_id=$(gh api "repos/$repo_name/properties/values" \
+          --jq '.[] | select(.property_name == "holagentframework_attendee_user_id") | .value // ""')
+        if [[ -n "$stored_id" && "$stored_id" != "$ATTENDEE_USER_ID" ]]; then
+          echo "ERROR: $repo_name already belongs to a different attendee; refusing to overwrite their user ID." >&2
+          exit 1
+        fi
+        printf '{"properties":[{"property_name":"holagentframework_attendee_user_id","value":"%s"}]}' "$ATTENDEE_USER_ID" |
+          gh api --method PATCH "repos/$repo_name/properties/values" --input -
+        stored_id=$(gh api "repos/$repo_name/properties/values" \
+          --jq '.[] | select(.property_name == "holagentframework_attendee_user_id") | .value // ""')
+        if [[ "$stored_id" != "$ATTENDEE_USER_ID" ]]; then
+          echo "ERROR: Attendee user ID was not saved on $repo_name." >&2
+          exit 1
         fi
 
     - name: Install GH Collab
