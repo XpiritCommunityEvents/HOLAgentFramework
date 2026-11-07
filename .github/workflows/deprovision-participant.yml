@@ -1,18 +1,105 @@
-
 name: Deprovision Participant
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-  delete-resource-groups:
+  cleanup:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Read GitHub handles from file
-        id: read-handles
+      - name: Delete template copies and remove teamless users
+        env:
+          GH_TOKEN: ${{ secrets.VSLIVE_REPOCREATE }}
+          ORG: XpiritCommunityEvents
+          TEMPLATE_REPOSITORY: ${{ github.repository }}
         run: |
-          echo "::set-output name=handles::$(cat provisioning/cleanup-handles.txt)"
+          set -euo pipefail
 
+          echo "Searching for attendee-workshopAF-* repositories in $ORG..."
+          repos=$(gh api "/orgs/$ORG/repos?per_page=100" --paginate \
+            --jq '.[] | .name | select(test("^attendee-workshopAF-[A-Za-z0-9-]+$"))')
+
+          if [ -z "$repos" ]; then
+            echo "No matching repositories found. Nothing to clean up."
+            exit 0
+          fi
+
+          teams=$(gh api "/orgs/$ORG/teams?per_page=100" --paginate --jq '.[].slug')
+          cleanup_failed=0
+
+          while IFS= read -r repo; do
+            handle="${repo#attendee-workshopAF-}"
+            echo "Processing $ORG/$repo (participant: $handle)"
+
+            if ! template_repository=$(gh api "repos/$ORG/$repo" --jq '.template_repository.full_name // ""'); then
+              echo "ERROR: Could not verify the template source for $ORG/$repo." >&2
+              cleanup_failed=1
+              continue
+            fi
+
+            if [[ "${template_repository,,}" != "${TEMPLATE_REPOSITORY,,}" ]]; then
+              echo "Skipping $ORG/$repo: it was not created from $TEMPLATE_REPOSITORY."
+              continue
+            fi
+
+            member_team=""
+            team_check_failed=0
+            for team in $teams; do
+              if membership_response=$(gh api --include --silent \
+                "/orgs/$ORG/teams/$team/memberships/$handle" 2>&1); then
+                member_team="$team"
+                break
+              elif ! grep -qE '^HTTP/[^ ]+ 404([[:space:]]|$)' <<< "$membership_response"; then
+                echo "ERROR: Could not check $handle's membership in team '$team':" >&2
+                echo "$membership_response" >&2
+                cleanup_failed=1
+                team_check_failed=1
+                break
+              fi
+            done
+
+            if (( team_check_failed )); then
+              continue
+            elif [[ -n "$member_team" ]]; then
+              echo "Keeping $handle in the organization; they belong to team '$member_team'."
+            else
+              echo "Removing teamless user '$handle' from $ORG..."
+              if remove_response=$(gh api --include --silent --method DELETE \
+                "/orgs/$ORG/memberships/$handle" 2>&1); then
+                if ! grep -qE '^HTTP/[^ ]+ 204([[:space:]]|$)' <<< "$remove_response"; then
+                  echo "ERROR: Unexpected response removing $handle:" >&2
+                  echo "$remove_response" >&2
+                  cleanup_failed=1
+                  continue
+                fi
+                echo "Removed $handle from $ORG."
+              elif grep -qE '^HTTP/[^ ]+ 404([[:space:]]|$)' <<< "$remove_response"; then
+                echo "$handle is already not a member of $ORG."
+              else
+                echo "ERROR: Could not remove $handle from $ORG:" >&2
+                echo "$remove_response" >&2
+                cleanup_failed=1
+                continue
+              fi
+            fi
+
+            echo "Deleting $ORG/$repo..."
+            if gh repo delete "$ORG/$repo" --yes; then
+              echo "Deleted $ORG/$repo."
+            else
+              echo "ERROR: Could not delete $ORG/$repo." >&2
+              cleanup_failed=1
+            fi
+          done <<< "$repos"
+
+          if (( cleanup_failed )); then
+            echo "Cleanup finished with errors." >&2
+            exit 1
+          fi
+
+          echo "Cleanup complete."
