@@ -9,6 +9,9 @@ namespace modulerag;
 
 public class ChatWithRag
 {
+    private static readonly string PolicyPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "../../../../../datasets/venue-policies"));
+
     public async Task RAG_with_memory(AIAgent agent)
     {
         var question =
@@ -34,10 +37,9 @@ public class ChatWithRag
         List<PolicyFilePart> files = [];
 
         ulong key = 0;
-        var directory = "../../../../datasets/venue-policies";
-        foreach (var file in GetFileListOfPolicyDocuments(directory))
+        foreach (var file in GetFileListOfPolicyDocuments(PolicyPath))
         {
-            var fullfilename = Path.Combine(directory, file);
+            var fullfilename = Path.Combine(PolicyPath, file);
 
             // mimic a persistent storage using json serializations
             // you would normally use a database for this

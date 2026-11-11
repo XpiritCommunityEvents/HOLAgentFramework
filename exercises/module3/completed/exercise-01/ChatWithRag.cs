@@ -8,6 +8,9 @@ namespace modulerag;
 
 public class ChatWithRag
 {
+    private static readonly string PolicyPath = Path.GetFullPath(
+        Path.Combine(AppContext.BaseDirectory, "../../../../../datasets/venue-policies"));
+
     public async Task RAG_with_memory(
         AIAgent agent,
         VectorStoreCollection<ulong, PolicyFilePart> collection,
@@ -53,11 +56,10 @@ public class ChatWithRag
         var chunker = StructureChunker.CreateStructureFirst();
         List<PolicyFilePart> files = [];
         ulong key = 0;
-        var directory = "../../../../datasets/venue-policies";
 
-        foreach (var file in GetFileListOfPolicyDocuments(directory))
+        foreach (var file in GetFileListOfPolicyDocuments(PolicyPath))
         {
-            var fullFileName = Path.Combine(directory, file);
+            var fullFileName = Path.Combine(PolicyPath, file);
 
             // Mimic persistent storage using JSON serialization. A real application
             // would normally use a database-backed vector store.
