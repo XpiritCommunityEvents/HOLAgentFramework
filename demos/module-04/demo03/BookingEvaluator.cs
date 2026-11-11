@@ -10,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using System.ClientModel;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace ModuleAgent;
 #pragma warning disable MAAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
@@ -68,7 +70,7 @@ public class BookingEvaluator : LoopEvaluator
     /// <summary>The value substituted for the gap analysis when the judge did not provide one.</summary>
     private const string UnknownGapAnalysis = "<unknown>";
 
-    private readonly IChatClient _EvaluatorClient;
+    private readonly AIAgent _EvaluatorAgent;
     private readonly string _instructions;
     private readonly string _feedbackMessageTemplate;
 
@@ -80,13 +82,14 @@ public class BookingEvaluator : LoopEvaluator
         var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
         _instructions = DefaultInstructions;
         _feedbackMessageTemplate = DefaultFeedbackMessageTemplate;
-        _EvaluatorClient = new OpenAI.Chat.ChatClient(
-        model,
+        _EvaluatorAgent = new OpenAI.OpenAIClient(
         new ApiKeyCredential(token),
         new OpenAI.OpenAIClientOptions
         {
             Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
-        }).AsIChatClient();
+        })
+            .GetResponsesClient()
+            .AsAIAgent(model: model, name: "BookingEvaluator");
     }
     public override async ValueTask<LoopEvaluation> EvaluateAsync(LoopContext context, CancellationToken cancellationToken = default)
     {
@@ -107,11 +110,21 @@ public class BookingEvaluator : LoopEvaluator
 
         bool answered;
         string gapAnalysis = UnknownGapAnalysis;
-        ChatResponse<EvalVerdict> response = await this._EvaluatorClient
-            .GetResponseAsync<EvalVerdict>(judgeMessages, cancellationToken: cancellationToken)
+        AgentResponse<EvalVerdict> response = await this._EvaluatorAgent
+            .RunAsync<EvalVerdict>(judgeMessages, cancellationToken: cancellationToken)
             .ConfigureAwait(false);
 
-        if (response.TryGetResult(out EvalVerdict? verdict) && verdict is not null)
+        EvalVerdict? verdict = null;
+        try
+        {
+            verdict = response.Result;
+        }
+        catch (JsonException)
+        {
+            // Some providers may return the requested verdict markers instead of structured JSON.
+        }
+
+        if (verdict is not null)
         {
             answered = verdict.Answered;
             if (!string.IsNullOrWhiteSpace(verdict.GapAnalysis))

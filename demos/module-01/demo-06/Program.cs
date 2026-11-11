@@ -1,7 +1,9 @@
 ﻿using System.Net.Http.Headers;
 using System.Text.Json;
 using System.ClientModel;
-using Azure.AI.OpenAI;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
+using OpenAI;
+using OpenAI.Responses;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 
@@ -34,10 +36,12 @@ string imagePath = File.Exists(Path.Combine(AppContext.BaseDirectory, "SanDiego-
 
 byte[] imageBytes = await File.ReadAllBytesAsync(imagePath);
 
-var agent = new AzureOpenAIClient(new Uri(endpoint), new ApiKeyCredential(apiKey))
-                .GetChatClient(model)
-                .AsIChatClient()
-                .AsAIAgent(instructions: prompt);
+var agent = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptions
+                {
+                    Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
+                })
+                .GetResponsesClient()
+                .AsAIAgent(model: model, instructions: prompt);
 
 // Multimodal messages are built from a list of AIContent parts.
 var message = new ChatMessage(ChatRole.User,

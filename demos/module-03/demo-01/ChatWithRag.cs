@@ -46,6 +46,7 @@ public class ChatWithRag
         var systemPrompt = "You select the single filename that contains the venue policy requested by the user. Return only a filename from the supplied list.";
         var userPrompt = $"Available files:\n{fileList}\n\nWhich file contains the venue policy for the venue named '{venueName}'?";
         
+        // Intentional raw Chat Completions comparison; the active agent uses Responses.
         var chatClient = new OpenAI.Chat.ChatClient(
             model,
             new ApiKeyCredential(token),

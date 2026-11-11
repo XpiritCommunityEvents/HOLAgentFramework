@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.VectorData;
 using modulerag;
 using System.ClientModel;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 var config = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -35,14 +37,13 @@ await chat.IngestDocuments(collection, embeddingGenerator);
 
 var ragContextProvider = new RagContextProvider(collection, embeddingGenerator);
 
-AIAgent agent = new OpenAI.Chat.ChatClient(
-    model,
+AIAgent agent = new OpenAI.OpenAIClient(
     new ApiKeyCredential(token),
     new OpenAI.OpenAIClientOptions
     {
         Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
     })
-    .AsIChatClient()
+    .GetResponsesClient()
     .AsAIAgent(new ChatClientAgentOptions
     {
         Name = "Assistant",
@@ -57,7 +58,7 @@ AIAgent agent = new OpenAI.Chat.ChatClient(
                 Always use the venue policy information provided in your context.
                 """
         }
-    });
+    }, model: model);
 
 await chat.RAG_with_memory(agent);
 

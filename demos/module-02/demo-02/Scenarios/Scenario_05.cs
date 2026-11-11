@@ -2,6 +2,8 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace AgentFramework101.Scenarios;
 
@@ -10,7 +12,7 @@ namespace AgentFramework101.Scenarios;
 /// </summary>
 internal static class Scenario_05
 {
-    public static async Task Run(IChatClient chatClient, IConfiguration configuration)
+    public static async Task Run(ResponsesClient responsesClient, string model, IConfiguration configuration)
     {
         Console.WriteLine("SCENARIO 05 --- MCP integration");
 
@@ -30,7 +32,7 @@ internal static class Scenario_05
 
         IList<McpClientTool> tools = await mcpClient.ListToolsAsync();
 
-        AIAgent agent = chatClient
+        AIAgent agent = responsesClient
             .AsAIAgent(new ChatClientAgentOptions
             {
                 Name = "GloboTicketAssistant",
@@ -44,7 +46,7 @@ internal static class Scenario_05
                         """,
                     Tools = tools.ToArray()
                 }
-            })
+            }, model: model)
             .AsBuilder()
             .Build();
 

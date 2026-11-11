@@ -1,6 +1,8 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace AgentFramework101.Scenarios;
 
@@ -9,7 +11,7 @@ namespace AgentFramework101.Scenarios;
 /// </summary>
 internal static class Scenario_04
 {
-    public static async Task Run(IChatClient chatClient, IConfiguration configuration)
+    public static async Task Run(ResponsesClient responsesClient, string model, IConfiguration configuration)
     {
         Console.WriteLine("SCENARIO 04 --- Skills");
 
@@ -25,7 +27,7 @@ internal static class Scenario_04
             });
 //            scriptRunner: PdfSkillSupport.RunPythonScriptAsync);
 
-        AIAgent agent = chatClient
+        AIAgent agent = responsesClient
             .AsAIAgent(new ChatClientAgentOptions
             {
                 Name = "GloboTicketAssistant",
@@ -40,7 +42,7 @@ internal static class Scenario_04
                         """,
 //                    Tools = [AIFunctionFactory.Create(PdfSkillSupport.DownloadFile)]
                 }
-            })
+            }, model: model)
             .AsBuilder()
             .Build();
 

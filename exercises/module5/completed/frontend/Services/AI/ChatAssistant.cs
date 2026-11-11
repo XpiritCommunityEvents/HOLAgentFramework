@@ -1,5 +1,7 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace GloboTicket.Frontend.Services.AI;
 
@@ -17,8 +19,8 @@ internal static class ChatAssistant
         answer the question.
         """;
 
-    internal static AIAgent Create(IChatClient chatClient, IEnumerable<AITool> tools, IServiceProvider serviceProvider, bool enableSensitiveData = false, string? applicationName = Name) =>
-        chatClient.AsAIAgent(new ChatClientAgentOptions
+    internal static AIAgent Create(ResponsesClient responsesClient, string model, IEnumerable<AITool> tools, IServiceProvider serviceProvider, bool enableSensitiveData = false, string applicationName = Name) =>
+        responsesClient.AsAIAgent(new ChatClientAgentOptions
         {
             Name = Name,
             Description = Description,
@@ -28,7 +30,12 @@ internal static class ChatAssistant
                 Instructions = Instructions,
                 Tools = [.. tools]
             }
-        })
+        },
+            model: model,
+            clientFactory: client => new ChatClientBuilder(client)
+                .UseLogging()
+                .Build(serviceProvider),
+            services: serviceProvider)
         .AsBuilder()
         .UseLogging()
         .UseOpenTelemetry(applicationName, otel => otel.EnableSensitiveData = enableSensitiveData)

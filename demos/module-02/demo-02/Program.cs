@@ -2,7 +2,9 @@ using AgentFramework101.Scenarios;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using OpenAI;
+using OpenAI.Responses;
 using System.ClientModel;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
@@ -19,16 +21,16 @@ var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClie
     Endpoint = new Uri(endpoint)
 });
 
-using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
+var responsesClient = openAIClient.GetResponsesClient();
 
 Console.WriteLine("GloboTicket assistant.");
 
-await Scenario_01.Run(chatClient);
+await Scenario_01.Run(responsesClient, model);
 
-//await Scenario_02.Run(chatClient);
+//await Scenario_02.Run(responsesClient, model);
 
-//await Scenario_03.Run(chatClient, configuration);
+//await Scenario_03.Run(responsesClient, model, configuration);
 
-//await Scenario_04.Run(chatClient, configuration);
+//await Scenario_04.Run(responsesClient, model, configuration);
 
-//await Scenario_05.Run(chatClient, configuration);
+//await Scenario_05.Run(responsesClient, model, configuration);

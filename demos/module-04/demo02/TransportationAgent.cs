@@ -1,11 +1,13 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace ModuleAgent;
 
 internal static class TransportationAgent
 {
-    public static AIAgent Create(IChatClient chatClient)
+    public static AIAgent Create(ResponsesClient responsesClient, string model)
     {
         AIFunction findRides = AIFunctionFactory.Create(
             RideInformationSystemService.GetAvailableRides,
@@ -14,7 +16,8 @@ internal static class TransportationAgent
             RideInformationSystemService.BookARide,
             "book_ride");
 
-        return chatClient.AsAIAgent(
+        return responsesClient.AsAIAgent(
+            model: model,
             name: "TransportationAgent",
             description: "Finds transportation from the selected hotel to the concert.",
             instructions: """

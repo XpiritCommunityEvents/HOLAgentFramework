@@ -3,6 +3,8 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Module04.Demo05.Models;
 using Module04.Demo05.Tools;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace Module04.Demo05.Agents;
 
@@ -10,8 +12,9 @@ public static class TravelConciergeAgent
 {
     public const string CompletionMarker = "TRAVEL_ITINERARY_COMPLETE";
 
-    public static AIAgent Create(IChatClient chatClient, IEnumerable<AITool> specialistTools) =>
-        chatClient.AsAIAgent(
+    public static AIAgent Create(ResponsesClient responsesClient, string model, IEnumerable<AITool> specialistTools) =>
+        responsesClient.AsAIAgent(
+            model: model,
             name: "TravelConciergeAgent",
             description: "Coordinates ticket reading, hotel and ride selection, and final booking.",
             instructions: """

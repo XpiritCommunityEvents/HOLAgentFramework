@@ -1,5 +1,7 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace AgentFramework101.Scenarios;
 
@@ -8,11 +10,11 @@ namespace AgentFramework101.Scenarios;
 /// </summary>
 internal static class Scenario_01
 {
-    public static async Task Run(IChatClient chatClient)
+    public static async Task Run(ResponsesClient responsesClient, string model)
     {
         Console.WriteLine("SCENARIO 01 --- synchronous, structured responses and sessions");
 
-        AIAgent agent = chatClient
+        AIAgent agent = responsesClient
             .AsAIAgent(new ChatClientAgentOptions
             {
                 Name = "GloboTicketAssistant",
@@ -25,14 +27,11 @@ internal static class Scenario_01
                         Load an available skill when its description matches the user's request.
                         """,
                 }
-            });
+            }, model: model);
 
         //var runOptions = new ChatClientAgentRunOptions(new ChatOptions
         //{
-        //    TopP = 0.5f,
-        //    TopK = 40,
-        //    Temperature = 0f,
-        //    FrequencyPenalty = 0.5f,
+        //    Reasoning = new() { Effort = ReasoningEffort.Medium },
         //    MaxOutputTokens = 500
         //});
 

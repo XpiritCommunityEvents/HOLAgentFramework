@@ -10,7 +10,9 @@ using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using OpenAI;
+using OpenAI.Responses;
 using System.ClientModel;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 AppContext.SetSwitch("OpenAI.Experimental.OpenTelemetry", true);
 
@@ -51,7 +53,7 @@ await using McpClient mcpClient = await McpClient.CreateAsync(
 
 IList<McpClientTool> tools = await mcpClient.ListToolsAsync();
 
-builder.Services.AddSingleton<IChatClient>(sp =>
+builder.Services.AddSingleton<ResponsesClient>(sp =>
 {
     string apiKey = builder.Configuration["OpenAI:ApiKey"]
         ?? throw new InvalidOperationException("The OpenAI API key is not configured.");
@@ -63,20 +65,13 @@ builder.Services.AddSingleton<IChatClient>(sp =>
     var openAIClient = new OpenAIClient(
         new ApiKeyCredential(apiKey),
         new OpenAIClientOptions { Endpoint = endpoint });
-    var client = openAIClient.GetChatClient(model).AsIChatClient();
-
-    return new ChatClientBuilder(client)
-        .UseLogging()
-        .UseOpenTelemetry(sourceName: builder.Environment.ApplicationName, configure: (cfg) => {
-            // Allows the DevUI debug panel to see actual prompt text and tool results.
-            // Only enabled in Development to avoid exporting user content in production.
-            cfg.EnableSensitiveData = builder.Environment.IsDevelopment();
-        })
-        .Build(sp);
+    return openAIClient.GetResponsesClient();
 });
 
 builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
-    services.GetRequiredService<IChatClient>(),
+    services.GetRequiredService<ResponsesClient>(),
+    builder.Configuration["OpenAI:Model"]
+        ?? throw new InvalidOperationException("The OpenAI model is not configured."),
     tools,
     services,
     enableSensitiveData: builder.Environment.IsDevelopment(),

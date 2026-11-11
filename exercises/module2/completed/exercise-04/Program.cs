@@ -4,7 +4,9 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using ModelContextProtocol.Client;
 using OpenAI;
+using OpenAI.Responses;
 using System.ClientModel;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
@@ -20,8 +22,6 @@ var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClie
 {
     Endpoint = new Uri(endpoint)
 });
-
-using IChatClient chatClient = openAIClient.GetChatClient(model).AsIChatClient();
 
 Console.WriteLine("GloboTicket assistant.");
 
@@ -76,7 +76,7 @@ using var skillsProvider = new AgentSkillsProvider(
     },
     scriptRunner: PdfSkillSupport.RunPythonScriptAsync);
 
-AIAgent agent = chatClient
+AIAgent agent = openAIClient.GetResponsesClient()
     .AsAIAgent(new ChatClientAgentOptions
     {
         Name = "GloboTicketAssistant",
@@ -91,17 +91,14 @@ AIAgent agent = chatClient
                 """,
             Tools = tools
         }
-    })
+    }, model: model)
     .AsBuilder()
         .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
    .Build();
 
 var runOptions = new ChatClientAgentRunOptions(new ChatOptions
 {
-   TopP = 0.5f,
-   TopK = 40,
-   Temperature = 0f,
-   FrequencyPenalty = 0.5f,
+   Reasoning = new() { Effort = ReasoningEffort.Medium },
    MaxOutputTokens = 500
 });
 

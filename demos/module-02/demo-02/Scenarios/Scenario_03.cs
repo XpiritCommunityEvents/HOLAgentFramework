@@ -1,6 +1,8 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace AgentFramework101.Scenarios;
 
@@ -15,7 +17,7 @@ internal static class Scenario_03
     static string GetCurrentUtcTime() =>
         DateTimeOffset.UtcNow.ToString("yyyy-MM-dd HH:mm:ss 'UTC'");
 
-    public static async Task Run(IChatClient chatClient, IConfiguration configuration)
+    public static async Task Run(ResponsesClient responsesClient, string model, IConfiguration configuration)
     {
         Console.WriteLine("SCENARIO 03 --- tools, and approvals");
 
@@ -41,7 +43,7 @@ internal static class Scenario_03
                     "Get the current date and time in UTC."))
         ];
 
-        AIAgent agent = chatClient
+        AIAgent agent = responsesClient
             .AsAIAgent(new ChatClientAgentOptions
             {
                 Name = "GloboTicketAssistant",
@@ -55,7 +57,7 @@ internal static class Scenario_03
                         """,
                     Tools = tools
                 }
-            })
+            }, model: model)
             .AsBuilder()
             //    .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
             .Build();

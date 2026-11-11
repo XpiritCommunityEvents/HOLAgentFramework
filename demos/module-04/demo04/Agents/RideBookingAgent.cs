@@ -1,12 +1,15 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Module04.Demo05.Tools;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace Module04.Demo05.Agents;
 
 public static class RideBookingAgent
 {
-    public static AIAgent Create(IChatClient chatClient) => chatClient.AsAIAgent(
+    public static AIAgent Create(ResponsesClient responsesClient, string model) => responsesClient.AsAIAgent(
+        model: model,
         name: "RideBookingAgent",
         description: "Finds suitable rides in the concert city.",
         instructions: """

@@ -3,7 +3,7 @@
 using System.ClientModel;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Azure.AI.OpenAI;
+using OpenAI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 

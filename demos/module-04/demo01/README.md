@@ -1,34 +1,25 @@
-# Demo 01: Agent Harness
+# Demo 01: Transportation agent
 
-This sample shows how to use Agent Harness agents, which adds planning, todos, and tool approval.
+This sample creates an Agent Framework transportation agent with ride lookup and
+booking function tools, then prints one response to the supplied concert question.
+It is not the Harness example and does not implement `/plan` or `/todos` commands.
 
-In addition to retaining conversation history in one `AgentSession`, this sample adds two Harness features:
-
-- a visible plan/execute mode and session-backed todo list;
-- an approval request before the `book_ride` tool can run.
-
-Hosted web search is disabled with `HarnessAgentOptions.DisableWebSearch = true`.
-Harness enables it by default, which makes the OpenAI Chat Completions adapter
-send `web_search_options`. Endpoints or models that do not support this option
-reject the first prompt with `Unknown parameter: 'web_search_options'`.
-This demo does not need web search; planning, todos, and ride approval remain enabled.
-
-The console prints Harness state after each turn. Use `/plan`, `/execute`, and
-`/todos` to inspect the behavior directly. Type `exit` to stop.
+The model client uses `GetResponsesClient().AsIChatClient(model)` so supported
+reasoning deployments can use function tools without the Chat Completions
+restriction. The instruction to ask before booking is prompt guidance here, not
+an enforced approval gate. Demo 03 demonstrates Harness and explicit tool approval.
 
 ## Configure and run
 
 Keep the API key out of `appsettings.json`:
 
 ```powershell
-dotnet user-secrets set "OpenAI:Model" "<deployment-name>" --project demos/module-04/demo03-harness/module-04-demo-03-harness.csproj
-dotnet user-secrets set "OpenAI:Endpoint" "https://<resource>.openai.azure.com/openai/v1" --project demos/module-04/demo03-harness/module-04-demo-03-harness.csproj
-dotnet user-secrets set "OpenAI:ApiKey" "<api-key>" --project demos/module-04/demo03-harness/module-04-demo-03-harness.csproj
-dotnet run --project demos/module-04/demo03-harness/module-04-demo-03-harness.csproj
+dotnet user-secrets set "OpenAI:Model" "<deployment-name>" --project demos\module-04\demo01\module-04-demo-01.csproj
+dotnet user-secrets set "OpenAI:Endpoint" "https://<resource>.services.ai.azure.com/" --project demos\module-04\demo01\module-04-demo-01.csproj
+dotnet user-secrets set "OpenAI:ApiKey" "<api-key>" --project demos\module-04\demo01\module-04-demo-01.csproj
+dotnet run --project demos\module-04\demo01\module-04-demo-01.csproj
 ```
 
-Try asking the agent to plan a ride. Review the todos, switch with `/execute`,
-then ask it to book the agreed ride. The console will show the tool arguments
-and wait for `y` before continuing.
-
-Try switching between `gpt-5.6-luna` and `gpt-5.6-terra` and observe the different planning and todo behavior. The Terra model is more advanced and more thorough.
+The endpoint is the Azure resource root; code appends `openai/v1/`.
+See the [API conventions](../../../README.md#model-api-conventions) for the
+experimental SDK diagnostic and intentional provider exceptions.

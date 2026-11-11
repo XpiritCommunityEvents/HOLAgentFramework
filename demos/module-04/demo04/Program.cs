@@ -4,7 +4,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Module04.Demo05.Agents;
 using Module04.Demo05.Orchestration;
-using OpenAI.Chat;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 var config = new ConfigurationBuilder()
         .SetBasePath(Directory.GetCurrentDirectory())
@@ -17,18 +18,18 @@ string model = config["OpenAI:Model"] ?? throw new InvalidOperationException("Op
 string endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("OpenAI:EndPoint is not configured.");
 string token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
 
-IChatClient chatClient = new ChatClient(
-        model,
+var responsesClient = new OpenAI.OpenAIClient(
         new ApiKeyCredential(token),
         new OpenAI.OpenAIClientOptions { Endpoint = new Uri(new Uri(endpoint), "openai/v1/") })
-        .AsIChatClient();
+        .GetResponsesClient();
 
-AIAgent ticketAgent = TicketReaderAgent.Create(chatClient);
-AIAgent hotelAgent = HotelBookingAgent.Create(chatClient);
-AIAgent rideAgent = RideBookingAgent.Create(chatClient);
-AIAgent itineraryAgent = ItineraryDocumentAgent.Create(chatClient);
+AIAgent ticketAgent = TicketReaderAgent.Create(responsesClient, model);
+AIAgent hotelAgent = HotelBookingAgent.Create(responsesClient, model);
+AIAgent rideAgent = RideBookingAgent.Create(responsesClient, model);
+AIAgent itineraryAgent = ItineraryDocumentAgent.Create(responsesClient, model);
 AIAgent concierge = TravelConciergeAgent.Create(
-        chatClient,
+        responsesClient,
+        model,
         [ticketAgent.AsAIFunction(), hotelAgent.AsAIFunction(), rideAgent.AsAIFunction(), itineraryAgent.AsAIFunction()]);
 
 string pattern = args.FirstOrDefault()?.ToLowerInvariant() ?? "tools";

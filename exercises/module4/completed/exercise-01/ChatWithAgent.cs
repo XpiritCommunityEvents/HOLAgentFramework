@@ -3,6 +3,8 @@ using System.ComponentModel;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using OpenAI.Responses;
+#pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 #pragma warning disable MAAI001 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
 
@@ -55,21 +57,21 @@ internal class ChatWithAgent
         var endpoint = config["OpenAI:EndPoint"] ?? throw new InvalidOperationException("OpenAI:EndPoint is not configured.");
         var token = config["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI:ApiKey is not configured.");
 
-        AIAgent agent = new OpenAI.Chat.ChatClient(
-        model,
+        AIAgent agent = new OpenAI.OpenAIClient(
         new ApiKeyCredential(token),
 
         new OpenAI.OpenAIClientOptions
         {
             Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
         })
-        .AsIChatClient()
-        .AsAIAgent( 
+        .GetResponsesClient()
+        .AsAIAgent(
+            model: model,
             tools: [
-             AIFunctionFactory.Create(AskForUserInput),
-             AIFunctionFactory.Create(ShowMessage),
-             AIFunctionFactory.Create(RideInformationSystemService.GetAvailableRides),
-             AIFunctionFactory.Create(RideInformationSystemService.BookARide)
+                AIFunctionFactory.Create(AskForUserInput),
+                AIFunctionFactory.Create(ShowMessage),
+                AIFunctionFactory.Create(RideInformationSystemService.GetAvailableRides),
+                AIFunctionFactory.Create(RideInformationSystemService.BookARide)
             ],
             instructions: instructions,
             name: "TransportationAgent");
