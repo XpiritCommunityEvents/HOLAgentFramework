@@ -9,3 +9,7 @@ operation URL. Session history, streaming, skills, middleware, and approval
 responses still use the same Agent Framework APIs. The raw HTTP demo 01 is an
 intentional Chat Completions comparison. See the
 [API conventions](../../README.md#model-api-conventions).
+
+Completed exercise 01 focuses on the agent, context provider, session, and
+response formats. Discount tools and anonymous-user middleware are introduced
+in completed exercise 02, not registered in exercise 01.
