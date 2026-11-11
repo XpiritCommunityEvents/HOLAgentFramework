@@ -1,7 +1,16 @@
+using System.Collections.Concurrent;
 using System.Reflection;
 using GloboTicket.Catalog;
 using GloboTicket.Catalog.MCP;
 using GloboTicket.Catalog.Repositories;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
+using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
@@ -10,6 +19,63 @@ namespace GloboTicket.UnitTests;
 [TestClass]
 public sealed class CatalogToolContractTests
 {
+    [TestMethod]
+    [DataRow("get_events_by_artist")]
+    [DataRow("get_event_details")]
+    public async Task Mcp_tools_call_result_serializes_catalog_content(string toolName)
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Logging.ClearProviders();
+        var failures = new CapturedFailures();
+        builder.Logging.AddProvider(failures);
+        builder.Services.AddSingleton<IEventRepository, RecordingEventRepository>();
+        builder.Services.AddMcpServer().WithHttpTransport().WithTools<CatalogTool>();
+        await using var app = builder.Build();
+        app.MapMcp("/mcp");
+        await app.StartAsync();
+        try
+        {
+            string address = app.Services.GetRequiredService<IServer>()
+                .Features.Get<IServerAddressesFeature>()!.Addresses.Single();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await using var client = await McpClient.CreateAsync(new HttpClientTransport(
+                new HttpClientTransportOptions { Endpoint = new Uri(address + "/mcp") }),
+                cancellationToken: timeout.Token);
+            var arguments = toolName == "get_event_details"
+                ? new Dictionary<string, object?> { ["id"] = Guid.Empty.ToString() }
+                : new Dictionary<string, object?> { ["artist"] = "The Example Band" };
+            CallToolResult result = await client.CallToolAsync(toolName, arguments,
+                cancellationToken: timeout.Token);
+            Assert.AreNotEqual(true, result.IsError);
+            var content = (TextContentBlock)result.Content.Single();
+            StringAssert.Contains(content.Text, toolName == "get_event_details"
+                ? "Validation error" : "The Example Band");
+        }
+        catch (McpProtocolException)
+        {
+            Assert.Fail(string.Join("\n", failures.Exceptions));
+        }
+        finally
+        {
+            await app.StopAsync();
+        }
+    }
+
+    private sealed class CapturedFailures : ILoggerProvider, ILogger
+    {
+        internal ConcurrentQueue<Exception> Exceptions { get; } = new();
+        public ILogger CreateLogger(string categoryName) => this;
+        public void Dispose() { }
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state,
+            Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            if (exception is not null) Exceptions.Enqueue(exception);
+        }
+    }
+
     [TestMethod]
     public void Every_catalog_tool_is_explicitly_read_only_and_non_destructive()
     {
@@ -33,16 +99,15 @@ public sealed class CatalogToolContractTests
         var tool = new CatalogTool(repository);
         using var cancellation = new CancellationTokenSource();
 
-        IReadOnlyList<ContentBlock> result = await tool.GetEventsByArtist(
+        string result = await tool.GetEventsByArtist(
             "  The Example Band  ",
             cancellation.Token);
 
         Assert.AreEqual("The Example Band", repository.Artist);
         Assert.AreEqual(20, repository.Limit);
         Assert.AreEqual(cancellation.Token, repository.CancellationToken);
-        TextContentBlock content = (TextContentBlock)result.Single();
-        Assert.Contains("ID: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", content.Text);
-        Assert.Contains("Source: catalog/events/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", content.Text);
+        Assert.Contains("ID: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", result);
+        Assert.Contains("Source: catalog/events/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", result);
     }
 
     [TestMethod]
@@ -51,16 +116,16 @@ public sealed class CatalogToolContractTests
         var repository = new RecordingEventRepository();
         var tool = new CatalogTool(repository);
 
-        IReadOnlyList<ContentBlock> artist = await tool.GetEventsByArtist("   ");
-        IReadOnlyList<ContentBlock> dates = await tool.GetEventsInDateRange(
+        string artist = await tool.GetEventsByArtist("   ");
+        string dates = await tool.GetEventsInDateRange(
             new DateTime(2026, 9, 5),
             new DateTime(2026, 9, 4));
-        ContentBlock emptyId = await tool.GetEventDetails(Guid.Empty);
+        string emptyId = await tool.GetEventDetails(Guid.Empty);
 
         Assert.AreEqual(0, repository.InvocationCount);
-        Assert.Contains("Validation error", ((TextContentBlock)artist.Single()).Text);
-        Assert.Contains("startDate", ((TextContentBlock)dates.Single()).Text);
-        Assert.Contains("must not be empty", ((TextContentBlock)emptyId).Text);
+        Assert.Contains("Validation error", artist);
+        Assert.Contains("startDate", dates);
+        Assert.Contains("must not be empty", emptyId);
     }
 
     private sealed class RecordingEventRepository : IEventRepository
