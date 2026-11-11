@@ -22,7 +22,7 @@ internal static class PdfSkillSupport
     public static string SkillsDirectory { get; } = Path.Combine(AppContext.BaseDirectory, "skills");
 
     /// <summary>Resolved once so a PATH with several Pythons cannot silently switch interpreters between runs.</summary>
-    private static readonly string PythonExecutable = ResolvePython();
+    internal static string PythonExecutable { get; } = ResolvePython();
 
     [Description("Downloads a file from a public http(s) URL into the agent working directory and returns the local file path.")]
     public static async Task<string> DownloadFile(

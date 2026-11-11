@@ -23,9 +23,14 @@ public static class ItineraryDocumentFunctions
             return $"Error: itinerary script was not found at {scriptPath}.";
         }
 
+        if (string.IsNullOrEmpty(PdfSkillSupport.PythonExecutable))
+        {
+            return "Error: no Python interpreter found on PATH. Install Python 3 and the itinerary dependencies.";
+        }
+
         var startInfo = new ProcessStartInfo
         {
-            FileName = "python",
+            FileName = PdfSkillSupport.PythonExecutable,
             WorkingDirectory = PdfSkillSupport.WorkingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
