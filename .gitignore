@@ -443,3 +443,16 @@ exercises/module4/start/kernel-memory/
 
 # APM dependencies
 apm_modules/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100/
+.Trashes/
+.fseventsd/
+.TemporaryItems/
+.VolumeIcon.icns
+Icon?
+.apdisk
