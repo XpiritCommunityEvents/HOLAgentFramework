@@ -94,3 +94,17 @@ Standalone samples intentionally share a user-secrets ID. Module 5's AppHost has
 | Module 1 demo 06 image editing | MAI image-editing REST API, not OpenAI Responses |
 
 Do not migrate these exceptions to Responses. For reasoning with function tools in the raw Chat Completions lesson, choose a compatible deployment or use `reasoning_effort: "none"` only for that compatibility demonstration, never for the agents.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs are tracked in this repository's GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the default labels `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use the single-context layout with a root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
