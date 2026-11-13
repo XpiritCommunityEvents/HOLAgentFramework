@@ -15,28 +15,49 @@ namespace GloboTicket.Frontend.Services.Ordering
         }
         public async Task<Guid> SubmitOrder(CheckoutViewModel checkoutViewModel)
         {
-            
-            var lines = await shoppingBasketService.GetLinesForBasket(checkoutViewModel.BasketId);
-            var order = new OrderForCreation();
-            order.Date = DateTimeOffset.Now;
-            order.OrderId = Guid.NewGuid();
-            order.Lines = lines.Select(line => new OrderLine() { EventId = line.EventId, Price = line.Price, TicketCount = line.TicketAmount }).ToList();
-            order.CustomerDetails = new CustomerDetails()
+            using var response = await orderingClient.PostAsJsonAsync("order", new
             {
-                Address = checkoutViewModel.Address,
-                CreditCardNumber = checkoutViewModel.CreditCard,
-                Email = checkoutViewModel.Email,
-                Name = checkoutViewModel.Name,
-                PostalCode = checkoutViewModel.PostalCode,
-                Town = checkoutViewModel.Town,
-                CreditCardExpiryDate = checkoutViewModel.CreditCardDate
-            };
-            // make a synchronous call to the ordering microservice
-            var response = await orderingClient.PostAsJsonAsync("order", order);
-            // can be a validation error - haven't implemented validation yet
-            var s = await response.Content.ReadAsStringAsync();
-            response.EnsureSuccessStatusCode();
-            return order.OrderId;
+                checkoutViewModel.QuoteId, checkoutViewModel.Name, checkoutViewModel.Email
+            });
+            await EnsureSuccess(response);
+            return (await response.Content.ReadFromJsonAsync<OrderReceipt>())!.OrderId;
+        }
+
+        public async Task<OrderQuote> QuoteOrder(Guid basketId, CancellationToken cancellationToken = default)
+        {
+            var lines = await shoppingBasketService.GetLinesForBasket(basketId);
+            var request = new QuoteRequest(
+                lines.GroupBy(l => l.EventId).Select(g => new QuoteLine(g.Key, g.Sum(l => l.TicketAmount))).ToArray(),
+                await shoppingBasketService.GetPromoCode(basketId));
+            using var response = await orderingClient.PostAsJsonAsync("order/quotes", request, cancellationToken);
+            await EnsureSuccess(response);
+            return await response.Content.ReadFromJsonAsync<OrderQuote>(cancellationToken)
+                ?? throw new InvalidOperationException("Ordering returned no quote.");
+        }
+
+        public async Task<OrderQuote> GetQuote(Guid quoteId, CancellationToken cancellationToken = default)
+        {
+            using var response = await orderingClient.GetAsync($"order/quotes/{quoteId}", cancellationToken);
+            await EnsureSuccess(response);
+            return await response.Content.ReadFromJsonAsync<OrderQuote>(cancellationToken)
+                ?? throw new InvalidOperationException("Ordering returned no quote.");
+        }
+
+        public async Task<OrderReceipt> GetOrder(Guid orderId, CancellationToken cancellationToken = default)
+        {
+            using var response = await orderingClient.GetAsync($"order/{orderId}", cancellationToken);
+            await EnsureSuccess(response);
+            return await response.Content.ReadFromJsonAsync<OrderReceipt>(cancellationToken)
+                ?? throw new InvalidOperationException("Ordering returned no receipt.");
+        }
+
+        private static async Task EnsureSuccess(HttpResponseMessage response)
+        {
+            if (!response.IsSuccessStatusCode)
+            {
+                var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>();
+                throw new HttpRequestException(problem?.Detail ?? "Ordering request failed.", null, response.StatusCode);
+            }
         }
     }
 }

@@ -7,14 +7,30 @@ namespace GloboTicket.Ordering.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class OrderController(
-    ILogger<OrderController> logger,
-    EmailSender emailSender) : ControllerBase
+    OrderingService ordering) : ControllerBase
 {
+    [HttpPost("quotes")]
+    public Task<IActionResult> Quote(QuoteRequest request, CancellationToken cancellationToken) =>
+        Execute(() => ordering.QuoteAsync(request, cancellationToken));
+
+    [HttpGet("quotes/{id:guid}")]
+    public Task<IActionResult> GetQuote(Guid id, CancellationToken cancellationToken) =>
+        Execute(() => ordering.GetQuoteAsync(id, cancellationToken));
+
     [HttpPost("", Name = "SubmitOrder")]
-    public async Task<IActionResult> Submit(OrderForCreation order, CancellationToken cancellationToken)
+    public Task<IActionResult> Submit(SubmitOrderRequest request, CancellationToken cancellationToken) =>
+        Execute(() => ordering.SubmitAsync(request, cancellationToken));
+
+    [HttpGet("{id:guid}")]
+    public Task<IActionResult> Get(Guid id, CancellationToken cancellationToken) =>
+        Execute(() => ordering.GetOrderAsync(id, cancellationToken));
+
+    private async Task<IActionResult> Execute<T>(Func<Task<T>> action)
     {
-        logger.LogInformation("Received a new order from {CustomerName}", order.CustomerDetails.Name);
-        await emailSender.SendEmailForOrder(order, cancellationToken);
-        return Ok();
+        try { return Ok(await action()); }
+        catch (OrderException exception)
+        {
+            return Problem(detail: exception.Message, statusCode: exception.StatusCode);
+        }
     }
 }

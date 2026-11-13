@@ -110,6 +110,9 @@ namespace GloboTicket.Frontend.Services
             }
             return Task.CompletedTask;
         }
+
+        public Task<string> GetPromoCode(Guid basketId) =>
+            Task.FromResult(baskets.TryGetValue(basketId, out var basket) ? basket.PromoCode : null);
         
         public Task<bool> ShouldApplyAdministrationCost(Guid basketId)
         {

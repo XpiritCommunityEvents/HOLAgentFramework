@@ -9,8 +9,9 @@ var openai = builder.AddOpenAI("openai")
 var model = openai.AddModel("model", "gpt-6-luna")
     .WithHealthCheck();
 
-var sql = builder.AddSqlServer("sql");
+var sql = builder.AddSqlServer("sql").WithDataVolume();
 var database = sql.AddDatabase("EventCatalogDb", "EventCatalogDb");
+var orderingDatabase = sql.AddDatabase("OrderingDb", "OrderingDb");
 
 var catalog = builder.AddProject<catalog>("catalog")
     .WithReference(database, "DefaultConnection")
@@ -19,6 +20,10 @@ var catalog = builder.AddProject<catalog>("catalog")
     .WithUrlForEndpoint("http", url => url.DisplayText = "Catalog API");
 
 var ordering = builder.AddProject<ordering>("ordering")
+    .WithReference(orderingDatabase)
+    .WaitFor(orderingDatabase)
+    .WithEnvironment("ApiConfigs__EventCatalog__Uri", catalog.GetEndpoint("http"))
+    .WaitFor(catalog)
     .WithHttpHealthCheck("/health")
     .WithUrlForEndpoint("http", url => url.DisplayText = "Ordering API");
 
@@ -40,5 +45,10 @@ var frontend =builder.AddProject<frontend>("GloboTicketAssistant")
 var devui = builder.AddDevUI("devui")
     .WithAgentService(frontend)
     .WaitFor(frontend);
+
+if (builder.ExecutionContext.IsRunMode)
+{
+    builder.AddMcpInspector("mcp-inspector", catalog, ordering);
+}
 
 builder.Build().Run();

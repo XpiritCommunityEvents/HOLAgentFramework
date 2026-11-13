@@ -35,7 +35,10 @@ public class SqlEventRepository : IEventRepository
 
     public async Task<IReadOnlyList<Event>> GetEventsInLocation(string location, int limit, CancellationToken cancellationToken = default) => await OrderedEvents().Where(e => e.Venue != null && ((e.Venue.City != null && e.Venue.City.Contains(location)) || (e.Venue.State != null && e.Venue.State.Contains(location)))).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
 
-    public async Task<IReadOnlyList<string>> GetArtists(int limit, CancellationToken cancellationToken = default) => await _eventCatalogDbContext.Events.AsNoTracking().Where(e => e.Artist != null).Select(e => e.Artist!).Distinct().OrderBy(a => a).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<string>> GetArtists(int limit, CancellationToken cancellationToken = default, string prefix = null) =>
+        await _eventCatalogDbContext.Events.AsNoTracking()
+            .Where(e => e.Artist != null && (prefix == null || e.Artist.StartsWith(prefix)))
+            .Select(e => e.Artist!).Distinct().OrderBy(a => a).Take(ClampLimit(limit)).ToListAsync(cancellationToken);
 
     public async Task<Event> GetEventById(Guid eventId, CancellationToken cancellationToken = default)
     {

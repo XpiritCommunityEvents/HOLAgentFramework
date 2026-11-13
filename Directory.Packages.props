@@ -18,6 +18,7 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Proxies" Version="10.0.15" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.15" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Agents.AI" Version="1.28.0" />
     <PackageVersion Include="Microsoft.Agents.AI.Harness" Version="1.28.0" />

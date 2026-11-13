@@ -1,9 +1,6 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+@model GloboTicket.Frontend.Models.Api.OrderReceipt
 
-<h1>Thank you for your order!</h1>
-
-<p>Please check your email for confirmation.</p>
+<h1>Simulated order recorded</h1>
+<p>Order reference: <strong>@Model.OrderId</strong></p>
+<p>Quote: @Model.Quote.QuoteId. Total: USD @Model.Quote.Total.ToString("F2").</p>
+<p>@Model.Status</p>

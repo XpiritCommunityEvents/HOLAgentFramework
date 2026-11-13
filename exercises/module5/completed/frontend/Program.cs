@@ -7,6 +7,7 @@ using GloboTicket.Frontend.Services.Ordering;
 using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.DevUI;
 using Microsoft.Agents.AI.Hosting.AGUI.AspNetCore;
+using Microsoft.Agents.AI.Hosting;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 using OpenAI;
@@ -40,6 +41,9 @@ builder.Services.AddSingleton<Settings>();
 
 builder.Services.AddSignalR();
 builder.Services.AddAGUIServer();
+#pragma warning disable MAAI001 // Pending approvals must survive between hosted agent requests.
+builder.Services.AddSingleton<AgentSessionStore, InMemoryAgentSessionStore>();
+#pragma warning restore MAAI001
 
 string catalogBaseAddress = builder.Configuration["ApiConfigs:EventCatalog:Uri"]
     ?? throw new InvalidOperationException("The event catalog URI is not configured.");
@@ -51,7 +55,22 @@ await using McpClient mcpClient = await McpClient.CreateAsync(
         Endpoint = new Uri($"{catalogBaseAddress.TrimEnd('/')}/mcp/")
     }));
 
-IList<McpClientTool> tools = await mcpClient.ListToolsAsync();
+string orderingBaseAddress = builder.Configuration["ApiConfigs:Ordering:Uri"]
+    ?? throw new InvalidOperationException("The ordering URI is not configured.");
+await using McpClient orderingMcpClient = await McpClient.CreateAsync(
+    new HttpClientTransport(new HttpClientTransportOptions
+    {
+        Name = "Ordering",
+        Endpoint = new Uri($"{orderingBaseAddress.TrimEnd('/')}/mcp")
+    }));
+
+IList<AITool> tools =
+[
+    .. await mcpClient.ListToolsAsync(),
+    .. (await orderingMcpClient.ListToolsAsync())
+        .Where(tool => tool.Name != "collect_demo_customer")
+        .Select(tool => tool.Name == "submit_order" ? (AITool)new ApprovalRequiredAIFunction(tool) : tool)
+];
 
 builder.Services.AddSingleton<ResponsesClient>(sp =>
 {
@@ -76,6 +95,8 @@ builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
     services,
     enableSensitiveData: builder.Environment.IsDevelopment(),
     builder.Environment.ApplicationName));
+builder.AddAIAgent(ChatAssistant.Name, (services, _) => services.GetRequiredService<AIAgent>())
+    .WithInMemorySessionStore(withIsolation: false); // Trusted workshop: no authenticated user partition.
 builder.Services.AddSingleton<ConversationStore>();
 
 builder.Services.AddOpenAIResponses();
@@ -105,7 +126,7 @@ app.UseAuthorization();
 
 
 app.MapHub<ChatHub>("/chatHub");
-app.MapAGUIServer("/ag-ui", app.Services.GetRequiredService<AIAgent>());
+app.MapAGUIServer("/ag-ui", AgUiAgent.WithSessionBoundApprovals(app.Services.GetRequiredService<AIAgent>()));
 
 app.MapControllerRoute(
     name: "default",

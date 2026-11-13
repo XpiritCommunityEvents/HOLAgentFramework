@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.Agents.AI" />
     <PackageReference Include="Microsoft.Extensions.AI" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="MSTest.TestAdapter" />
     <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="coverlet.collector">
@@ -22,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\catalog\catalog.csproj" />
     <ProjectReference Include="..\frontend\frontend.csproj" />
+    <ProjectReference Include="..\ordering\ordering.csproj" />
   </ItemGroup>
 
 </Project>

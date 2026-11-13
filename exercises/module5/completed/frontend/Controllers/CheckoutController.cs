@@ -27,36 +27,62 @@ namespace GloboTicket.Frontend.Controllers
             this.logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index(CancellationToken cancellationToken)
         {
             var currentBasketId = Request.Cookies.GetCurrentBasketId(settings);
             //var basket = await shoppingBasketService.GetBasket(currentBasketId);
 
-            return View(new CheckoutViewModel() {  BasketId = currentBasketId});
+            try
+            {
+                var quote = await orderSubmissionService.QuoteOrder(currentBasketId, cancellationToken);
+                return View(new CheckoutViewModel { BasketId = currentBasketId, QuoteId = quote.QuoteId, Quote = quote });
+            }
+            catch (HttpRequestException exception) when (exception.StatusCode is not null)
+            {
+                return Problem(detail: exception.Message, statusCode: (int)exception.StatusCode);
+            }
         }
 
-        public IActionResult Thanks()
+        public async Task<IActionResult> Thanks(Guid id, CancellationToken cancellationToken)
         {
-            return View();
+            return View(await orderSubmissionService.GetOrder(id, cancellationToken));
+        }
+
+        [HttpGet("checkout/quote/{id:guid}")]
+        public async Task<IActionResult> Quote(Guid id, CancellationToken cancellationToken)
+        {
+            try { return Json(await orderSubmissionService.GetQuote(id, cancellationToken)); }
+            catch (HttpRequestException exception) when (exception.StatusCode is not null)
+            {
+                return Problem(detail: exception.Message, statusCode: (int)exception.StatusCode);
+            }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Purchase(CheckoutViewModel checkout)
         {
+            ModelState.Remove(nameof(checkout.Quote));
             if (ModelState.IsValid)
             {
                 var currentBasketId = Request.Cookies.GetCurrentBasketId(settings);
                 checkout.BasketId = currentBasketId;
                 
-                logger.LogInformation($"Received an order from {checkout.Name}");
-                var orderId = await orderSubmissionService.SubmitOrder(checkout);
+                Guid orderId;
+                try { orderId = await orderSubmissionService.SubmitOrder(checkout); }
+                catch (HttpRequestException exception) when (exception.StatusCode is not null)
+                {
+                    return Problem(detail: exception.Message + " Return to checkout for a new quote if expired.",
+                        statusCode: (int)exception.StatusCode);
+                }
                 await shoppingBasketService.ClearBasket(currentBasketId);
 
-                return RedirectToAction("Thanks");
+                return RedirectToAction("Thanks", new { id = orderId });
             }
             else
             {
-                return View("Index");
+                checkout.Quote = await orderSubmissionService.GetQuote(checkout.QuoteId);
+                return View("Index", checkout);
             }
         }
 

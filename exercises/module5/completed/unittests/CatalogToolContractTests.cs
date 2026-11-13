@@ -184,7 +184,8 @@ public sealed class CatalogToolContractTests
 
         public Task<IReadOnlyList<string>> GetArtists(
             int limit,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string? prefix = null)
         {
             InvocationCount++;
             return Task.FromResult<IReadOnlyList<string>>([]);

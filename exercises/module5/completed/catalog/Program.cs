@@ -16,7 +16,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddMcpServer()
     .WithHttpTransport()
-    .WithToolsFromAssembly();
+    .WithToolsFromAssembly()
+    .WithResources<CatalogContext>()
+    .WithPrompts<CatalogContext>()
+    .WithCompleteHandler(CatalogContext.CompleteArtist);
 
 var app = builder.Build();
 
