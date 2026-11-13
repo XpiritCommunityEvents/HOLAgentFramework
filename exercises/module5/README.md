@@ -37,7 +37,8 @@ aspire wait GloboTicketAssistant --apphost exercises/module5/completed/AppHost/A
 aspire describe --apphost exercises/module5/completed/AppHost/AppHost.csproj
 ```
 
-Open the frontend URL shown by Aspire and select the AG-UI chat. Ask:
+Open the frontend URL shown by Aspire and navigate to Chat Support. The chat uses
+AG-UI and CopilotKit. Ask:
 
 > Find two tickets for an artist in a city within my budget, show me the total,
 > then place the simulated order after I approve.
@@ -58,7 +59,6 @@ The AG-UI compatibility adapter also removes CopilotKit's synthetic approval-res
 messages: a decision is not a receipt and must not suppress the server's tool execution.
 Chat sessions and pending approvals are in memory: a frontend restart requires a
 new conversation/approval. Persisted quotes and orders are separate and survive it.
-SignalR remains for comparison; new ordering UI behavior targets AG-UI.
 
 Stop only this AppHost when finished:
 

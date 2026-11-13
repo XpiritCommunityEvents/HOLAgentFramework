@@ -3,93 +3,20 @@
 }
 
 <link rel="stylesheet" href="~/css/chat.css" />
+<link rel="stylesheet" href="~/js/agui-chat.css" />
 
 <section class="chat-shell" aria-labelledby="chat-title">
     <header class="chat-heading">
-        <p class="chat-eyebrow">GloboTicket assistant</p>
-        <h1 id="chat-title">Two frontends. One agent.</h1>
-        <p class="chat-summary">
-            Compare a hand-built SignalR experience with a protocol-native AG-UI client.
-            Both connect to the same <code>GloboTicketAssistant</code> instance and catalog tools.
-        </p>
+        <h1 id="chat-title">GloboTicket assistant</h1>
     </header>
 
-    <div class="transport-switch" role="tablist" aria-label="Frontend implementation">
-        <button type="button" id="signalrTab" class="transport-option is-active" data-transport="signalr"
-                role="tab" aria-selected="true" aria-controls="signalrWorkspace">
-            <span class="transport-label">Custom frontend</span>
-            <strong>SignalR</strong>
-            <span>Application-specific hub events</span>
-        </button>
-        <button type="button" id="aguiTab" class="transport-option" data-transport="agui"
-                role="tab" aria-selected="false" aria-controls="aguiWorkspace" tabindex="-1">
-            <span class="transport-label">Protocol ecosystem</span>
-            <strong>AG-UI + CopilotKit</strong>
-            <span>Prebuilt agentic UI over SSE</span>
-        </button>
-    </div>
-
-    <section id="signalrWorkspace" class="transport-workspace signalr-workspace"
-             data-workspace="signalr" role="tabpanel" aria-labelledby="signalrTab">
-        <header class="workspace-heading">
-            <div>
-                <p class="workspace-kicker">Hand-built path</p>
-                <h2>SignalR chat</h2>
-                <p>Message rendering, streaming state, errors, and conversation IDs are application code.</p>
-            </div>
-            <div class="chat-status" role="status" aria-live="polite">
-                <span class="chat-status-dot" aria-hidden="true"></span>
-                <span id="signalrConnectionStatus">Connecting to hub</span>
-            </div>
-        </header>
-
-        <div class="chat-thread" id="signalrChatThread">
-            <ol id="signalrMessagesList" class="chat-messages" aria-live="polite" aria-relevant="additions text"></ol>
-            <div id="signalrEmptyState" class="chat-empty">
-                <span class="chat-empty-mark" aria-hidden="true">GT</span>
-                <h3>Ask about upcoming events</h3>
-                <p>Try “Which concerts are available?” to exercise the catalog tool.</p>
-            </div>
-        </div>
-
-        <form id="signalrChatForm" class="chat-composer">
-            <label class="visually-hidden" for="signalrMessageInput">Message the GloboTicket assistant</label>
-            <input type="text" class="chat-input" id="signalrMessageInput"
-                   placeholder="Ask about concerts, dates, or venues" autocomplete="off" />
-            <button type="submit" id="signalrSendButton" class="chat-send">Send</button>
-        </form>
-    </section>
-
-    <section id="aguiWorkspace" class="transport-workspace agui-workspace"
-             data-workspace="agui" role="tabpanel" aria-labelledby="aguiTab" hidden>
-        <header class="agui-heading">
-            <div>
-                <p class="workspace-kicker">Out-of-the-box path</p>
-                <h2>CopilotKit on AG-UI</h2>
-                <p>
-                    The official AG-UI client supplies the agent contract; CopilotKit supplies the
-                    message UI, Markdown, run controls, tool-call rendering, and inspector.
-                </p>
-            </div>
-            <ul class="agui-capabilities" aria-label="Enabled capabilities">
-                <li>Rich messages</li>
-                <li>Tool activity</li>
-                <li>Run lifecycle</li>
-                <li>Inspector</li>
-            </ul>
-        </header>
-
+    <div id="aguiWorkspace" class="agui-workspace">
         <div class="agui-frame">
             <div id="agUiChatRoot" class="agui-chat-root">
-                <div class="agui-loading" role="status">Loading the AG-UI client…</div>
+                <div class="agui-loading" role="status">Loading chat...</div>
             </div>
         </div>
-        <p class="agui-note">
-            Tip: after a response, use its toolbar to inspect the AG-UI exchange or regenerate the run.
-        </p>
-    </section>
+    </div>
 </section>
 
-<script src="~/js/signalr/dist/browser/signalr.js"></script>
-<script src="~/js/comparison.js"></script>
-<script src="~/js/signalr-chat.js"></script>
+<script src="~/js/agui-chat.js"></script>

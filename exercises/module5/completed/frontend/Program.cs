@@ -39,7 +39,6 @@ builder.Services.AddHttpClient<IOrderSubmissionService, HttpOrderSubmissionServi
 builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketService>();
 builder.Services.AddSingleton<Settings>();
 
-builder.Services.AddSignalR();
 builder.Services.AddAGUIServer();
 #pragma warning disable MAAI001 // Pending approvals must survive between hosted agent requests.
 builder.Services.AddSingleton<AgentSessionStore, InMemoryAgentSessionStore>();
@@ -97,7 +96,6 @@ builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
     builder.Environment.ApplicationName));
 builder.AddAIAgent(ChatAssistant.Name, (services, _) => services.GetRequiredService<AIAgent>())
     .WithInMemorySessionStore(withIsolation: false); // Trusted workshop: no authenticated user partition.
-builder.Services.AddSingleton<ConversationStore>();
 
 builder.Services.AddOpenAIResponses();
 builder.Services.AddOpenAIConversations();
@@ -125,7 +123,6 @@ app.UseRouting();
 app.UseAuthorization();
 
 
-app.MapHub<ChatHub>("/chatHub");
 app.MapAGUIServer("/ag-ui", AgUiAgent.WithSessionBoundApprovals(app.Services.GetRequiredService<AIAgent>()));
 
 app.MapControllerRoute(

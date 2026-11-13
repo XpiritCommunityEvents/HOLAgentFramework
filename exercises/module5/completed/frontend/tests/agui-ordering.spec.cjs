@@ -9,12 +9,19 @@ async function openOrderingChat(page, { expired = false, missing = false } = {})
     await page.route("http://localhost:4173/**", async route => {
         const path = new URL(route.request().url()).pathname;
         if (path === "/") {
+            const view = readFileSync(join(__dirname, "../Views/Chat/Index.cshtml"), "utf8")
+                .replace(/^@\{[\s\S]*?\}/, "")
+                .replaceAll("~/", "/");
             return route.fulfill({ contentType: "text/html", body:
-                '<html><body><div id="agUiChatRoot"></div><script src="/agui-chat.js"></script></body></html>' });
+                `<html><body>${view}</body></html>` });
         }
-        if (path === "/agui-chat.js") {
+        if (path === "/js/agui-chat.js") {
             return route.fulfill({ contentType: "application/javascript",
                 body: readFileSync(join(__dirname, "../wwwroot/js/agui-chat.js"), "utf8") });
+        }
+        if (path === "/css/chat.css" || path === "/js/agui-chat.css") {
+            return route.fulfill({ contentType: "text/css",
+                body: readFileSync(join(__dirname, "../wwwroot", path), "utf8") });
         }
         if (path === `/checkout/quote/${quoteId}`) {
             return route.fulfill({ status: missing ? 404 : 200, json: missing ? { detail: "Quote not found." } : {
@@ -53,6 +60,7 @@ async function openOrderingChat(page, { expired = false, missing = false } = {})
         return route.abort();
     });
     await page.goto("http://localhost:4173/");
+    await expect(page.locator("#aguiWorkspace")).toBeVisible();
     const input = page.getByRole("textbox");
     await input.fill("Find two tickets and quote a simulated order.");
     await input.press("Enter");
