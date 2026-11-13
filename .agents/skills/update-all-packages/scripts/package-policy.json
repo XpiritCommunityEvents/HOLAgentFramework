@@ -1,0 +1,20 @@
+{
+  "sdkAlignedPrefixes": [
+    "Microsoft.Extensions.",
+    "Microsoft.EntityFrameworkCore",
+    "Microsoft.AspNetCore.",
+    "Microsoft.Bcl.",
+    "Microsoft.NETCore.",
+    "Microsoft.Data.Sqlite",
+    "System."
+  ],
+  "pinned": {
+    "OpenAI": "2.15.0 breaks Microsoft.Extensions.AI.OpenAI 10.11.0 streaming (MissingMethodException); upgrade together and run Responses contract tests.",
+    "Azure.AI.Inference": "preview-only; kept until a stable replacement exists.",
+    "OpenTelemetry.Instrumentation.EntityFrameworkCore": "preview-only; kept until a stable replacement exists.",
+    "Microsoft.Agents.AI.DevUI": "preview-only hosting integration; kept until stable.",
+    "Microsoft.Agents.AI.Hosting.OpenAI": "preview-only hosting integration; kept until stable.",
+    "Microsoft.Agents.AI.Hosting.AGUI.AspNetCore": "preview-only hosting integration; kept until stable.",
+    "Aspire.Hosting.AgentFramework.DevUI": "preview-only hosting integration; kept until stable."
+  }
+}
