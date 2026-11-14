@@ -34,7 +34,7 @@ AIAgent concierge = TravelConciergeAgent.Create(
         model,
         [ticketAgent.AsAIFunction(), hotelAgent.AsAIFunction(), rideAgent.AsAIFunction(), itineraryAgent.AsAIFunction()]);
 
-string pattern = args.FirstOrDefault()?.ToLowerInvariant() ?? "tools";
+string pattern = "groupchat"; // tools, groupchat
 string question = """
         I have tickets to Martin Garrix. The ticket PDF is here:
         https://github.com/vriesmarcel/vslive-2026-vegas-sk/blob/main/CT4EB6AF_mobile_267842.pdf
@@ -47,15 +47,10 @@ switch (pattern)
         case "tools":
                 await AgentsAsToolsOrchestration.RunAsync(concierge, question);
                 break;
-        case "sequential":
-                await SequentialOrchestration.RunAsync(question, ticketAgent, hotelAgent, rideAgent, itineraryAgent);
-                break;
-        case "concurrent":
-                await ConcurrentOrchestration.RunAsync(question, ticketAgent, hotelAgent, rideAgent, itineraryAgent);
-                break;
-        case "handoff":
-                await HandoffOrchestration.RunAsync(question, concierge, ticketAgent, hotelAgent, rideAgent, itineraryAgent);
+          case "groupchat":
+                AIAgent groupChatConcierge = TravelConciergeAgent.CreateForGroupChat(responsesClient, model);
+                await GroupChatOrchestration.RunAsync(question, ticketAgent, hotelAgent, rideAgent, groupChatConcierge);
                 break;
         default:
-                throw new ArgumentException("Choose one of: tools, sequential, concurrent, handoff.", nameof(args));
+                throw new ArgumentException("Choose one of: tools, sequential, groupchat.", nameof(args));
 }
