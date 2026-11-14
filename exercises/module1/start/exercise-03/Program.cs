@@ -8,6 +8,8 @@ using OpenAI.Responses;
 
 #pragma warning disable OPENAI001
 
+Console.OutputEncoding = System.Text.Encoding.UTF8; // Ensure proper encoding for console output, especially for special characters.
+
 var configuration = new ConfigurationBuilder()
     .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
     .AddUserSecrets<Program>()

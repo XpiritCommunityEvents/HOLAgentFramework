@@ -7,6 +7,8 @@ using Module04.Demo05.Orchestration;
 using OpenAI.Responses;
 #pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
+Console.OutputEncoding = System.Text.Encoding.UTF8; // Ensure proper encoding for console output, especially for special characters.
+
 var config = new ConfigurationBuilder()
         .SetBasePath(Directory.GetCurrentDirectory())
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)

@@ -9,6 +9,8 @@ using OpenAI.Responses;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 
+Console.OutputEncoding = System.Text.Encoding.UTF8; // Ensure proper encoding for console output, especially for special characters.
+
 var configuration = new ConfigurationBuilder()
     .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
     .AddUserSecrets<Program>()
