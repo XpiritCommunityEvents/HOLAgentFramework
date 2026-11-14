@@ -1,11 +1,12 @@
 ﻿
 
 using System.ClientModel;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using OpenAI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Agents.AI;
+using OpenAI.Responses;
+
+#pragma warning disable OPENAI001
 
 var configuration = new ConfigurationBuilder()
     .AddJsonFile(Path.Combine(AppContext.BaseDirectory, "appsettings.json"))
@@ -19,3 +20,4 @@ var apiKey = configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationExcepti
 
 Console.WriteLine($"Model: {model}");
 Console.WriteLine($"Endpoint: {endpoint}");
+
