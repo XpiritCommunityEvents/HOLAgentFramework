@@ -28,10 +28,11 @@ internal class ChatWithAgent
     
         List<ChatMessage> input = [new ChatMessage(ChatRole.User, question)];
 
-        var response =  await transportationAgent.RunAsync(input, session);
-
-        
-        AgentResponsePrinter.PrintResponse(response);
+        await foreach (var update in transportationAgent.RunStreamingAsync(input, session))
+        {
+            AgentResponsePrinter.PrintResponseUpdate(update);
+        }
+        Console.WriteLine();
         Console.WriteLine("******** Done ***********");
     }
 

@@ -1,7 +1,9 @@
 # Demo 01: Transportation agent
 
 This sample creates an Agent Framework transportation agent with ride lookup and
-booking function tools, then prints one response to the supplied concert question.
+booking function tools, then streams its response to the supplied concert question.
+The console printer includes reasoning summaries (when supplied by the model),
+tool calls/results, approval requests, errors, and token usage as updates arrive.
 It is not the Harness example and does not implement `/plan` or `/todos` commands.
 
 The model client uses `GetResponsesClient().AsAIAgent(...)` so supported

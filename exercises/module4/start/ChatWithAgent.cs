@@ -23,10 +23,12 @@ internal class ChatWithAgent
         var transportationAgent = CreateTransportationAgent(config);
 
         Console.WriteLine("******** Start the agent ***********");
-        var agentresult = await transportationAgent.RunAsync(question);
-
         Console.WriteLine("******** RESPONSE ***********");
-        AgentResponsePrinter.PrintResponse(agentresult);
+        await foreach (var update in transportationAgent.RunStreamingAsync(question))
+        {
+            AgentResponsePrinter.PrintResponseUpdate(update);
+        }
+        Console.WriteLine();
     }
 
     private AIAgent CreateTransportationAgent(IConfiguration config)
