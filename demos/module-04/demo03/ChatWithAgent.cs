@@ -34,7 +34,7 @@ internal class ChatWithAgent
             var updates = new List<AgentResponseUpdate>();
             await foreach (var item in transportationAgent.RunStreamingAsync(input, session))
             {
-                AgentResponsePrinter.HandleResponseUpdate(item);
+                AgentResponsePrinter.PrintResponseUpdate(item);
                 updates.Add(item);
             }
 
@@ -89,7 +89,7 @@ internal class ChatWithAgent
         only when the required image/OCR dependencies are available. Never guess document contents.
 
         You are done the moment both a hotel and a ride have been successfully booked or when the user
-        cancels the process.
+        cancels the process. In each response, summarize the current status of both bookings.
         """;
 
         var model = config["OpenAI:Model"] ?? throw new InvalidOperationException("OpenAI:Model is not configured.");

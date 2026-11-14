@@ -5,11 +5,10 @@ The booking evaluator requests a structured verdict and either stops the loop
 or supplies feedback. User questions are routed through `AskForUserInput`.
 This is not the Harness planning/todo example.
 
-Both the transportation agent and evaluator use
-`GetResponsesClient().AsIChatClient(model)`. The tool interfaces, session,
-structured verdict, and stop/continue behavior are unchanged. Booking approval
-in this exercise is prompt/tool behavior; the explicit Harness approval-response
-workflow is in completed exercise 02.
+Both the transportation agent and evaluator use `GetResponsesClient().AsAIAgent(...)`.
+The evaluator judges the latest response text, not independently verified booking
+state. Confirmation in this exercise is prompt/tool behavior; the explicit Harness
+approval-response workflow is in completed exercise 02.
 
 ## Configure and run
 

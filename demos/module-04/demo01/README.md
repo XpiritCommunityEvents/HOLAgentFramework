@@ -4,7 +4,7 @@ This sample creates an Agent Framework transportation agent with ride lookup and
 booking function tools, then prints one response to the supplied concert question.
 It is not the Harness example and does not implement `/plan` or `/todos` commands.
 
-The model client uses `GetResponsesClient().AsIChatClient(model)` so supported
+The model client uses `GetResponsesClient().AsAIAgent(...)` so supported
 reasoning deployments can use function tools without the Chat Completions
 restriction. The instruction to ask before booking is prompt guidance here, not
 an enforced approval gate. Demo 03 demonstrates Harness and explicit tool approval.

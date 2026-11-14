@@ -4,9 +4,8 @@ Start with the transportation agent and its ride lookup/booking function tools,
 then follow the Wiki to add orchestration. This scaffold prints one response;
 it does not yet include Harness planning, todos, or an enforced approval gate.
 
-Use the existing Responses-backed `IChatClient` when extending the agent:
-`GetResponsesClient().AsIChatClient(model)`. Do not revert to Chat Completions
-or disable reasoning to make function tools work.
+Use the existing Responses client and `AsAIAgent` when extending the agent.
+Do not revert to Chat Completions or disable reasoning to make function tools work.
 
 ## Configure and run
 

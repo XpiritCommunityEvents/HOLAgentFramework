@@ -52,8 +52,8 @@ internal class ChatWithAgent
         //     You always suggest 3 options with different price ranges.
             
         //     Never ask the user a question as plain text: nobody reads it. Whenever you need information from
-        //     the user, call the AskForUserInput function and wait for its result. Booking functions request
-        //     approval on their own, so call them directly instead of asking for permission in text first.
+        //     the user, call the AskForUserInput function and wait for its result. Confirm the selected ride
+        //     with the user through AskForUserInput before calling BookARide.
 
         //     ##Exit condition: 
         //     The agent should exit once a ride has been successfully booked or the user cancels the process.
