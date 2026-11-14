@@ -64,7 +64,7 @@ var requestBody = new
     //     }
     // },
     // tool_choice = "auto",
-    max_tokens = 500
+    max_completion_tokens = 500
 };
 
 using var content = new StringContent(

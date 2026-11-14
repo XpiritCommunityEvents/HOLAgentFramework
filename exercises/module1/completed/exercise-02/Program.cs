@@ -32,7 +32,7 @@ var requestBody = new
             content = "What is the weather in San Diego?"
         }
     },
-    max_tokens = 500
+    max_completion_tokens = 500
 };
 
 using var content = new StringContent(
