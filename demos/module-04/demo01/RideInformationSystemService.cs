@@ -43,7 +43,7 @@ public static class RideInformationSystemService
         new Ride { RideId = 14, RideType = "Taxi", Price = 29.00m, ServiceName = "City Cabs", City = "Seattle" },
         new Ride { RideId = 15, RideType = "Taxi", Price = 35.00m, ServiceName = "Ibiza Cabs", City = "Ibiza" },
         new Ride { RideId = 16, RideType = "Ride Share", Price = 24.00m, ServiceName = "Amsterdam Rides", City = "Amsterdam" },
-        new Ride { RideId = 17, RideType = "Shuttle", Price = 32.00m, ServiceName = "San Diego Shuttle", City = "San Diego" },
+        new Ride { RideId = 17, RideType = "Shuttle", Price = 32.00m, ServiceName = "Orlando Shuttle", City = "Orlando" },
         new Ride { RideId = 18, RideType = "Taxi", Price = 31.00m, ServiceName = "Boston Cabs", City = "Boston" },
         new Ride { RideId = 19, RideType = "Ride Share", Price = 23.00m, ServiceName = "Boston Rides", City = "Boston" },
         new Ride { RideId = 20, RideType = "Limousine", Price = 110.00m, ServiceName = "Vegas Luxury", City = "Las Vegas" },

@@ -27,7 +27,7 @@ var requestOptions = new ChatCompletionsOptions()
     Model = model,
     Messages =
     [
-        new ChatRequestUserMessage("What are concerts and artists that are popular in San Diego. Make it short and concise")
+        new ChatRequestUserMessage("What are concerts and artists that are popular in Orlando. Make it short and concise")
     ]
 };
 

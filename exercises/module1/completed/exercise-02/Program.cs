@@ -31,7 +31,7 @@ var requestBody = new
         new
         {
             role = "user",
-            content = "What is the weather in San Diego?"
+            content = "What is the weather in Orlando?"
         }
     },
     max_completion_tokens = 500
