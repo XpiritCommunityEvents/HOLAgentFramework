@@ -36,3 +36,5 @@ await Scenario_01.Run(responsesClient, model);
 //await Scenario_04.Run(responsesClient, model, configuration);
 
 //await Scenario_05.Run(responsesClient, model, configuration);
+
+//await Scenario_06.Run(configuration);
