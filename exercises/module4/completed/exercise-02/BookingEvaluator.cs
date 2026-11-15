@@ -1,4 +1,5 @@
 using System.ClientModel;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -13,10 +14,18 @@ namespace ModuleAgent;
 public class BookingEvaluator : LoopEvaluator
 {
     private const string Instructions =
-        "You evaluate the agent's latest response to the customer's request. " +
-        "The task is complete only when both a hotel and a ride have been booked or the customer cancels. " +
-        "Also set 'answered' to true when the agent is waiting for information only the customer can provide. " +
-        "Set 'answered' to true if the task is complete, otherwise false. " +
+        "You are an evaluator for a travel-booking agent. You are given the customer's latest input, the agent's " +
+        "tool activity, and the agent's latest response. The agent's task is to book a hotel room and a ride for " +
+        "the customer. The customer already owns the event tickets; ticket purchases never need to be verified. " +
+        "Set 'answered' to true in any of these cases: " +
+        "(1) the tool activity shows both a hotel room and a ride were booked successfully - treat the booking " +
+        "tools' success results as authoritative and do not demand confirmation numbers, stay dates, receipts, or " +
+        "other details those tools do not return; " +
+        "(2) the customer indicates they are done, satisfied, or wants to stop (for example 'I'm good', 'we are " +
+        "good', 'stop', 'thanks', 'bye'), or cancels the process; " +
+        "(3) the agent is blocked waiting on the customer, for example on an approval decision or information only " +
+        "the customer can supply: looping again would only repeat the same question. " +
+        "Set 'answered' to false only when booking work the agent can still perform on its own remains outstanding. " +
         "When false, use 'gapAnalysis' to explain what remains. " +
         "If structured output is unavailable, respond with VERDICT: DONE or VERDICT: MORE.";
 
@@ -46,13 +55,8 @@ public class BookingEvaluator : LoopEvaluator
             return LoopEvaluation.Stop();
         }
 
-        if (string.IsNullOrWhiteSpace(context.LastResponse.Text))
-        {
-            return LoopEvaluation.Continue("The response was empty. Continue working on the booking.");
-        }
-
         var response = await _evaluatorAgent.RunAsync<EvalVerdict>(
-            context.LastResponse.Text, cancellationToken: cancellationToken).ConfigureAwait(false);
+            BuildEvidence(context), cancellationToken: cancellationToken).ConfigureAwait(false);
 
         EvalVerdict? verdict = null;
         try
@@ -71,6 +75,53 @@ public class BookingEvaluator : LoopEvaluator
         return answered
             ? LoopEvaluation.Stop()
             : LoopEvaluation.Continue($"The booking is incomplete: {verdict?.GapAnalysis ?? "<unknown>"}. Please continue.");
+    }
+
+    /// <summary>
+    /// Builds the judge's user message from the loop context. The agent's bare response text is not enough to judge
+    /// completion: successful BookRoom/BookARide results and the customer's own words (new user messages and
+    /// AskForUserInput tool results such as "I'm good, stop") only appear in the initial messages and the last
+    /// response's tool contents, so those are surfaced to the judge as well.
+    /// </summary>
+    private static string BuildEvidence(LoopContext context)
+    {
+        var evidence = new StringBuilder();
+
+        evidence.AppendLine("## Customer's latest input:");
+        foreach (ChatMessage message in context.InitialMessages)
+        {
+            if (!string.IsNullOrWhiteSpace(message.Text))
+            {
+                evidence.AppendLine(message.Text);
+            }
+        }
+
+        evidence.AppendLine();
+        evidence.AppendLine("## Agent's tool activity during the latest response:");
+        var toolCallNames = new Dictionary<string, string>();
+        foreach (ChatMessage message in context.LastResponse.Messages)
+        {
+            foreach (AIContent content in message.Contents)
+            {
+                switch (content)
+                {
+                    case FunctionCallContent call:
+                        toolCallNames[call.CallId] = call.Name;
+                        evidence.AppendLine($"[tool call] {call.Name}");
+                        break;
+                    case FunctionResultContent result:
+                        string toolName = toolCallNames.TryGetValue(result.CallId, out string? name) ? name : "<unknown tool>";
+                        evidence.AppendLine($"[tool result] {toolName} -> {result.Result}");
+                        break;
+                }
+            }
+        }
+
+        evidence.AppendLine();
+        evidence.AppendLine("## Agent's latest response:");
+        evidence.AppendLine(context.LastResponse.Text);
+
+        return evidence.ToString();
     }
 
     private class EvalVerdict
