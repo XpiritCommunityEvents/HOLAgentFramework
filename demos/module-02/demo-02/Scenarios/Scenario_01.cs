@@ -1,6 +1,7 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using OpenAI.Responses;
+using System.Text.Json;
 #pragma warning disable OPENAI001 // The pinned SDK marks the Responses API as experimental.
 
 namespace AgentFramework101.Scenarios;
