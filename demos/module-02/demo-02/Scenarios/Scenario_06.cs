@@ -22,7 +22,7 @@ internal static class Scenario_06
         Console.WriteLine("SCENARIO 06 --- Using local Ollama provider");
 
         // Demo: using a local LLM
-        var ollamaClient = new OllamaApiClient(new Uri("http://localhost:11434"), "gemma4");
+        var ollamaClient = new OllamaApiClient(new Uri("http://localhost:11434"), "gemma4:12b");
 
         // Fake user context for demonstration purposes. Set the Application:UserId in appsettings.json or your environment.
         var userContext = new UserSessionContext(configuration["Application:UserId"]?.Trim());
@@ -62,6 +62,7 @@ internal static class Scenario_06
                 }
             })
             .AsBuilder()
+            .Use(anonymousUserFilter.InvokeAsync) // Apply the anonymous user filter to each agent turn
             .Build();
 
         // Reuse one session so each turn includes the conversation so far.
