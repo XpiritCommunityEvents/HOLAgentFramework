@@ -42,9 +42,6 @@ public sealed class AgUiOrderingApprovalTests
         builder.Services.AddSingleton(agent);
         builder.AddAIAgent("BookingAgent", (services, _) => services.GetRequiredService<AIAgent>())
             .WithInMemorySessionStore(withIsolation: false);
-#pragma warning disable MAAI001 // The production host also persists pending approvals.
-        builder.Services.AddSingleton<AgentSessionStore, InMemoryAgentSessionStore>();
-#pragma warning restore MAAI001
         builder.Services.AddOpenAIResponses();
         builder.Services.AddOpenAIConversations();
         await using var app = builder.Build();
@@ -135,15 +132,16 @@ public sealed class AgUiOrderingApprovalTests
         }, "submit_order");
         AIAgent agent = model.AsAIAgent(new ChatClientAgentOptions
         {
+            Name = "BookingAgent",
             ChatOptions = new() { Tools = [new ApprovalRequiredAIFunction(tool)] }
         });
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Logging.ClearProviders();
         builder.Services.AddAGUIServer();
-#pragma warning disable MAAI001 // Hosted session stores are experimental in the pinned hosting integration.
-        builder.Services.AddSingleton<AgentSessionStore, InMemoryAgentSessionStore>();
-#pragma warning restore MAAI001
+        builder.Services.AddSingleton(agent);
+        builder.AddAIAgent("BookingAgent", (services, _) => services.GetRequiredService<AIAgent>())
+            .WithInMemorySessionStore(withIsolation: false);
         await using var app = builder.Build();
         app.MapAGUIServer("/ag-ui", AgUiAgent.WithSessionBoundApprovals(agent));
         await app.StartAsync();

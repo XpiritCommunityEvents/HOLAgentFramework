@@ -40,9 +40,6 @@ builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketServ
 builder.Services.AddSingleton<Settings>();
 
 builder.Services.AddAGUIServer();
-#pragma warning disable MAAI001 // Pending approvals must survive between hosted agent requests.
-builder.Services.AddSingleton<AgentSessionStore, InMemoryAgentSessionStore>();
-#pragma warning restore MAAI001
 
 string catalogBaseAddress = builder.Configuration["ApiConfigs:EventCatalog:Uri"]
     ?? throw new InvalidOperationException("The event catalog URI is not configured.");
