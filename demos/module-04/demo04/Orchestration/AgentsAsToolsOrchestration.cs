@@ -13,34 +13,33 @@ public static class AgentsAsToolsOrchestration
     {
         AgentSession session = await concierge.CreateSessionAsync();
         List<ChatMessage> input = [new ChatMessage(ChatRole.User, request)];
+        var printer = new AgentResponsePrinter();
 
         for (int turn = 0; turn < MaxTurns && input.Count > 0; turn++)
         {
             var updates = new List<AgentResponseUpdate>();
             await foreach (AgentResponseUpdate update in concierge.RunStreamingAsync(input, session))
             {
-                Console.Write(update.Text);
+                printer.PrintResponseUpdate(update, concierge.Name);
                 updates.Add(update);
             }
 
             AgentResponse response = updates.ToAgentResponse();
-            if (response.Messages.Any(message =>
-                    message.Text?.Contains(TravelConciergeAgent.CompletionMarker, StringComparison.Ordinal) is true))
-            {
-                return;
-            }
-
             var approvals = response.Messages
                 .SelectMany(message => message.Contents)
                 .OfType<ToolApprovalRequestContent>()
                 .ToList();
 
+            if (approvals.Count == 0 && response.Messages.Any(message =>
+                    message.Text?.Contains(TravelConciergeAgent.CompletionMarker, StringComparison.Ordinal) is true))
+            {
+                return;
+            }
+
             List<AIContent> replies = [];
             foreach (ToolApprovalRequestContent approval in approvals)
             {
-                Console.Write($"\nApprove final itinerary booking? [y/N] ");
-                bool approved = Console.ReadLine()?.Trim().StartsWith("y", StringComparison.OrdinalIgnoreCase) is true;
-                replies.Add(approval.CreateResponse(approved, approved ? "Approved." : "Rejected."));
+                replies.Add(ConsoleAgentInteraction.PromptForApproval(approval));
             }
 
             input = approvals.Count > 0
