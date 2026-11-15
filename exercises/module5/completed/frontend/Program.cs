@@ -39,8 +39,6 @@ builder.Services.AddHttpClient<IOrderSubmissionService, HttpOrderSubmissionServi
 builder.Services.AddSingleton<IShoppingBasketService, InMemoryShoppingBasketService>();
 builder.Services.AddSingleton<Settings>();
 
-builder.Services.AddAGUIServer();
-
 string catalogBaseAddress = builder.Configuration["ApiConfigs:EventCatalog:Uri"]
     ?? throw new InvalidOperationException("The event catalog URI is not configured.");
 
@@ -64,7 +62,6 @@ IList<AITool> tools =
 [
     .. await mcpClient.ListToolsAsync(),
     .. (await orderingMcpClient.ListToolsAsync())
-        .Where(tool => tool.Name != "collect_demo_customer")
         .Select(tool => tool.Name == "submit_order" ? (AITool)new ApprovalRequiredAIFunction(tool) : tool)
 ];
 
@@ -72,8 +69,6 @@ builder.Services.AddSingleton<ResponsesClient>(sp =>
 {
     string apiKey = builder.Configuration["OpenAI:ApiKey"]
         ?? throw new InvalidOperationException("The OpenAI API key is not configured.");
-    string model = builder.Configuration["OpenAI:Model"]
-        ?? throw new InvalidOperationException("The OpenAI model is not configured.");
     Uri endpoint = new(builder.Configuration["OpenAI:Endpoint"]
         ?? throw new InvalidOperationException("The OpenAI endpoint is not configured."));
 
@@ -91,12 +86,18 @@ builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
     services,
     enableSensitiveData: builder.Environment.IsDevelopment(),
     builder.Environment.ApplicationName));
+
 builder.AddAIAgent(ChatAssistant.Name, (services, _) => services.GetRequiredService<AIAgent>())
     .WithInMemorySessionStore(withIsolation: false); // Trusted workshop: no authenticated user partition.
 
-builder.Services.AddOpenAIResponses();
-builder.Services.AddOpenAIConversations();
-builder.Services.AddDevUI();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddOpenAIResponses();
+    builder.Services.AddOpenAIConversations();
+    builder.Services.AddDevUI();
+}
+
+builder.Services.AddAGUIServer();
 
 var app = builder.Build();
 
@@ -106,10 +107,10 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
 }
 
-app.MapOpenAIResponses();
-app.MapOpenAIConversations();
 if (app.Environment.IsDevelopment())
 {
+    app.MapOpenAIResponses();
+    app.MapOpenAIConversations();
     app.MapDevUI();
 }
 
@@ -118,7 +119,6 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
-
 
 app.MapAGUIServer("/ag-ui", AgUiAgent.WithSessionBoundApprovals(app.Services.GetRequiredService<AIAgent>()));
 
