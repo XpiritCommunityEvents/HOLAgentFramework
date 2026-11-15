@@ -108,7 +108,7 @@ AgentSession session = await agent.CreateSessionAsync();
 
 // Use this prompt to test the skills. You can also try other prompts that might trigger the skills.
 var question = """
-I have tickets to Martin Garrix, you can find them here: https://github.com/vriesmarcel/vslive-2026-vegas-sk/blob/main/CT4EB6AF_mobile_267842.pdf
+I have tickets to Martin Garrix, you can find them here: https://raw.githubusercontent.com/vriesmarcel/vslive-2026-vegas-sk/main/CT4EB6AF_mobile_267842.pdf
 """;
 
 while (true)

@@ -37,7 +37,7 @@ AIAgent concierge = TravelConciergeAgent.Create(
 string pattern = "tools"; // tools, groupchat
 string question = """
         I have tickets to Martin Garrix. The ticket PDF is here:
-        https://github.com/vriesmarcel/vslive-2026-vegas-sk/blob/main/CT4EB6AF_mobile_267842.pdf
+        https://raw.githubusercontent.com/vriesmarcel/vslive-2026-vegas-sk/main/CT4EB6AF_mobile_267842.pdf
         Read the ticket, find a hotel and ride, and ask me before booking.
         """;
 
