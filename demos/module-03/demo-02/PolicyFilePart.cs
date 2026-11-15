@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.VectorData;
+using Microsoft.Extensions.VectorData;
 
 namespace modulerag;
 
@@ -8,15 +8,23 @@ namespace modulerag;
 /// </summary>
 public sealed class PolicyFilePart
 {
-    [VectorStoreKey]
     public ulong Key { get; set; }
 
-    [VectorStoreData(IsIndexed = true)]
     public required string FileName { get; init; }
 
-    [VectorStoreData]
     public required string Chunk { get; init; }
 
-    [VectorStoreVector(1536)]
     public ReadOnlyMemory<float> EmbeddingVector { get; set; }
+
+    // The schema is defined at runtime because the vector size depends on the configured embedding model.
+    public static VectorStoreCollectionDefinition CreateDefinition(int dimensions) => new()
+    {
+        Properties =
+        [
+            new VectorStoreKeyProperty(nameof(Key), typeof(ulong)),
+            new VectorStoreDataProperty(nameof(FileName), typeof(string)) { IsIndexed = true },
+            new VectorStoreDataProperty(nameof(Chunk), typeof(string)),
+            new VectorStoreVectorProperty(nameof(EmbeddingVector), typeof(ReadOnlyMemory<float>), dimensions),
+        ]
+    };
 }

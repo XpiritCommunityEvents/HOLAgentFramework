@@ -34,21 +34,38 @@ AIAgent agent = new OpenAI.OpenAIClient(
     """,
                 name: "Assistant");
 
-var client = new OpenAI.Embeddings.EmbeddingClient(
-    "text-embedding-3-small",
-    new ApiKeyCredential(token),
-    new OpenAI.OpenAIClientOptions
-    {
-        Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
-    });
+var embeddingProvider = config["Embeddings:Provider"] ?? throw new InvalidOperationException("Embeddings:Provider is not configured.");
+var embeddingConfig = config.GetSection($"Embeddings:{embeddingProvider}");
+var embeddingModel = embeddingConfig["Model"] ?? throw new InvalidOperationException($"Embeddings:{embeddingProvider}:Model is not configured.");
+var embeddingDimensions = int.TryParse(embeddingConfig["Dimensions"], out var dimensions)
+    ? dimensions
+    : throw new InvalidOperationException($"Embeddings:{embeddingProvider}:Dimensions is not configured.");
+
+// Both clients expose the same IEmbeddingGenerator abstraction, so the rest of the sample is provider-agnostic.
+IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator = embeddingProvider switch
+{
+    "Ollama" => new OllamaSharp.OllamaApiClient(
+        embeddingConfig["Endpoint"] ?? throw new InvalidOperationException("Embeddings:Ollama:Endpoint is not configured."),
+        embeddingModel),
+    "OpenAI" => new OpenAI.Embeddings.EmbeddingClient(
+        embeddingModel,
+        new ApiKeyCredential(token),
+        new OpenAI.OpenAIClientOptions
+        {
+            Endpoint = new Uri(new Uri(endpoint), "openai/v1/")
+        })
+        .AsIEmbeddingGenerator(defaultModelDimensions: embeddingDimensions),
+    _ => throw new InvalidOperationException($"Unsupported Embeddings:Provider '{embeddingProvider}'. Use 'Ollama' or 'OpenAI'.")
+};
 
 VectorStore vectorStore = new InMemoryVectorStore();
-var collection = vectorStore.GetCollection<ulong, PolicyFilePart>("venue-policies");
+var collection = vectorStore.GetCollection<ulong, PolicyFilePart>("venue-policies", PolicyFilePart.CreateDefinition(embeddingDimensions));
 await collection.EnsureCollectionExistsAsync();
 
-var embeddingGenerator = client.AsIEmbeddingGenerator(defaultModelDimensions: 1536);
-
-var chat = new ChatWithRag();
+var chat = new ChatWithRag(
+    cacheName: $"{embeddingProvider}-{embeddingModel}".ToLowerInvariant(),
+    queryPrompt: embeddingConfig["QueryPrompt"] ?? "",
+    documentPrompt: embeddingConfig["DocumentPrompt"] ?? "");
 
 await chat.IngestDocuments(collection, embeddingGenerator);
 await chat.RAG_with_memory(agent, collection, embeddingGenerator);

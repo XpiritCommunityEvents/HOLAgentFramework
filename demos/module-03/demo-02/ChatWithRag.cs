@@ -7,8 +7,11 @@ using System.Text.Json;
 
 namespace modulerag;
 
-public class ChatWithRag
+// Some embedding models (like EmbeddingGemma) are trained with task prompts in front of queries and documents.
+// cacheName keeps cached vectors from different embedding models apart.
+public class ChatWithRag(string cacheName, string queryPrompt, string documentPrompt)
 {
+
     public async Task RAG_with_memory(AIAgent agent, VectorStoreCollection<ulong, PolicyFilePart> collection, IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator)
     {
         var question =
@@ -19,7 +22,7 @@ public class ChatWithRag
             Is this allowed? 
             """;
 
-        var questionEmbedding = await embeddingGenerator.GenerateAsync(question);
+        var questionEmbedding = await embeddingGenerator.GenerateAsync(queryPrompt + question);
 
         var searchResult = await collection.SearchAsync(questionEmbedding.Vector, top: 1).ToListAsync();
 
@@ -36,7 +39,7 @@ public class ChatWithRag
             Which venue allows a backpack?
             """;
 
-        var questionEmbedding = await embeddingGenerator.GenerateAsync(question);
+        var questionEmbedding = await embeddingGenerator.GenerateAsync(queryPrompt + question);
         var searchResult = await collection.SearchAsync(questionEmbedding.Vector, top: 50).ToListAsync();
 
         var response = await GetResponseOnQuestion(agent, question, string.Join("\n\n", searchResult.Select(r => r.Record.Chunk)));
@@ -59,7 +62,7 @@ public class ChatWithRag
 
             // mimic a persistent storage using json serializations
             // you would normally use a database for this
-            var jsonCacheFileName = Path.ChangeExtension(fullfilename, ".json");
+            var jsonCacheFileName = Path.ChangeExtension(fullfilename, $".{cacheName}.json");
             if (File.Exists(jsonCacheFileName))
             {
                 var cachedChunks = JsonSerializer.Deserialize<PolicyFilePart[]>(File.ReadAllBytes(jsonCacheFileName));
@@ -83,7 +86,7 @@ public class ChatWithRag
                         Chunk = $"# Venue: {file}\n{chunk.Content}",
                     };
 
-                    var embedding = await embeddingGenerator.GenerateAsync(filePart.Chunk);
+                    var embedding = await embeddingGenerator.GenerateAsync(documentPrompt + filePart.Chunk);
                     filePart.EmbeddingVector = embedding.Vector;
 
                     venueChunks.Add(filePart);

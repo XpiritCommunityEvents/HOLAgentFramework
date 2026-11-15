@@ -16,6 +16,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" />
     <PackageReference Include="CommunityToolkit.VectorData.InMemory" />
+    <PackageReference Include="OllamaSharp" />
   </ItemGroup>
 
   <ItemGroup>
