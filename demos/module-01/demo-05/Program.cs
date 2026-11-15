@@ -50,7 +50,7 @@ var agent = new OpenAIClient(new ApiKeyCredential(apiKey), new OpenAIClientOptio
 // Multimodal messages are built from a list of AIContent parts.
 var message = new ChatMessage(ChatRole.User,
 [
-    new TextContent("Here is the image of the Orlando area:"),
+    new TextContent("Here is the image of the San Diego area:"),
     new DataContent(imageBytes, "image/png")
 ]);
 
