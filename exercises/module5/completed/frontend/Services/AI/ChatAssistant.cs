@@ -36,7 +36,7 @@ internal static class ChatAssistant
         Use get_order for a receipt; retries must reuse the original quote and details.
         """;
 
-    internal static AIAgent Create(ResponsesClient responsesClient, string model, IEnumerable<AITool> tools, IServiceProvider serviceProvider, bool enableSensitiveData = false, string applicationName = Name) =>
+    internal static AIAgent Create(ResponsesClient responsesClient, string model, IEnumerable<AITool> tools, IServiceProvider serviceProvider, bool enableSensitiveData = false, string applicationName = Name, bool mcpUiPrototype = false) =>
         responsesClient.AsAIAgent(new ChatClientAgentOptions
         {
             Name = Name,
@@ -44,7 +44,12 @@ internal static class ChatAssistant
             AllowConcurrentInvocation = true,
             ChatOptions = new ChatOptions
             {
-                Instructions = Instructions,
+                Instructions = Instructions + (mcpUiPrototype ? """
+
+                    For interactive concert discovery use browse_concerts when available.
+                    A concert widget selection requests a quote, not an order or approval.
+                    Quote and receipt widgets complement the text results; all existing approval rules still apply.
+                    """ : ""),
                 Tools = [.. tools]
             }
         },

@@ -19,5 +19,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ServiceDefaults\ServiceDefaults.csproj" />
+    <EmbeddedResource Include="MCP/Prototype/tool-ui.html" LogicalName="GloboTicket.McpUiPrototype.tool-ui.html" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 using Projects;
+using Microsoft.Extensions.Configuration;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -49,6 +50,17 @@ var devui = builder.AddDevUI("devui")
 if (builder.ExecutionContext.IsRunMode)
 {
     builder.AddMcpInspector("mcp-inspector", catalog, ordering);
+    if (builder.Configuration.GetValue<bool>("McpUiPrototype:Enabled"))
+    {
+        catalog.WithEnvironment("McpUiPrototype__Enabled", "true");
+        ordering.WithEnvironment("McpUiPrototype__Enabled", "true");
+        frontend.WithEnvironment("McpUiPrototype__Enabled", "true")
+            .WithUrlForEndpoint("http", url =>
+            {
+                url.DisplayText = "MCP Apps prototype (DevUI companion)";
+                url.Url += "/Chat?mcpUiPrototype=1&variant=A";
+            });
+    }
 }
 
 builder.Build().Run();

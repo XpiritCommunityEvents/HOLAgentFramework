@@ -63,10 +63,12 @@ await using McpClient orderingMcpClient = await McpClient.CreateAsync(
         Endpoint = new Uri($"{orderingBaseAddress.TrimEnd('/')}/mcp")
     }));
 
+var catalogTools = await mcpClient.ListToolsAsync();
+var orderingTools = await orderingMcpClient.ListToolsAsync();
 IList<AITool> tools =
 [
-    .. await mcpClient.ListToolsAsync(),
-    .. (await orderingMcpClient.ListToolsAsync())
+    .. catalogTools,
+    .. orderingTools
         .Where(tool => tool.Name != "collect_demo_customer")
         .Select(tool => tool.Name == "submit_order" ? (AITool)new ApprovalRequiredAIFunction(tool) : tool)
 ];
@@ -93,7 +95,9 @@ builder.Services.AddSingleton<AIAgent>(services => ChatAssistant.Create(
     tools,
     services,
     enableSensitiveData: builder.Environment.IsDevelopment(),
-    builder.Environment.ApplicationName));
+    builder.Environment.ApplicationName,
+    mcpUiPrototype: builder.Environment.IsDevelopment() &&
+        builder.Configuration.GetValue<bool>("McpUiPrototype:Enabled")));
 builder.AddAIAgent(ChatAssistant.Name, (services, _) => services.GetRequiredService<AIAgent>())
     .WithInMemorySessionStore(withIsolation: false); // Trusted workshop: no authenticated user partition.
 
@@ -102,6 +106,7 @@ builder.Services.AddOpenAIConversations();
 builder.Services.AddDevUI();
 
 var app = builder.Build();
+app.MapMcpUiPrototype(catalogTools, mcpClient, orderingTools, orderingMcpClient);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

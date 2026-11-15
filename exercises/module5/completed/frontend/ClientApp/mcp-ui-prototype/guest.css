@@ -1,0 +1,51 @@
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 system-ui, sans-serif; color: #1e3229; background: #fafbf7; }
+main { padding: 22px; }
+h1 { font-size: clamp(24px, 4vw, 36px); line-height: 1.1; letter-spacing: -.04em; margin: 10px 0 14px; }
+h2 { font-size: 17px; line-height: 1.2; margin: 8px 0; }
+p { color: #596860; }
+small { font-size: 11px; color: #596860; }
+button { border: 1px solid #1e3229; border-radius: 6px; background: #1e3229; color: white; padding: 9px 13px; font: inherit; cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button[aria-pressed=true] { background: #d5ee8a; color: #1e3229; }
+button:focus-visible,input:focus-visible { outline: 3px solid #da7a39; outline-offset: 2px; }
+.eyebrow { font-size: 10px; font-weight: 750; letter-spacing: .17em; color: #687857; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); gap: 12px; }
+.concert { border: 1px solid #d7dfd3; border-radius: 10px; overflow: hidden; background: white; }
+.poster { min-height: 105px; padding: 16px; background: #284a38; color: #e4f5c1; font-size: 20px; font-weight: 800; letter-spacing: -.04em; }
+.poster-1 { background: #f0cfb6; color: #6c382d; }
+.poster-2 { background: #ded9ed; color: #473d68; }
+.card-body { padding: 14px; }
+.card-body button { display: block; width: 100%; margin-top: 14px; }
+.card-body p { margin: 8px 0 16px; font-size: 12px; }
+.selected { box-shadow: inset 0 0 0 2px #6a9041; background: #f1f7e8; }
+.planner { display: grid; grid-template-columns: 170px 1fr; gap: 22px; }
+.planner aside { background: #e7eee0; padding: 18px; border-radius: 10px; }
+.large-number { font-size: 64px; font-weight: 800; }
+.timeline { list-style: none; margin: 0; padding: 0 0 0 16px; border-left: 2px solid #c6d3bf; }
+.timeline li { display: grid; grid-template-columns: 80px 1fr 120px; gap: 12px; padding: 18px 8px; border-bottom: 1px solid #d7dfd3; }
+.date { font-size: 12px; font-weight: 700; color: #637b55; }
+.timeline-action { text-align: right; }
+.timeline-action button { display: block; margin-top: 12px; font-size: 12px; }
+.table-scroll { overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: #687857; }
+td,th { padding: 14px 8px; border-bottom: 1px solid #d7dfd3; }
+.selection-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 16px 0; margin-top: 12px; border-top: 1px solid #d7dfd3; }
+input { width: 65px; padding: 7px; border: 1px solid #aabb9c; border-radius: 4px; font: inherit; }
+.notice { font-size: 11px; color: #657064; }
+.state { padding-top: 10px; border-top: 1px dashed #b1bdab; font-size: 11px; }
+.state pre { max-height: 200px; overflow: auto; white-space: pre-wrap; }
+.checkout-columns { display: grid; grid-template-columns: 1fr 230px; gap: 24px; }
+.price-panel { background: #e5eedc; padding: 18px; border-radius: 10px; }
+.hero-price { font-size: 36px; font-weight: 800; letter-spacing: -.05em; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 12px; }
+dd { text-align: right; margin: 0; }
+.total { border-top: 1px solid #91a27e; padding-top: 10px; font-weight: 800; font-size: 17px; }
+.quote-lines { list-style: none; padding: 0; }
+.quote-lines li { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid #d7dfd3; font-size: 12px; }
+.steps { list-style: none; padding: 12px; display: flex; gap: 20px; background: #1e3229; color: #edf4d2; border-radius: 6px; font-size: 11px; }
+.invoice { max-width: 550px; margin: auto; padding: 22px; background: white; border: 1px solid #d7dfd3; border-top: 5px solid #1e3229; }
+.receipt-status { padding: 12px; border: 1px solid #a8c280; border-radius: 6px; background: #f1f7e8; }
+code { overflow-wrap: anywhere; font-size: 11px; }
+@media(max-width:650px) { .planner,.checkout-columns { grid-template-columns: 1fr; } .planner aside { display: none; } .timeline li { grid-template-columns: 60px 1fr; } .timeline-action { grid-column: 2; text-align: left; } .steps { flex-wrap: wrap; gap: 8px; } }

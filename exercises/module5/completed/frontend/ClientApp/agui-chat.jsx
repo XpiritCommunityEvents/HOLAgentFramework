@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import { HttpAgent } from "@ag-ui/client";
 import { CopilotChat, CopilotKit, useInterrupt } from "@copilotkit/react-core/v2";
 import "@copilotkit/react-core/v2/styles.css";
+import { initialVariant, PrototypeSwitcher } from "./mcp-ui-prototype/host.jsx";
+import { PrototypeContext, prototypeRenderers } from "./mcp-ui-prototype/chat.jsx";
 
 const agentId = "GloboTicketAssistant";
 const threadStorageKey = "globoticket.chat.agui.thread";
@@ -120,10 +122,31 @@ function OrderingApproval() {
 }
 
 function AgUiChat() {
+    const prototype = root.dataset.mcpUiPrototype === "1";
+    const [variant, setVariant] = useState(initialVariant);
+    const [uiTools, setUiTools] = useState([]);
+    const [prototypeError, setPrototypeError] = useState("");
+    useEffect(() => {
+        if (!prototype) return;
+        document.body.classList.add("prototype-enabled");
+        fetch("/mcp-ui-prototype/tools").then(async response => {
+            if (!response.ok) throw new Error(`MCP UI tool discovery failed (${response.status}).`);
+            setUiTools(await response.json());
+        }).catch(error => setPrototypeError(error.message));
+        return () => document.body.classList.remove("prototype-enabled");
+    }, [prototype]);
     return (
+        <div className={prototype ? "prototype-chat-layout" : undefined}>
+        {prototype && <div className="prototype-banner">
+            Throwaway MCP Apps prototype. Widgets request quotes; only the existing approval control submits orders.
+            {prototypeError && <p role="alert">{prototypeError}</p>}
+        </div>}
+        <div className={prototype ? "prototype-chat-content" : undefined} style={prototype ? undefined : { height: "100%" }}>
+        <PrototypeContext.Provider value={{ uiTools, variant }}>
         <CopilotKit
             agents__unsafe_dev_only={{ [agentId]: agent }}
             enableInspector={true}
+            renderToolCalls={prototype ? prototypeRenderers : undefined}
         >
             <OrderingApproval />
             <CopilotChat
@@ -136,6 +159,10 @@ function AgUiChat() {
                 }}
             />
         </CopilotKit>
+        </PrototypeContext.Provider>
+        </div>
+        {prototype && <PrototypeSwitcher variant={variant} onChange={setVariant} />}
+        </div>
     );
 }
 

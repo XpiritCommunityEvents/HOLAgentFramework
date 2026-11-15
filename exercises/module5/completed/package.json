@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build:ag-ui": "esbuild frontend/ClientApp/agui-chat.jsx --bundle --minify --target=es2022 --format=iife --define:process.env.NODE_ENV=\"'development'\" --loader:.ttf=file --loader:.woff=file --loader:.woff2=file --asset-names=agui-assets/[name]-[hash] --outfile=frontend/wwwroot/js/agui-chat.js",
-    "build:chat": "npm run build:ag-ui"
+    "build:chat": "npm run build:ag-ui && npm run build:mcp-ui-prototype",
+    "build:mcp-ui-prototype": "node frontend/ClientApp/mcp-ui-prototype/build.mjs",
+    "prototype:mcp-ui": "npm run build:mcp-ui-prototype && node frontend/ClientApp/mcp-ui-prototype/preview.mjs"
   },
   "repository": {
     "type": "git",
@@ -25,6 +27,8 @@
   "dependencies": {
     "@ag-ui/client": "1.0.4",
     "@copilotkit/react-core": "1.86.0",
+    "@mcp-ui/client": "7.1.1",
+    "@modelcontextprotocol/ext-apps": "1.7.5",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   }

@@ -12,7 +12,8 @@
 
     <div id="aguiWorkspace" class="agui-workspace">
         <div class="agui-frame">
-            <div id="agUiChatRoot" class="agui-chat-root">
+            <div id="agUiChatRoot" class="agui-chat-root"
+                 data-mcp-ui-prototype="@((bool?)ViewData["McpUiPrototype"] == true ? "1" : "0")">
                 <div class="agui-loading" role="status">Loading chat...</div>
             </div>
         </div>
