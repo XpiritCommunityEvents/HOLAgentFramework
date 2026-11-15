@@ -24,10 +24,9 @@ public class ChatWithRag
         """;
 
         //var policyContext ="";
-        //var policyContext = await GetVenuePolicyFileContentsChatClient(agent, endpoint, token, model, "AFAS Live!");
+        //var policyContext = File.ReadAllText("../../../../datasets/venue-policies/AFAS_Live.md");
         var policyContext = await GetVenuePolicyFileContentsAgentFramework(agent, "AFAS Live!");
         
-        //var policyContext = File.ReadAllText("../../../../datasets/venue-policies/AFAS_Live.md");
         
         await GetResponseOnQuestionSimple(agent, systemPrompt, question, policyContext);
         //await GetResponseOnQuestion(agent, question, policyContext);
