@@ -26,6 +26,12 @@ public static class AgUiAgent
         bool IsClientArtifact(AIContent content) => content is ToolApprovalRequestContent ||
             content is FunctionResultContent result && resumedCallIds.Contains(result.CallId);
 
+        // On resume the client replays the whole transcript, which the session already holds.
+        // Forwarding it would place earlier turns after the tool result, so the model re-reads
+        // the booking request as new input and proposes submit_order again.
+        if (resumedCallIds.Count > 0)
+            input = input.Where(message => message.Contents.Any(content => content is ToolApprovalResponseContent)).ToList();
+
         foreach (var message in input)
         {
             if (!message.Contents.Any(IsClientArtifact))

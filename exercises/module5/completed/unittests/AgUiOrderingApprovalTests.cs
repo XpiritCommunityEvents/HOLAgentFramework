@@ -228,6 +228,89 @@ public sealed class AgUiOrderingApprovalTests
         finally { await app.StopAsync(); }
     }
 
+    [TestMethod]
+    public async Task Agui_approved_order_is_not_reproposed_when_the_model_stores_conversation_state()
+    {
+        Guid quoteId = Guid.NewGuid();
+        int submissions = 0;
+        using var model = new StoredConversationBookingClient(quoteId);
+        AIAgent agent = model.AsAIAgent(new ChatClientAgentOptions
+        {
+            Name = "BookingAgent",
+            ChatOptions = new()
+            {
+                Tools = [new ApprovalRequiredAIFunction(AIFunctionFactory.Create(
+                    (Guid quoteId, string name, string email) => { submissions++; return $"Simulated receipt for {quoteId}"; },
+                    "submit_order"))]
+            }
+        });
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseUrls("http://127.0.0.1:0");
+        builder.Logging.ClearProviders();
+        builder.Services.AddAGUIServer();
+        builder.Services.AddSingleton(agent);
+        builder.AddAIAgent("BookingAgent", (services, _) => services.GetRequiredService<AIAgent>())
+            .WithInMemorySessionStore(withIsolation: false);
+        await using var app = builder.Build();
+        app.MapAGUIServer("/ag-ui", AgUiAgent.WithSessionBoundApprovals(agent));
+        await app.StartAsync();
+        try
+        {
+            string address = app.Services.GetRequiredService<IServer>().Features
+                .Get<IServerAddressesFeature>()!.Addresses.Single();
+            using var http = new HttpClient { BaseAddress = new Uri(address), Timeout = TimeSpan.FromSeconds(15) };
+            string threadId = Guid.NewGuid().ToString();
+            object user = new { id = "u", role = "user", content = "Book the simulated order." };
+            using var first = await http.PostAsJsonAsync("/ag-ui", new
+            {
+                threadId, runId = Guid.NewGuid().ToString(), messages = new[] { user },
+                tools = Array.Empty<object>(), context = Array.Empty<object>(), state = new { }, forwardedProps = new { }
+            });
+            string stream = await first.Content.ReadAsStringAsync();
+            JsonElement interrupt = Events(stream).Single(e => e.GetProperty("type").GetString() == "RUN_FINISHED")
+                .GetProperty("outcome").GetProperty("interrupts")[0];
+            string callId = model.LastCallId!;
+            var arguments = new { quoteId, name = "Demo", email = "demo@example.test" };
+            object[] history =
+            [
+                user,
+                new
+                {
+                    id = "proposal", role = "assistant", toolCalls = new[]
+                    {
+                        new { id = callId, type = "function", function = new { name = "submit_order", arguments = JsonSerializer.Serialize(arguments) } }
+                    }
+                },
+                new
+                {
+                    id = "approval-result", role = "tool", toolCallId = callId,
+                    content = JsonSerializer.Serialize(new { approved = true, toolCall = new { callId, name = "submit_order", arguments } })
+                }
+            ];
+            using var resumed = await http.PostAsJsonAsync("/ag-ui", new
+            {
+                threadId, runId = Guid.NewGuid().ToString(), messages = history,
+                tools = Array.Empty<object>(), context = Array.Empty<object>(), state = new { }, forwardedProps = new { },
+                resume = new[]
+                {
+                    new
+                    {
+                        interruptId = interrupt.GetProperty("id").GetString(), status = "resolved",
+                        payload = new { approved = true, toolCall = new { callId, name = "submit_order", arguments } }
+                    }
+                }
+            });
+            string continuation = await resumed.Content.ReadAsStringAsync();
+            Assert.AreEqual(1, submissions, continuation);
+            JsonElement finished = Events(continuation).Single(e => e.GetProperty("type").GetString() == "RUN_FINISHED");
+            Assert.IsFalse(finished.TryGetProperty("outcome", out var outcome)
+                && outcome.TryGetProperty("interrupts", out var interrupts) && interrupts.GetArrayLength() > 0,
+                "The approved order was proposed again. Model inputs after approval: " + model.LastInput + "\n" + continuation);
+            StringAssert.Contains(continuation, "Order placed");
+        }
+        finally { await app.StopAsync(); }
+    }
+
     private static IEnumerable<JsonElement> Events(string stream) =>
         stream.Split('\n').Where(l => l.StartsWith("data:") && l["data:".Length..].Trim() != "[DONE]")
             .Select(l => JsonSerializer.Deserialize<JsonElement>(l["data:".Length..]));
@@ -251,6 +334,45 @@ public sealed class AgUiOrderingApprovalTests
             {
                 Role = ChatRole.Assistant, MessageId = "proposal",
                 Contents = [new FunctionCallContent("order-call", "submit_order", new Dictionary<string, object?>
+                {
+                    ["quoteId"] = quoteId, ["name"] = "Demo", ["email"] = "demo@example.test"
+                })]
+            };
+        }
+
+        public object? GetService(Type serviceType, object? serviceKey = null) =>
+            serviceKey is null && serviceType.IsInstanceOfType(this) ? this : null;
+        public void Dispose() { }
+    }
+
+    // Mimics the Responses API: history is stored server-side (ConversationId), and the model acts on
+    // the latest input, so replaying the user's booking request after the tool result re-proposes the order.
+    private sealed class StoredConversationBookingClient(Guid quoteId) : IChatClient
+    {
+        private int _responses;
+        public string? LastCallId { get; private set; }
+        public string LastInput { get; private set; } = "";
+
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> messages,
+            ChatOptions? options = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            await Task.Yield();
+            var input = messages.ToList();
+            LastInput = string.Join(" | ", input.Select(m => $"{m.Role}:{string.Join(",", m.Contents.Select(c => c.GetType().Name))}"));
+            string conversationId = $"resp_{Interlocked.Increment(ref _responses)}";
+            if (input.LastOrDefault()?.Contents.Any(c => c is FunctionResultContent) == true)
+            {
+                yield return new(ChatRole.Assistant, "Order placed.") { ConversationId = conversationId };
+                yield break;
+            }
+            LastCallId = $"call_{_responses}";
+            yield return new ChatResponseUpdate
+            {
+                Role = ChatRole.Assistant, MessageId = $"proposal_{_responses}", ConversationId = conversationId,
+                Contents = [new FunctionCallContent(LastCallId, "submit_order", new Dictionary<string, object?>
                 {
                     ["quoteId"] = quoteId, ["name"] = "Demo", ["email"] = "demo@example.test"
                 })]
