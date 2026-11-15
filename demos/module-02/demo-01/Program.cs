@@ -26,7 +26,7 @@ httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(
 var requestBody = new
 {
     model,
-    messages = new[]
+    input = new[]
     {
         new
         {
@@ -34,39 +34,37 @@ var requestBody = new
             content = "What is the weather in Orlando?"
         }
     },
+    max_output_tokens = 500,
     // tools = new[]
     // {
     //     new
     //     {
     //         type = "function",
-    //         function = new
+    //         name = "get_local_weather",
+    //         description = "Get the current local weather in a specified location.",
+    //         parameters = new
     //         {
-    //             name = "get_local_weather",
-    //             description = "Get the current local weather in a specified location.",
-    //             parameters = new
+    //             type = "object",
+    //             properties = new
     //             {
-    //                 type = "object",
-    //                 properties = new
+    //                 unit = new
     //                 {
-    //                     unit = new
-    //                     {
-    //                         type = "string",
-    //                         description = "The temperature unit to use.",
-    //                         @enum = new[] { "celsius", "fahrenheit" }
-    //                     },
-    //                     location = new
-    //                     {
-    //                         type = "string",
-    //                         description = "The location to get the weather for.",
-    //                     }
+    //                     type = "string",
+    //                     description = "The temperature unit to use.",
+    //                     @enum = new[] { "celsius", "fahrenheit" }
     //                 },
-    //                 required = new[] { "unit", "location" }
-    //             }
+    //                 location = new
+    //                 {
+    //                     type = "string",
+    //                     description = "The location to get the weather for.",
+    //                 }
+    //             },
+    //             required = new[] { "unit", "location" },
+    //             additionalProperties = false
     //         }
     //     }
     // },
-    // tool_choice = "auto",
-    max_completion_tokens = 500
+    // tool_choice = "auto"
 };
 
 using var content = new StringContent(

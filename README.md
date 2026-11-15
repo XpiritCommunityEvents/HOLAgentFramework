@@ -10,3 +10,12 @@ The lab description can be found in the [Wiki](https://github.com/XpiritCommunit
 For local development, install the SDK selected by `global.json` (10.0.404 or a
 newer .NET 10 feature band). Follow the Wiki for the remaining prerequisites,
 model configuration, and step-by-step lab instructions.
+
+## Raw HTTP function-tool demo
+
+[Module 2 demo 01](demos/module-02/demo-01/Program.cs) uses the Responses API:
+configure `OpenAI:Endpoint` with the full `/openai/v1/responses` operation URL.
+User secrets and environment variables override the demo's `appsettings.json`.
+Its raw JSON body uses `input`, `max_output_tokens`, and function tools with
+`name`, `description`, and `parameters` directly on each tool.
+The demo displays the model's response; it does not execute the weather tool.
