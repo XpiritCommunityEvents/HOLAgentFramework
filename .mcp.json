@@ -5,6 +5,9 @@
       "args": [
         "agent",
         "mcp"
+      ],
+      "tools": [
+        "*"
       ]
     }
   }
